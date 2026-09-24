@@ -545,10 +545,10 @@ footer ul { margin: 0; padding-left: 18px; }
         </div>
       </div>`;
     }).join("") + `<div class="axis"><span>0 d</span><span>${axisMax / 2} d</span><span>${axisMax} d</span></div>`;
-    try { localStorage.setItem("gps-scope", JSON.stringify({ shape, dir, host, comments, users, cycles })); } catch (e) {}
+    try { localStorage.setItem("github-plane-sync:scope", JSON.stringify({ shape, dir, host, comments, users, cycles })); } catch (e) {}
   }
   try {
-    const s = JSON.parse(localStorage.getItem("gps-scope") || "null");
+    const s = JSON.parse(localStorage.getItem("github-plane-sync:scope") || "null");
     if (s) {
       ["shape", "dir", "host"].forEach(k => { const el = form.querySelector(`[name=${k}][value=${s[k]}]`); if (el) el.checked = true; });
       document.getElementById("f-comments").checked = !!s.comments;
@@ -604,7 +604,7 @@ footer ul { margin: 0; padding-left: 18px; }
   ];
   const qList = document.getElementById("qList");
   let saved = {};
-  try { saved = JSON.parse(localStorage.getItem("gps-answers") || "{}"); } catch (e) {}
+  try { saved = JSON.parse(localStorage.getItem("github-plane-sync:answers") || "{}"); } catch (e) {}
   qList.innerHTML = QS.map(([q, hint], i) => `
     <div class="q" id="q${i}">
       <label class="qt" for="qc${i}"><input type="checkbox" id="qc${i}"><span>${q}</span></label>
@@ -621,7 +621,7 @@ footer ul { margin: 0; padding-left: 18px; }
     const save = () => {
       saved[i] = { done: c.checked, text: a.value };
       syncQ(i);
-      try { localStorage.setItem("gps-answers", JSON.stringify(saved)); } catch (e) {}
+      try { localStorage.setItem("github-plane-sync:answers", JSON.stringify(saved)); } catch (e) {}
     };
     c.addEventListener("change", save); a.addEventListener("input", save);
   });
@@ -647,7 +647,7 @@ footer ul { margin: 0; padding-left: 18px; }
     clearArmed = false; e.target.textContent = "Clear answers";
     saved = {};
     QS.forEach((_, i) => { document.getElementById("qc" + i).checked = false; document.getElementById("qa" + i).value = ""; syncQ(i); });
-    try { localStorage.removeItem("gps-answers"); } catch (e) {}
+    try { localStorage.removeItem("github-plane-sync:answers"); } catch (e) {}
     status.textContent = "Cleared";
   });
 })();
