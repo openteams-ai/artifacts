@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>GitHub–Plane Multi-Repo Sync</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #F3F5F6;
+  --surface: #FFFFFF;
+  --sunken: #E9EDEF;
+  --ink: #14202A;
+  --muted: #56646F;
+  --line: #D6DDE1;
+  --accent: #0E6B6B;
+  --accent-soft: #D7ECEA;
+  --on-accent: #FFFFFF;
+  --warn: #9A5B00;
+  --warn-soft: #F7E9D2;
+  --crit: #A8261D;
+  --crit-soft: #F6DEDB;
+  --ok: #2B6E35;
+  --ok-soft: #DDEEDC;
+  --display: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0E1519; --surface: #151F25; --sunken: #1B272E; --ink: #E4EBEE; --muted: #93A3AD;
+    --line: #293740; --accent: #52BDB5; --accent-soft: #173A3A; --on-accent: #0B1A1A;
+    --warn: #E2A34A; --warn-soft: #3A2A12; --crit: #F0786C; --crit-soft: #3D1C19;
+    --ok: #74C682; --ok-soft: #183221;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0E1519; --surface: #151F25; --sunken: #1B272E; --ink: #E4EBEE; --muted: #93A3AD;
+  --line: #293740; --accent: #52BDB5; --accent-soft: #173A3A; --on-accent: #0B1A1A;
+  --warn: #E2A34A; --warn-soft: #3A2A12; --crit: #F0786C; --crit-soft: #3D1C19;
+  --ok: #74C682; --ok-soft: #183221;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 15px/1.6 var(--body);
+  padding: 0 20px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 40px 80px; display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: clamp(28px, 4.2vw, 42px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 24px; font-weight: 600; }
+h3 { font-size: 16px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--mono); font-size: 0.9em; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.section { display: grid; gap: 20px; }
+.section-head { display: grid; gap: 8px; }
+.lede { color: var(--muted); }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+/* Nav */
+nav.toc {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line);
+  margin: 0 -20px; padding: 10px 20px;
+}
+nav.toc ul { list-style: none; margin: 0 auto; padding: 0; max-width: 1040px; display: flex; gap: 6px 18px; flex-wrap: wrap; }
+nav.toc a { color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 500; }
+nav.toc a:hover { color: var(--ink); }
+
+/* Hero */
+header.hero { display: grid; gap: 16px; }
+.verdict {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 8px;
+}
+.verdict div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.verdict b { font-family: var(--display); font-size: 15px; }
+.verdict span { color: var(--muted); font-size: 14px; }
+
+.callout {
+  border: 1px solid var(--warn); background: var(--warn-soft); border-radius: 8px;
+  padding: 16px 18px; display: grid; gap: 6px;
+}
+.callout .eyebrow { color: var(--warn); }
+
+/* Gaps */
+.filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip-btn {
+  font: 500 13px var(--body); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; cursor: pointer;
+}
+.chip-btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.gaps { display: grid; gap: 8px; }
+details.gap { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+details.gap summary {
+  list-style: none; cursor: pointer; padding: 14px 16px;
+  display: grid; grid-template-columns: 96px 1fr auto; gap: 12px; align-items: center;
+}
+details.gap summary::-webkit-details-marker { display: none; }
+details.gap summary::after { content: "+"; font: 500 18px var(--mono); color: var(--muted); }
+details.gap[open] summary::after { content: "−"; }
+details.gap .body { padding: 0 16px 16px calc(96px + 28px); display: grid; gap: 8px; color: var(--muted); }
+details.gap .body strong { color: var(--ink); font-weight: 600; }
+.pill { font: 500 11px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 5px 8px; border-radius: 4px; justify-self: start; }
+.pill.crit { background: var(--crit-soft); color: var(--crit); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.gap-title { font-weight: 600; }
+@media (max-width: 560px) {
+  details.gap summary { grid-template-columns: 1fr auto; }
+  details.gap summary .pill { grid-column: 1 / -1; }
+  details.gap .body { padding-left: 16px; }
+}
+
+/* Architecture */
+.arch { display: grid; grid-template-columns: 1fr 40px 1.4fr 40px 1fr; align-items: stretch; gap: 0; }
+.arch .col { display: grid; gap: 10px; align-content: center; }
+.arrow { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); font: 500 11px var(--mono); gap: 2px; }
+.arrow svg { width: 32px; height: 20px; }
+.node {
+  text-align: left; font: inherit; color: var(--ink); cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px;
+  display: grid; gap: 2px; width: 100%;
+}
+.node small { color: var(--muted); font-size: 12.5px; }
+.node b { font-family: var(--display); font-weight: 600; }
+.node:hover { border-color: var(--accent); }
+.node[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.svc { border: 1.5px dashed var(--accent); border-radius: 10px; padding: 12px; display: grid; gap: 8px; }
+.svc .eyebrow { color: var(--accent); }
+.svc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.detail {
+  background: var(--sunken); border-radius: 8px; padding: 16px 18px; display: grid; gap: 8px; min-height: 120px;
+}
+.detail ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+@media (max-width: 760px) {
+  .arch { grid-template-columns: 1fr; gap: 6px; }
+  .arrow { flex-direction: row; gap: 8px; padding: 2px 0; }
+  .arrow svg { transform: rotate(90deg); }
+}
+
+pre.schema {
+  margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  padding: 16px; overflow-x: auto; font: 13px/1.6 var(--mono); color: var(--ink);
+}
+pre.schema .k { color: var(--accent); font-weight: 500; }
+pre.schema .c { color: var(--muted); }
+
+/* Estimator */
+.est { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
+@media (max-width: 820px) { .est { grid-template-columns: 1fr; } }
+.controls { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: grid; gap: 18px; }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; }
+legend { font-weight: 600; font-size: 14px; margin-bottom: 6px; padding: 0; }
+.seg { display: grid; gap: 6px; }
+.opt { display: grid; grid-template-columns: 18px 1fr; gap: 8px; align-items: start; font-size: 14px; cursor: pointer; }
+.opt input { margin: 3px 0 0; accent-color: var(--accent); }
+.opt small { display: block; color: var(--muted); font-size: 12.5px; }
+.results { display: grid; gap: 14px; }
+.total {
+  background: var(--ink); color: var(--bg); border-radius: 8px; padding: 18px 20px;
+  display: flex; flex-wrap: wrap; gap: 8px 28px; align-items: baseline; justify-content: space-between;
+}
+.total .num { font: 700 34px/1 var(--display); font-variant-numeric: tabular-nums; }
+.total .sub { font-size: 13px; opacity: 0.8; }
+.phases { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.phase { display: grid; grid-template-columns: 1fr 88px; gap: 4px 16px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.phase:first-child { border-top: 0; }
+.phase .name { font-weight: 600; font-size: 14px; }
+.phase .days { text-align: right; font: 500 13px var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+.phase .scope { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
+.phase .track { grid-column: 1 / -1; position: relative; height: 8px; background: var(--sunken); border-radius: 4px; }
+.phase .range { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 4px; }
+.phase .range .lo { position: absolute; inset: 0 auto 0 0; background: var(--accent); }
+.phase.added .name::after { content: "added scope"; margin-left: 8px; font: 500 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--warn); background: var(--warn-soft); padding: 2px 6px; border-radius: 3px; vertical-align: 2px; }
+.axis { display: flex; justify-content: space-between; font: 11px var(--mono); color: var(--muted); padding: 8px 16px 12px; border-top: 1px solid var(--line); }
+.note { font-size: 13px; color: var(--muted); }
+
+/* Questions */
+.questions { display: grid; gap: 10px; counter-reset: q; }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; }
+.q label.qt { display: grid; grid-template-columns: 20px 1fr; gap: 10px; font-weight: 600; cursor: pointer; }
+.q input[type=checkbox] { margin: 4px 0 0; accent-color: var(--accent); }
+.q textarea {
+  width: 100%; min-height: 44px; resize: vertical; font: 14px/1.5 var(--body); color: var(--ink);
+  background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
+}
+.q.done { border-color: var(--ok); }
+.q .hint { color: var(--muted); font-size: 13px; padding-left: 30px; }
+.q textarea { margin-left: 0; }
+.q-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.btn { font: 600 14px var(--body); background: var(--accent); color: var(--on-accent); border: 0; border-radius: 6px; padding: 9px 16px; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+#copyStatus { font-size: 13px; color: var(--muted); }
+#copyFallback { width: 100%; min-height: 140px; font: 12.5px var(--mono); }
+
+/* Running it */
+.host-card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px 20px; display: grid; gap: 14px; }
+.host-card .fit { color: var(--muted); }
+.host-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.host-grid div { display: grid; gap: 6px; align-content: start; }
+.host-grid ul, .ops ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.host-grid .eyebrow.pro { color: var(--ok); }
+.host-grid .eyebrow.con { color: var(--crit); }
+.rec { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; background: var(--accent-soft); color: var(--accent); padding: 5px 8px; border-radius: 4px; margin-left: 8px; vertical-align: 3px; }
+.ops { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.ops-col { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; display: grid; gap: 10px; align-content: start; font-size: 14px; }
+.ops-col li { color: var(--muted); }
+.ops-col strong { color: var(--ink); font-weight: 600; }
+.steps { background: var(--sunken); border-radius: 8px; padding: 16px 20px; display: grid; gap: 10px; }
+.steps ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+
+footer { color: var(--muted); font-size: 13px; display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 20px; }
+footer ul { margin: 0; padding-left: 18px; }
+@media (prefers-reduced-motion: no-preference) {
+  .phase .range { transition: left .25s ease, width .25s ease; }
+}
+</style>
+</head>
+<body>
+
+<nav class="toc" aria-label="Sections">
+  <ul>
+    <li><a href="#verdict">Verdict</a></li>
+    <li><a href="#gaps">Gaps</a></li>
+    <li><a href="#design">Design</a></li>
+    <li><a href="#estimate">Estimate</a></li>
+    <li><a href="#running">Running it</a></li>
+    <li><a href="#questions">Open questions</a></li>
+  </ul>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero" id="verdict">
+    <div class="eyebrow">Assessment · Sept 2026</div>
+    <h1>Linking several GitHub repos to one Plane project</h1>
+    <p class="lede">Today each Plane project syncs with a single GitHub repo. This page reviews the approach Plane suggested (run your own sync service), lists what it leaves out, and estimates the work under different scopes.</p>
+    <div class="verdict">
+      <div><b>The approach is sound</b><span>Your service owns the repo↔project mapping and routing. Plane only receives create and update calls.</span></div>
+      <div><b>The outline is thin</b><span>It covers how to connect the pieces. It skips routing, loop prevention, missed webhooks, and identity mapping.</span></div>
+      <div><b>~2.5 wks one-way, ~5–7 wks two-way</b><span>One engineer. Use the estimator below to change the scope.</span></div>
+    </div>
+  </header>
+
+  <div class="callout" role="note">
+    <div class="eyebrow">Check this first · ~½ day</div>
+    <p><strong>The native integration may already do this.</strong> Plane's GitHub docs describe issue sync as a per-project setting ("Project Issue Sync") but never say whether a project can link more than one repo. Try adding a second repo to a sandbox project before building anything. It needs the Pro plan or higher. Self-hosted Plane also needs your own GitHub App.</p>
+  </div>
+
+  <section class="section" id="gaps">
+    <div class="section-head">
+      <div class="eyebrow">Review</div>
+      <h2>What Plane's suggestion leaves out</h2>
+      <p class="lede">Open a row for details. Filter by how much each one matters.</p>
+    </div>
+    <div class="filters" role="group" aria-label="Filter by importance">
+      <button class="chip-btn" type="button" data-filter="all" aria-pressed="true">All</button>
+      <button class="chip-btn" type="button" data-filter="crit" aria-pressed="false">Decide first</button>
+      <button class="chip-btn" type="button" data-filter="warn" aria-pressed="false">Must build</button>
+      <button class="chip-btn" type="button" data-filter="ok" aria-pressed="false">Advice</button>
+    </div>
+    <div class="gaps" id="gapList"></div>
+  </section>
+
+  <section class="section" id="design">
+    <div class="section-head">
+      <div class="eyebrow">Proposed design</div>
+      <h2>One service between two apps</h2>
+      <p class="lede">Select a component to see what it does.</p>
+    </div>
+    <div class="arch">
+      <div class="col">
+        <button class="node" type="button" data-node="ghapp"><b>GitHub App</b><small>Installed on the org</small></button>
+        <button class="node" type="button" data-node="ghapi"><b>GitHub API</b><small>REST / GraphQL</small></button>
+      </div>
+      <div class="arrow" aria-hidden="true">
+        <svg viewBox="0 0 32 20"><path d="M2 10h26M22 4l6 6-6 6M10 16l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span>hooks</span>
+      </div>
+      <div class="svc">
+        <div class="eyebrow">Sync service</div>
+        <div class="svc-grid">
+          <button class="node" type="button" data-node="ingest"><b>Ingest</b><small>Verify, enqueue, 200</small></button>
+          <button class="node" type="button" data-node="worker"><b>Worker</b><small>Route, map, write</small></button>
+          <button class="node" type="button" data-node="recon"><b>Reconciler</b><small>Cron, fixes drift</small></button>
+          <button class="node" type="button" data-node="db"><b>Postgres</b><small>Mappings and links</small></button>
+        </div>
+      </div>
+      <div class="arrow" aria-hidden="true">
+        <svg viewBox="0 0 32 20"><path d="M2 10h26M22 4l6 6-6 6M10 16l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span>hooks</span>
+      </div>
+      <div class="col">
+        <button class="node" type="button" data-node="planeapp"><b>Plane App</b><small>Settings › Integrations</small></button>
+        <button class="node" type="button" data-node="planeapi"><b>Plane API</b><small>Work items, comments</small></button>
+      </div>
+    </div>
+    <div class="detail" id="nodeDetail" aria-live="polite"></div>
+
+    <h3>Tables</h3>
+<pre class="schema"><span class="k">repo_project_map</span>  repo · plane_project_id · direction · routing_rule · state_map
+<span class="k">item_links</span>        gh_repo · gh_issue_number · gh_node_id · plane_work_item_id · last_synced_hash · last_synced_at
+<span class="k">comment_links</span>     gh_comment_id · plane_comment_id · last_synced_hash
+<span class="k">user_map</span>          gh_login · plane_user_id
+<span class="k">sync_events</span>       source · delivery_id · received_at · status   <span class="c">-- drops repeated deliveries</span></pre>
+  </section>
+
+  <section class="section" id="estimate">
+    <div class="section-head">
+      <div class="eyebrow">Level of effort</div>
+      <h2>Estimate by scope</h2>
+      <p class="lede">One engineer, in working days. Change the scope and the phases update.</p>
+    </div>
+    <div class="est">
+      <form class="controls" id="scope" onsubmit="return false">
+        <fieldset>
+          <legend>How repos map to projects</legend>
+          <label class="opt"><input type="radio" name="shape" id="shape-fanin" value="fanin" checked><span>Many repos → one project<small>Each issue goes to its repo's project.</small></span></label>
+          <label class="opt"><input type="radio" name="shape" id="shape-fanout" value="fanout"><span>One repo → many projects<small>Needs routing by label, path or CODEOWNERS.</small></span></label>
+          <label class="opt"><input type="radio" name="shape" id="shape-both" value="both"><span>Both</span></label>
+        </fieldset>
+        <fieldset>
+          <legend>Sync direction</legend>
+          <label class="opt"><input type="radio" name="dir" id="dir-one" value="one"><span>GitHub → Plane only<small>GitHub is the source of truth.</small></span></label>
+          <label class="opt"><input type="radio" name="dir" id="dir-two" value="two" checked><span>Two-way<small>Edits in Plane also update GitHub.</small></span></label>
+        </fieldset>
+        <fieldset>
+          <legend>Plane hosting</legend>
+          <label class="opt"><input type="radio" name="host" id="host-cloud" value="cloud" checked><span>Plane Cloud</span></label>
+          <label class="opt"><input type="radio" name="host" id="host-self" value="self"><span>Self-hosted<small>Network reachability and version differences.</small></span></label>
+        </fieldset>
+        <fieldset>
+          <legend>Fields to sync</legend>
+          <label class="opt"><input type="checkbox" name="comments" id="f-comments" checked><span>Comments</span></label>
+          <label class="opt"><input type="checkbox" name="users" id="f-users" checked><span>Assignees and authors<small>Needs a GitHub login ↔ Plane user table.</small></span></label>
+          <label class="opt"><input type="checkbox" name="cycles" id="f-cycles"><span>Milestones ↔ cycles</span></label>
+        </fieldset>
+      </form>
+      <div class="results">
+        <div class="total">
+          <div>
+            <div class="sub">Total</div>
+            <div class="num" id="totalWeeks">–</div>
+          </div>
+          <div class="sub" id="totalDays">–</div>
+        </div>
+        <div class="phases" id="phaseList"></div>
+        <p class="note">Weeks assume 5 working days. After launch, plan on 1–2 days a month of upkeep for API changes and edge cases. Rows marked "added scope" were not part of the original estimate.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="running">
+    <div class="section-head">
+      <div class="eyebrow">Operations</div>
+      <h2>Where it runs</h2>
+      <p class="lede">The service needs a public HTTPS endpoint for both webhooks, a small database, a queue, and a scheduled job. Pick a hosting option to compare.</p>
+    </div>
+    <div class="filters" role="group" aria-label="Hosting option">
+      <button class="chip-btn" type="button" data-host="k8s" aria-pressed="true">Existing Kubernetes</button>
+      <button class="chip-btn" type="button" data-host="cf" aria-pressed="false">Cloudflare Workers</button>
+      <button class="chip-btn" type="button" data-host="paas" aria-pressed="false">Container platform</button>
+    </div>
+    <div class="host-card" id="hostDetail" aria-live="polite"></div>
+
+    <div class="section-head">
+      <h2>Keeping it running</h2>
+      <p class="lede">Plan on one named owner and 1–2 days a month. Most of that goes to API changes, new repo mappings, and the occasional drift fix.</p>
+    </div>
+    <div class="ops">
+      <div class="ops-col">
+        <h3>Watch</h3>
+        <ul>
+          <li><strong>Plane webhook turned off.</strong> Plane disables it after 5 failed deliveries. Check its status from the reconciler and page someone.</li>
+          <li><strong>Queue depth and dead letters.</strong> A growing backlog means an API is rate-limiting or down.</li>
+          <li><strong>Drift found per reconciler run.</strong> Should sit near zero. A rise means webhooks are being missed.</li>
+          <li><strong>429s and 5xx from either API.</strong></li>
+          <li><strong>Signature failures.</strong> Usually a rotated secret that wasn't updated in the service.</li>
+        </ul>
+      </div>
+      <div class="ops-col">
+        <h3>Routine</h3>
+        <ul>
+          <li><strong>Rotate secrets</strong> every quarter: GitHub App private key, both webhook secrets, Plane app credentials.</li>
+          <li><strong>Dependency updates</strong> through Renovate or Dependabot.</li>
+          <li><strong>Follow Plane's API changelog.</strong> The API is still changing. Pin the version you call and test against staging before upgrades.</li>
+          <li><strong>Back up Postgres.</strong> The link tables are the only record of which issue matches which work item.</li>
+          <li><strong>Review mappings</strong> when teams rename, archive or split repos.</li>
+        </ul>
+      </div>
+      <div class="ops-col">
+        <h3>When it breaks</h3>
+        <ul>
+          <li><strong>Pause one mapping.</strong> Set its direction to <code>paused</code>. This stops a loop or bad routing without taking down the rest.</li>
+          <li><strong>Replay a time window.</strong> Run the reconciler with <code>--since</code> after an outage.</li>
+          <li><strong>Remove duplicates</strong> by grouping Plane items on <code>external_id</code>.</li>
+          <li><strong>Rebuild lost links.</strong> Plane items carry the GitHub node ID in <code>external_id</code>. Also write the Plane ID into a hidden marker in each GitHub issue, so links can be rebuilt from both sides.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="steps">
+      <h3>Adding a repo to a project</h3>
+      <ol>
+        <li>Give the GitHub App access to the repo in the org's app settings.</li>
+        <li>Add a <code>repo_project_map</code> row through a PR to the config file or the admin CLI. Set the direction and state map.</li>
+        <li>Run the backfill for that repo in dry-run mode, check the output, then run it for real.</li>
+        <li>Create a test issue and confirm it shows up in Plane, and that edits flow back if the mapping is two-way.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" id="questions">
+    <div class="section-head">
+      <div class="eyebrow">Before building</div>
+      <h2>Open questions</h2>
+      <p class="lede">Record answers as you get them. They stay in this browser only. Copy them when you're done to share.</p>
+    </div>
+    <div class="questions" id="qList"></div>
+    <div class="q-actions">
+      <button class="btn" type="button" id="copyBtn">Copy answers</button>
+      <button class="btn ghost" type="button" id="clearBtn">Clear answers</button>
+      <span id="copyStatus" aria-live="polite"></span>
+    </div>
+    <textarea id="copyFallback" hidden readonly aria-label="Answers to copy"></textarea>
+  </section>
+
+  <footer>
+    <div>Sources</div>
+    <ul>
+      <li><a href="https://docs.plane.so/integrations/github">Plane: GitHub integration</a></li>
+      <li><a href="https://developers.plane.so/dev-tools/intro-webhooks">Plane: Webhooks</a></li>
+    </ul>
+  </footer>
+</div>
+
+<script>
+(function () {
+  // ---------- Gaps ----------
+  const GAPS = [
+    { sev: "crit", label: "Decide first", title: "Which way the mapping goes",
+      body: "<p><strong>Many repos → one project</strong> is simple: an issue lands in the project mapped to its repo.</p><p><strong>One repo → many projects</strong> needs routing rules, such as by label, file path or CODEOWNERS. Decide which case you're solving before you design the tables.</p>" },
+    { sev: "crit", label: "Decide first", title: "Where new Plane items go in GitHub",
+      body: "<p>When someone creates a work item in Plane, the service has to pick a repo. Options: a <strong>\"Repo\" custom property or label</strong>, a <strong>module → repo mapping</strong>, or a <strong>default repo per project</strong>. This is the main design decision for two-way sync.</p>" },
+    { sev: "warn", label: "Must build", title: "Loop prevention",
+      body: "<p>Every write the service makes fires a webhook on the other side. Skip events where the actor is the bot, and skip payloads whose content hash matches <code>last_synced_hash</code>. Without both checks, updates bounce back and forth forever.</p>" },
+    { sev: "warn", label: "Must build", title: "Missed webhooks",
+      body: "<p><strong>GitHub</strong> doesn't redeliver failed webhooks on its own.</p><p><strong>Plane</strong> retries 5 times with backoff, then turns the webhook off and emails its creator.</p><p>A periodic reconciliation job is required. It should also alert when Plane disables the webhook.</p>" },
+    { sev: "warn", label: "Must build", title: "Identity mapping",
+      body: "<p>A GitHub login ↔ Plane user table for assignees and comment authors. Without it, every change shows up as made by the bot.</p>" },
+    { sev: "warn", label: "Must build", title: "Field mapping",
+      body: "<p>GitHub has open and closed. Plane has state groups with custom states. Labels need create-if-missing. Descriptions convert between GitHub markdown and Plane's <code>description_html</code>. Decide which side wins for each field.</p>" },
+    { sev: "warn", label: "Must build", title: "Turn off native sync on those projects",
+      body: "<p>If the built-in integration stays on for a project, items sync twice. The cutover plan has to include a backfill that matches items the native integration already linked.</p>" },
+    { sev: "ok", label: "Advice", title: "Keep the MCP server out of runtime",
+      body: "<p>The MCP server is useful for writing the code faster or for a one-time backfill. It should not sit in the live sync path, because the sync must behave the same way every time.</p>" },
+    { sev: "ok", label: "Advice", title: "Use apps, not personal tokens",
+      body: "<p>Registering a Plane app under <strong>Settings › Integrations</strong> gives scoped credentials and sets up the webhook. Pair it with a <strong>GitHub App</strong> installed on the org rather than a personal access token, so access doesn't depend on one person's account.</p>" },
+  ];
+  const gapList = document.getElementById("gapList");
+  gapList.innerHTML = GAPS.map(g =>
+    `<details class="gap" data-sev="${g.sev}"><summary><span class="pill ${g.sev}">${g.label}</span><span class="gap-title">${g.title}</span></summary><div class="body">${g.body}</div></details>`
+  ).join("");
+  document.querySelectorAll("[data-filter]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const f = btn.dataset.filter;
+      document.querySelectorAll("[data-filter]").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+      gapList.querySelectorAll(".gap").forEach(el => { el.hidden = f !== "all" && el.dataset.sev !== f; });
+    });
+  });
+
+  // ---------- Architecture ----------
+  const NODES = {
+    ghapp: ["GitHub App", ["Installed once on the GitHub org, with access to every repo you map.", "Sends issue, issue_comment and pull_request webhooks.", "Signs each delivery with X-Hub-Signature-256.", "Rate limit is about 5,000 requests per hour per installation."]],
+    ghapi: ["GitHub API", ["The worker creates and edits issues and comments as the app's bot user.", "Pull requests that mention a Plane ID such as [PROJ-123] get linked, and can move the item's state. This works across all mapped repos."]],
+    ingest: ["Ingest", ["One endpoint for GitHub and one for Plane.", "Checks the HMAC signature, records the delivery_id, puts the event on a queue, and returns 200 right away.", "Drops a delivery it has already seen."]],
+    worker: ["Worker", ["Looks up the route in repo_project_map, then maps fields: state, labels, assignees, description.", "Skips events made by the bot and payloads whose hash hasn't changed.", "Sets external_id and external_source on Plane work items to the GitHub node ID, so retries never create duplicates.", "Backs off when either API rate-limits it."]],
+    recon: ["Reconciler", ["Runs every few minutes.", "Lists items updated since the last run on both sides and fixes anything that drifted.", "Covers webhooks that were missed or dropped.", "Alerts if Plane has turned the webhook off."]],
+    db: ["Postgres", ["Holds the mapping config, item and comment links, the user map, and the delivery log.", "The FastAPI + async SQLAlchemy + Postgres stack the team already uses fits here. Cloudflare Workers + Queues + D1 would also work if you'd rather not run a server."]],
+    planeapp: ["Plane App", ["Registered under Settings › Integrations › Build your own app.", "Gives API credentials scoped to what you pick, and sets up a webhook pointed at the service.", "Plane webhooks cover the whole workspace, so one webhook sees every project.", "Signs each delivery with X-Plane-Signature."]],
+    planeapi: ["Plane API", ["Creates and updates work items, comments and labels.", "Plane's API rate limit is low, so the worker needs to throttle its calls."]],
+  };
+  const detail = document.getElementById("nodeDetail");
+  function showNode(key) {
+    const [title, items] = NODES[key];
+    detail.innerHTML = `<h3>${title}</h3><ul>${items.map(i => `<li>${i}</li>`).join("")}</ul>`;
+    document.querySelectorAll(".node").forEach(n => n.setAttribute("aria-pressed", String(n.dataset.node === key)));
+  }
+  document.querySelectorAll(".node").forEach(n => n.addEventListener("click", () => showNode(n.dataset.node)));
+  showNode("worker");
+
+  // ---------- Estimator ----------
+  const form = document.getElementById("scope");
+  const phaseList = document.getElementById("phaseList");
+  function val(name) { const el = form.querySelector(`[name=${name}]:checked`); return el ? el.value : null; }
+  function on(id) { return document.getElementById(id).checked; }
+  function fmt(n) { return (Math.round(n * 2) / 2).toString().replace(/\.0$/, ""); }
+  function estimate() {
+    const shape = val("shape"), dir = val("dir"), host = val("host");
+    const comments = on("f-comments"), users = on("f-users"), cycles = on("f-cycles");
+    const rows = [];
+    rows.push({ name: "0 · Spike", lo: 0.5, hi: 1, scope: "Check native multi-repo support, confirm plan and edition, settle routing." });
+    rows.push({ name: "1 · One-way MVP", lo: 7.5, hi: 10, scope: "Mapping table and config, issue create/edit/close/reopen, labels, state map, idempotency, signature checks, queue, deploy." });
+    if (shape === "fanout") rows.push({ name: "Routing rules", lo: 2, hi: 3, scope: "Send one repo's issues to different projects by label, path or CODEOWNERS.", added: false });
+    if (shape === "both") rows.push({ name: "Routing rules", lo: 3, hi: 5, scope: "Many-to-one mapping plus routing one repo's issues to several projects." });
+    if (dir === "two") {
+      let lo = 7, hi = 11, parts = ["Plane webhooks → GitHub", "Plane → repo routing", "loop suppression", "which side wins per field", "cross-repo PR links"];
+      if (comments) { lo += 1.5; hi += 2; parts.push("comment sync"); }
+      if (users) { lo += 1.5; hi += 2; parts.push("user mapping"); }
+      rows.push({ name: "2 · Two-way sync", lo, hi, scope: parts.join(", ") + "." });
+      rows.push({ name: "3 · Hardening", lo: 5, hi: 10, scope: "Reconciler, backfill of already-linked items, webhook watchdog, metrics and alerts, runbook." });
+    } else {
+      if (comments) rows.push({ name: "Comment sync", lo: 1, hi: 1.5, scope: "GitHub comments copied to Plane." });
+      if (users) rows.push({ name: "User mapping", lo: 1, hi: 1.5, scope: "GitHub login ↔ Plane user table for assignees and authors." });
+      rows.push({ name: "Reconciler", lo: 2, hi: 4, scope: "Cron that fixes drift from missed webhooks, plus alerting." });
+    }
+    if (host === "self") rows.push({ name: "Self-hosted setup", lo: 1, hi: 2, scope: "Make the service reachable from Plane, test against your Plane version." });
+    if (cycles) rows.push({ name: "Milestones ↔ cycles", lo: 3, hi: 5, scope: "Map GitHub milestones to Plane cycles, including date changes.", added: true });
+    if (shape !== "fanin") rows.forEach(r => { if (r.name === "Routing rules") r.added = true; });
+
+    const lo = rows.reduce((s, r) => s + r.lo, 0), hi = rows.reduce((s, r) => s + r.hi, 0);
+    document.getElementById("totalWeeks").textContent = `${fmt(lo / 5)}–${fmt(hi / 5)} weeks`;
+    document.getElementById("totalDays").textContent = `${fmt(lo)}–${fmt(hi)} working days · ${dir === "two" ? "two-way" : "one-way"}`;
+
+    const max = Math.max(...rows.map(r => r.hi));
+    const axisMax = Math.ceil(max / 5) * 5;
+    phaseList.innerHTML = rows.map(r => {
+      const left = (r.lo / axisMax) * 100, width = Math.max(((r.hi - r.lo) / axisMax) * 100, 1.2);
+      return `<div class="phase${r.added ? " added" : ""}">
+        <div class="name">${r.name}</div><div class="days">${fmt(r.lo)}–${fmt(r.hi)} d</div>
+        <div class="scope">${r.scope}</div>
+        <div class="track" role="img" aria-label="${fmt(r.lo)} to ${fmt(r.hi)} days">
+          <div class="range" style="left:0;width:${left + width}%;background:linear-gradient(90deg, var(--accent-soft) 0 ${(left / (left + width)) * 100}%, var(--accent) ${(left / (left + width)) * 100}% 100%)"></div>
+        </div>
+      </div>`;
+    }).join("") + `<div class="axis"><span>0 d</span><span>${axisMax / 2} d</span><span>${axisMax} d</span></div>`;
+    try { localStorage.setItem("gps-scope", JSON.stringify({ shape, dir, host, comments, users, cycles })); } catch (e) {}
+  }
+  try {
+    const s = JSON.parse(localStorage.getItem("gps-scope") || "null");
+    if (s) {
+      ["shape", "dir", "host"].forEach(k => { const el = form.querySelector(`[name=${k}][value=${s[k]}]`); if (el) el.checked = true; });
+      document.getElementById("f-comments").checked = !!s.comments;
+      document.getElementById("f-users").checked = !!s.users;
+      document.getElementById("f-cycles").checked = !!s.cycles;
+    }
+  } catch (e) {}
+  form.addEventListener("change", estimate);
+  estimate();
+
+  // ---------- Hosting ----------
+  const HOSTS = {
+    k8s: { title: "Existing Kubernetes cluster", rec: true,
+      fit: "Best if the team already runs services with Helm and ArgoCD, or if self-hosted Plane lives in the same cluster.",
+      shape: ["One FastAPI Deployment for ingest (2 replicas)", "One worker Deployment", "A CronJob for the reconciler", "Postgres from the platform's managed offering or CloudNativePG", "Queue as a Postgres table read with SELECT … FOR UPDATE SKIP LOCKED, so there's no Redis to run", "Public Ingress with TLS for the two webhook paths only"],
+      pros: ["Matches the team's Python stack and deploy conventions", "Private network path to a self-hosted Plane", "Logs, metrics and alerts go to the existing stack"],
+      cons: ["Webhook paths have to be exposed publicly", "Someone owns the chart, upgrades and the database"] },
+    cf: { title: "Cloudflare Workers", rec: false,
+      fit: "Best for Plane Cloud when you want the least infrastructure to own.",
+      shape: ["A Worker for both webhook endpoints", "Cloudflare Queues between ingest and the worker, with a dead-letter queue", "D1 for mapping and link tables", "A Cron Trigger for the reconciler", "Secrets in Workers secrets"],
+      pros: ["Public HTTPS by default, no servers or patching", "Queues, retries and cron are built in", "Low cost at this volume (Workers paid plan)"],
+      cons: ["TypeScript, not the team's Python conventions", "Reaching a self-hosted Plane on a private network needs a Cloudflare Tunnel", "D1 is SQLite, so plan exports for backups"] },
+    paas: { title: "Container platform (Cloud Run, Fly, Render)", rec: false,
+      fit: "A middle option when there's no cluster and the team wants to stay in Python.",
+      shape: ["The same FastAPI container as the Kubernetes option", "A managed Postgres add-on", "The platform's scheduler for the reconciler", "Postgres-table queue as above"],
+      pros: ["Python stack, very little platform work", "Public HTTPS and deploy-from-git out of the box"],
+      cons: ["Another vendor and bill to manage", "Scale-to-zero can add cold-start delay. Keep one instance warm so webhooks don't time out"] },
+  };
+  const hostDetail = document.getElementById("hostDetail");
+  function showHost(key) {
+    const h = HOSTS[key];
+    hostDetail.innerHTML = `<h3>${h.title}${h.rec ? '<span class="rec">Recommended</span>' : ""}</h3>
+      <p class="fit">${h.fit}</p>
+      <div class="host-grid">
+        <div><div class="eyebrow">Components</div><ul>${h.shape.map(s => `<li>${s}</li>`).join("")}</ul></div>
+        <div><div class="eyebrow pro">Pros</div><ul>${h.pros.map(s => `<li>${s}</li>`).join("")}</ul></div>
+        <div><div class="eyebrow con">Cons</div><ul>${h.cons.map(s => `<li>${s}</li>`).join("")}</ul></div>
+      </div>`;
+    document.querySelectorAll("[data-host]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.host === key)));
+  }
+  document.querySelectorAll("[data-host]").forEach(b => b.addEventListener("click", () => showHost(b.dataset.host)));
+  showHost("k8s");
+
+  // ---------- Questions ----------
+  const QS = [
+    ["Is it many repos → one project, one repo → many projects, or both?", "Sets the routing rules and the estimate's first option."],
+    ["Is two-way sync needed, or is GitHub → Plane enough?", "The biggest single swing in effort, about 2.5 weeks."],
+    ["Is Plane on Cloud or self-hosted, and on which plan?", "The native integration needs Pro or higher."],
+    ["What decides the target repo for items created in Plane?", "Custom property, label, module mapping, or a default repo."],
+    ["Which fields have to sync?", "Comments, assignees, milestones ↔ cycles."],
+    ["Where will it run, and who owns it after launch?", "Kubernetes, Cloudflare, or a container platform, plus a named owner for alerts and upkeep."],
+    ["Does the native integration already allow a second repo per project?", "Answer from the half-day spike. If yes, you may not need this service."],
+  ];
+  const qList = document.getElementById("qList");
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem("gps-answers") || "{}"); } catch (e) {}
+  qList.innerHTML = QS.map(([q, hint], i) => `
+    <div class="q" id="q${i}">
+      <label class="qt" for="qc${i}"><input type="checkbox" id="qc${i}"><span>${q}</span></label>
+      <div class="hint">${hint}</div>
+      <textarea id="qa${i}" aria-label="Answer: ${q}" placeholder="Answer"></textarea>
+    </div>`).join("");
+  function syncQ(i) {
+    document.getElementById("q" + i).classList.toggle("done", document.getElementById("qc" + i).checked);
+  }
+  QS.forEach((_, i) => {
+    const c = document.getElementById("qc" + i), a = document.getElementById("qa" + i);
+    if (saved[i]) { c.checked = !!saved[i].done; a.value = saved[i].text || ""; }
+    syncQ(i);
+    const save = () => {
+      saved[i] = { done: c.checked, text: a.value };
+      syncQ(i);
+      try { localStorage.setItem("gps-answers", JSON.stringify(saved)); } catch (e) {}
+    };
+    c.addEventListener("change", save); a.addEventListener("input", save);
+  });
+  const status = document.getElementById("copyStatus"), fb = document.getElementById("copyFallback");
+  function answersText() {
+    return "GitHub–Plane sync: open questions\n\n" + QS.map(([q], i) => {
+      const a = document.getElementById("qa" + i).value.trim();
+      const d = document.getElementById("qc" + i).checked ? "[x]" : "[ ]";
+      return `${d} ${q}\n    ${a || "(no answer yet)"}`;
+    }).join("\n\n");
+  }
+  document.getElementById("copyBtn").addEventListener("click", () => {
+    const text = answersText();
+    fb.hidden = true;
+    const fallback = () => { fb.value = text; fb.hidden = false; fb.focus(); fb.select(); status.textContent = "Copy isn't available here. The text is selected below."; };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => { status.textContent = "Copied"; }, fallback);
+    } else fallback();
+  });
+  let clearArmed = false;
+  document.getElementById("clearBtn").addEventListener("click", e => {
+    if (!clearArmed) { clearArmed = true; e.target.textContent = "Click again to clear"; setTimeout(() => { clearArmed = false; e.target.textContent = "Clear answers"; }, 3000); return; }
+    clearArmed = false; e.target.textContent = "Clear answers";
+    saved = {};
+    QS.forEach((_, i) => { document.getElementById("qc" + i).checked = false; document.getElementById("qa" + i).value = ""; syncQ(i); });
+    try { localStorage.removeItem("gps-answers"); } catch (e) {}
+    status.textContent = "Cleared";
+  });
+})();
+</script>
+</body>
+</html>
