@@ -2,7 +2,9 @@
 
 Standalone HTML pages: plans, assessments and reference material, published at **https://openteams-ai.github.io/artifacts/**.
 
-Each page lives in its own folder as a single `index.html` with no build step. This repo and the site are public, so don't add anything internal-only.
+Each page lives in its own folder as a single `index.html` with no build step.
+
+> **Public information only.** This repository and the site it publishes are public, and git history keeps everything ever pushed. Only add content that is already public or that OpenTeams has agreed to publish. Never include secrets or credentials, internal hostnames or infrastructure details, customer or partner names and data, personal contact information, internal conversations or links, or unannounced plans. If in doubt, don't push it. [`AGENTS.md`](AGENTS.md#public-content-check) has the checklist.
 
 ## Pages
 
