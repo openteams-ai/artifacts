@@ -12,7 +12,6 @@ Each page lives in its own folder as a single `index.html` with no build step.
 |---|---|
 | [WebGPU](https://openteams-ai.github.io/artifacts/webgpu-talk/) | Interactive 30-minute UI/UX CoP talk on WebGPU: what it is, the object graph, compute, hardware, and demos that run on the viewer's own GPU, with speaker notes. |
 | [Adopting Nebari Design (deck)](https://openteams-ai.github.io/artifacts/nebari-design-deck/) | Interactive UI/UX CoP deck version of the Nebari design explainer: pipeline, setup, catalog explorer, live token contract, header recipe, motion, with speaker notes. |
-| [Adopting Nebari Design](https://openteams-ai.github.io/artifacts/nebari-design-system/) | For engineers adopting the Nebari design system: the registry-to-call-site pipeline, setup steps, an interactive catalog of what each install pulls in, the token contract shown live in both themes, composition rules, the shared app header recipe, motion tokens, and the ecosystem around the registry. |
 | [How Nebari works](https://openteams-ai.github.io/artifacts/nebari-explainer/) | Interactive explainer: pick where Nebari runs (cloud, GovCloud, Hetzner, on-prem), then choose software packs and watch Argo CD wire them in from the GitOps repo. |
 | [GitHub–Plane multi-repo sync](https://openteams-ai.github.io/artifacts/github-plane-sync/) | Assessment, design, scope-based estimate, hosting options and runbook for syncing multiple GitHub repos to one Plane project. |
 
