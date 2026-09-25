@@ -1,4 +1,4 @@
-# artifacts
+# OpenTeams Artifacts
 
 Standalone HTML pages: plans, assessments and reference material, published at **https://openteams-ai.github.io/artifacts/**.
 
