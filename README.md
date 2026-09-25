@@ -17,8 +17,31 @@ Each page lives in its own folder as a single `index.html` with no build step.
 
 ## Adding a page
 
+The easiest way is the `publish-artifact` skill, which lives in this repo at [`.claude/skills/publish-artifact/`](https://github.com/openteams-ai/artifacts/blob/main/.claude/skills/publish-artifact/SKILL.md). It works from any directory: it makes a throwaway checkout, wraps the page, adds the README row, runs the public-content check, pushes, and reports the live URL. You need `gh` logged in with write access to this repo.
+
+Install it once for Claude Code, Cursor, Codex and similar tools:
+
+```sh
+npx skills add openteams-ai/artifacts -g
+```
+
+Then, in any session:
+
+```
+/publish-artifact path/to/page.html my-slug
+/publish-artifact https://claude.ai/artifact/... my-slug
+```
+
+If you use the skills-sync plugin, add this source instead and it stays up to date on its own:
+
+```json
+{ "repo": "openteams-ai/artifacts", "path": ".claude/skills", "skills": "*" }
+```
+
+Doing it by hand:
+
 1. Create `<slug>/index.html`: a complete, self-contained HTML document.
 2. Add a row to the table above, linking to the page's GitHub Pages URL.
 3. Push to `main`. GitHub Pages publishes it at `https://openteams-ai.github.io/artifacts/<slug>/` in about a minute.
 
-[`AGENTS.md`](AGENTS.md) has the full conventions: page requirements, converting a claude.ai artifact, checking locally, and confirming it's live. Coding agents read it automatically.
+[`AGENTS.md`](AGENTS.md) has the full conventions: page requirements, converting a claude.ai artifact, checking locally, and confirming it's live. Coding agents read it automatically, and the skill follows it too.

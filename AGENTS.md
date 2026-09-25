@@ -73,7 +73,7 @@ Every `<slug>/` folder needs a row in `README.md`, and every row needs a folder.
 
 ```sh
 for d in */; do s=${d%/}; grep -q "artifacts/$s/" README.md || echo "MISSING README ROW: $s"; done
-grep -oE 'artifacts/[a-z0-9-]+/' README.md | sed 's#artifacts/##;s#/##' | sort -u | while read s; do [ -d "$s" ] || echo "README ROW WITHOUT FOLDER: $s"; done
+grep -oE 'github\.io/artifacts/[a-z0-9-]+/' README.md | sed 's#.*artifacts/##;s#/##' | sort -u | while read s; do [ -d "$s" ] || echo "README ROW WITHOUT FOLDER: $s"; done
 ```
 
 No output means the index is complete. If a page someone else added is missing, add its row (describe it from the page's `<title>` and content) and commit that directly to `main`. Also check that the newest page is at the top of the table and that each link is the full `https://openteams-ai.github.io/artifacts/<slug>/` URL.
