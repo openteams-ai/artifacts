@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How Nebari works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1FA; --fg:#1E1B2E; --muted:#56536b; --panel:#ffffff; --line:#1E1B2E;
+  --sky:#D6ECFF; --sky2:#EAF5FF; --ground:#A9DB8E; --accent:#7C6CF2; --btn:#FFC93C;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#15131F; --fg:#EEEAF8; --muted:#aaa4c4; --panel:#221F31; --line:#0c0b14;
+    --sky:#243358; --sky2:#2d3f6a; --ground:#3f6a4a; --accent:#9C8FFF; --btn:#FFC93C;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15131F; --fg:#EEEAF8; --muted:#aaa4c4; --panel:#221F31; --line:#0c0b14;
+  --sky:#243358; --sky2:#2d3f6a; --ground:#3f6a4a; --accent:#9C8FFF; --btn:#FFC93C;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Fredoka",ui-rounded,"Nunito","Segoe UI",system-ui,sans-serif;line-height:1.45}
+main{max-width:1060px;margin:0 auto;padding:28px 18px 40px}
+h1{font-size:clamp(1.8rem,4.5vw,2.8rem);font-weight:700;margin:0 0 4px;letter-spacing:-.01em}
+.caption-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-height:3.2em;margin-bottom:14px}
+#caption{font-size:clamp(1.05rem,2.4vw,1.35rem);font-weight:500;margin:0;flex:1 1 320px;color:var(--fg)}
+.dots{display:flex;gap:7px}
+.dots span{width:12px;height:12px;border-radius:50%;border:2.5px solid var(--fg);opacity:.35;transition:all .3s}
+.dots span.on{background:var(--accent);border-color:var(--accent);opacity:1;transform:scale(1.15)}
+.stage-wrap{position:relative;border:5px solid var(--line);border-radius:22px;overflow:hidden;background:var(--sky);box-shadow:6px 6px 0 var(--line)}
+svg{display:block;width:100%;height:auto}
+.controls{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
+button{font:inherit;font-weight:600;font-size:1rem;cursor:pointer;border:3px solid var(--line);border-radius:14px;padding:9px 18px;background:var(--btn);color:#1E1B2E;box-shadow:3px 3px 0 var(--line);transition:transform .12s, box-shadow .12s}
+button:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--line)}
+button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--line)}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+button.ghost{background:var(--panel);color:var(--fg)}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.note{color:var(--muted);font-size:.9rem;margin-top:14px}
+
+#chooser{background:var(--panel);border:4px solid var(--line);border-radius:18px;padding:18px;margin-bottom:16px}
+#chooser h2{margin:0 0 12px;font-size:1.3rem}
+.cards{display:flex;gap:14px;flex-wrap:wrap}
+.card{flex:1 1 200px;border:3px solid var(--line);border-radius:16px;padding:14px;background:var(--bg)}
+.card h3{margin:4px 0 10px;font-size:1.15rem}
+.card .ic{font-size:2rem;line-height:1}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips button{padding:7px 14px;font-size:.95rem}
+@media (min-width:700px){
+  #chooser{position:absolute;inset:auto 50% 50% auto;transform:translate(50%,50%);width:min(560px,80%);margin:0;z-index:2;box-shadow:6px 6px 0 var(--line)}
+  .stage-wrap.choosing svg{filter:blur(2px) saturate(.8)}
+}
+#chooser[hidden],#packs[hidden]{display:none}
+#packs{background:var(--panel);border:4px solid var(--line);border-radius:18px;padding:16px 18px;margin-top:18px;box-shadow:5px 5px 0 var(--line)}
+#packs h2{margin:0 0 4px;font-size:1.25rem}
+#packs p{margin:0 0 12px;color:var(--muted)}
+.packgrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.packgrid button{background:var(--c);color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.packgrid button:disabled{opacity:.4}
+.packgrid small{font-weight:500;opacity:.85;font-size:.78em}
+.packgrid button:disabled::after{content:" ✓"}
+#finish{background:var(--accent);color:#fff}
+
+/* svg */
+.hidden{opacity:0}
+.fb{transform-box:fill-box}
+.gear{transform-box:fill-box;transform-origin:50% 50%}
+#machine.on .gear{animation:spin 1s linear infinite}
+#machine.on .gear.rev{animation-direction:reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.drift{animation:drift 40s linear infinite alternate}
+@keyframes drift{to{transform:translateX(60px)}}
+.blink{animation:blink 1.2s steps(2) infinite}
+.blink:nth-child(odd){animation-delay:.6s}
+@keyframes blink{50%{opacity:.25}}
+.lbl{font-family:"Fredoka",ui-rounded,system-ui,sans-serif;font-weight:700}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;white-space:pre}
+#machine{transform-box:fill-box;transform-origin:50% 100%}
+#robot.idle #rbob{animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-5px)}}
+.rotor{transform-box:fill-box;transform-origin:50% 50%;animation:rotor .18s linear infinite}
+@keyframes rotor{50%{transform:scaleX(.25)}}
+@media (prefers-reduced-motion:reduce){.drift,.blink,.rotor,#robot.idle #rbob{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>How Nebari works</h1>
+  <div class="caption-row">
+    <p id="caption" aria-live="polite">Pick where Nebari should run.</p>
+    <div class="dots" id="dots" aria-hidden="true"><span class="on"></span><span></span><span></span><span></span><span></span><span></span></div>
+  </div>
+
+  <div class="stage-wrap choosing" id="wrap">
+    <div id="chooser">
+      <h2>Where should Nebari run?</h2>
+      <div class="cards">
+        <div class="card"><div class="ic" aria-hidden="true">☁️</div><h3>Public cloud</h3>
+          <div class="chips"><button data-p="aws">AWS</button><button data-p="gcp">GCP</button><button data-p="azure">Azure</button><button data-p="govcloud">AWS GovCloud</button><button data-p="hetzner">Hetzner</button></div></div>
+        <div class="card"><div class="ic" aria-hidden="true">🏢</div><h3>On-prem</h3>
+          <div class="chips"><button data-p="onprem">Your datacenter</button></div></div>
+      </div>
+    </div>
+
+    <svg id="stage" viewBox="0 0 1300 600" role="img" aria-label="Animated explainer: a config file goes into NIC, which builds a Kubernetes platform, then software pack bricks are stacked on top while a landing page connects a growing network of users.">
+      <defs>
+        <linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sky2)"/><stop offset="1" stop-color="var(--sky)"/></linearGradient>
+      </defs>
+      <rect width="1300" height="600" fill="url(#skyg)"/>
+      <g class="drift" fill="#fff" opacity=".55">
+        <ellipse cx="120" cy="60" rx="50" ry="16"/><ellipse cx="150" cy="48" rx="30" ry="16"/>
+        <ellipse cx="620" cy="90" rx="60" ry="15"/><ellipse cx="650" cy="78" rx="32" ry="15"/>
+        <ellipse cx="880" cy="50" rx="44" ry="13"/><ellipse cx="1180" cy="40" rx="48" ry="13"/>
+      </g>
+      <rect x="0" y="572" width="1300" height="28" fill="var(--ground)"/>
+      <line x1="0" y1="572" x2="1300" y2="572" stroke="#1E1B2E" stroke-width="5"/>
+
+      <!-- base: cloud -->
+      <g id="baseCloud" class="hidden fb" style="transform-origin:50% 100%">
+        <g fill="#1E1B2E" stroke="#1E1B2E" stroke-width="12">
+          <circle cx="665" cy="530" r="42"/><circle cx="725" cy="500" r="55"/><circle cx="800" cy="490" r="58"/><circle cx="875" cy="505" r="52"/><circle cx="930" cy="535" r="36"/><rect x="640" y="520" width="305" height="52" rx="26"/>
+        </g>
+        <g fill="#fff">
+          <circle cx="665" cy="530" r="42"/><circle cx="725" cy="500" r="55"/><circle cx="800" cy="490" r="58"/><circle cx="875" cy="505" r="52"/><circle cx="930" cy="535" r="36"/><rect x="640" y="520" width="305" height="52" rx="26"/>
+        </g>
+        <ellipse cx="690" cy="545" rx="16" ry="8" fill="#FFB3C7" opacity=".7"/><ellipse cx="900" cy="545" rx="16" ry="8" fill="#FFB3C7" opacity=".7"/>
+        <text id="cloudLabel" x="795" y="535" text-anchor="middle" class="lbl" font-size="30" fill="#1E1B2E">AWS</text>
+      </g>
+
+      <!-- base: racks -->
+      <g id="baseRack" class="hidden fb" style="transform-origin:50% 100%">
+        <g id="racks"></g>
+      </g>
+
+      <!-- platform -->
+      <g id="platform"><g id="pi" class="hidden">
+        <g id="pstuds"></g>
+        <rect x="630" y="395" width="320" height="45" rx="9" fill="#2BB3A3" stroke="#1E1B2E" stroke-width="5"/>
+        <rect x="636" y="428" width="308" height="7" rx="3" fill="#000" opacity=".15"/>
+        <text id="platLabel" x="790" y="424" text-anchor="middle" class="lbl" font-size="18" fill="#fff">Kubernetes on AWS</text>
+        <g id="found"></g>
+      </g></g>
+
+      <!-- machine -->
+      <g id="machine">
+        <rect x="380" y="515" width="18" height="58" rx="4" fill="#1E1B2E"/><rect x="522" y="515" width="18" height="58" rx="4" fill="#1E1B2E"/>
+        <rect x="548" y="400" width="80" height="36" rx="6" fill="#FFC93C" stroke="#1E1B2E" stroke-width="5"/>
+        <path d="M600 409 l14 9 l-14 9" fill="none" stroke="#1E1B2E" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <polygon points="372,268 548,268 506,334 414,334" fill="#FFC93C" stroke="#1E1B2E" stroke-width="6" stroke-linejoin="round"/>
+        <rect x="360" y="328" width="200" height="192" rx="26" fill="#7C6CF2" stroke="#1E1B2E" stroke-width="6"/>
+        <rect x="384" y="348" width="152" height="62" rx="12" fill="#1E1B2E"/>
+        <text x="460" y="391" text-anchor="middle" class="lbl" font-size="34" fill="#7CF2C4">NIC</text>
+        <text x="460" y="436" text-anchor="middle" class="lbl" font-size="13" fill="#fff">Nebari Infrastructure Core</text>
+        <g class="gear"><circle cx="405" cy="480" r="20" fill="none" stroke="#FFC93C" stroke-width="11" stroke-dasharray="7 5.57"/><circle cx="405" cy="480" r="14" fill="#FFC93C" stroke="#1E1B2E" stroke-width="3"/><circle cx="405" cy="480" r="4" fill="#1E1B2E"/></g>
+        <g class="gear rev"><circle cx="452" cy="480" r="20" fill="none" stroke="#FF8C42" stroke-width="11" stroke-dasharray="7 5.57"/><circle cx="452" cy="480" r="14" fill="#FF8C42" stroke="#1E1B2E" stroke-width="3"/><circle cx="452" cy="480" r="4" fill="#1E1B2E"/></g>
+        <circle cx="512" cy="478" r="15" fill="#EF5B5B" stroke="#1E1B2E" stroke-width="4"/>
+        <circle cx="507" cy="473" r="4" fill="#fff" opacity=".7"/>
+        <g id="puffs" fill="#fff" stroke="#1E1B2E" stroke-width="3"></g>
+      </g>
+
+      <!-- config file -->
+      <g id="config" transform="translate(40,80)"><g id="ci" class="hidden fb" style="transform-origin:50% 50%">
+        <path d="M0 0 H200 L232 32 V248 H0 Z" fill="#fff" stroke="#1E1B2E" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M200 0 V32 H232" fill="#E6E1FA" stroke="#1E1B2E" stroke-width="5" stroke-linejoin="round"/>
+        <text x="14" y="26" class="mono" font-weight="700" fill="#7C6CF2" style="font-size:13px">nebari-config.yaml</text>
+        <line x1="12" y1="38" x2="190" y2="38" stroke="#1E1B2E" stroke-width="2" opacity=".25"/>
+        <g id="lines"></g>
+      </g></g>
+
+      <!-- software packs box -->
+      <g id="box"><g id="bi" class="hidden fb" style="transform-origin:50% 100%">
+        <rect x="60" y="460" width="190" height="112" rx="10" fill="#C98B4E" stroke="#1E1B2E" stroke-width="6"/>
+        <rect x="140" y="463" width="30" height="106" fill="#E0A86A"/>
+        <rect x="76" y="498" width="158" height="42" rx="8" fill="#FFF7E6" stroke="#1E1B2E" stroke-width="4"/>
+        <text x="155" y="525" text-anchor="middle" class="lbl" font-size="16" fill="#1E1B2E">Software packs</text>
+        <g id="lid" class="fb" style="transform-origin:0% 100%">
+          <rect x="52" y="438" width="206" height="26" rx="8" fill="#D99A5B" stroke="#1E1B2E" stroke-width="6"/>
+        </g>
+      </g></g>
+
+      <!-- landing page + user network -->
+      <g id="net">
+        <g id="nedges"></g>
+        <g id="portal" class="hidden fb" style="transform-origin:50% 50%">
+          <rect id="pglow" x="1041" y="231" width="178" height="158" rx="24" fill="none" stroke="#7CF2C4" stroke-width="10" opacity="0"/>
+          <rect x="1050" y="240" width="160" height="140" rx="18" fill="#E9EEF7" stroke="#1E1B2E" stroke-width="6"/>
+          <circle cx="1066" cy="255" r="4.5" fill="#EF5B5B"/><circle cx="1080" cy="255" r="4.5" fill="#FFC93C"/><circle cx="1094" cy="255" r="4.5" fill="#3CC47C"/>
+          <rect x="1060" y="266" width="140" height="104" rx="8" fill="#2A2640"/>
+          <text id="poff" x="1130" y="323" text-anchor="middle" class="lbl" font-size="13.5" fill="#9AA3B8">waiting for a pack</text>
+          <g id="ptiles"></g>
+          <rect x="1068" y="206" width="124" height="28" rx="9" fill="#FFC93C" stroke="#1E1B2E" stroke-width="4"/>
+          <text x="1130" y="226" text-anchor="middle" class="lbl" font-size="16" fill="#1E1B2E">Landing page</text>
+        </g>
+        <g id="users"></g>
+      </g>
+
+      <!-- gitops repo -->
+      <g id="gitops"><g id="gi" class="hidden fb" style="transform-origin:50% 100%">
+        <rect x="332" y="468" width="166" height="18" rx="5" fill="#3A4052" stroke="#1E1B2E" stroke-width="5"/>
+        <rect x="330" y="480" width="170" height="92" rx="10" fill="#5B6378" stroke="#1E1B2E" stroke-width="6"/>
+        <rect x="344" y="508" width="142" height="40" rx="8" fill="#FFF7E6" stroke="#1E1B2E" stroke-width="4"/>
+        <g stroke="#1E1B2E" stroke-width="3" fill="#FF8C42"><line x1="360" y1="518" x2="360" y2="538"/><path d="M360 532 Q360 524 372 522" fill="none"/><circle cx="360" cy="518" r="3.5"/><circle cx="360" cy="538" r="3.5"/><circle cx="373" cy="522" r="3.5"/></g>
+        <text x="428" y="534" text-anchor="middle" class="lbl" font-size="16" fill="#1E1B2E">GitOps repo</text>
+        <g id="badge" opacity="0"><circle cx="496" cy="478" r="15" fill="#EF5B5B" stroke="#1E1B2E" stroke-width="4"/><text id="badgeN" x="496" y="483.5" text-anchor="middle" class="lbl" font-size="15" fill="#fff">0</text></g>
+      </g></g>
+
+      <g id="bricks"></g>
+
+      <!-- argo cd robot: local (0,0) is the claw tip -->
+      <g id="robot" class="hidden"><g id="rbob">
+        <line x1="0" y1="-78" x2="0" y2="-88" stroke="#1E1B2E" stroke-width="5"/>
+        <ellipse class="rotor" cx="0" cy="-91" rx="30" ry="5" fill="#9AA3B8" stroke="#1E1B2E" stroke-width="3"/>
+        <path d="M-20 -28 L-15 -6 L-9 5 M20 -28 L15 -6 L9 5" fill="none" stroke="#1E1B2E" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="-34" y="-78" width="68" height="52" rx="14" fill="#E9EEF7" stroke="#1E1B2E" stroke-width="5"/>
+        <rect x="-24" y="-71" width="48" height="19" rx="8" fill="#1E1B2E"/>
+        <circle cx="-10" cy="-61.5" r="4" fill="#7CF2C4"/><circle cx="10" cy="-61.5" r="4" fill="#7CF2C4"/>
+        <text x="0" y="-33" text-anchor="middle" class="lbl" font-size="12.5" fill="#1E1B2E">Argo CD</text>
+      </g></g>
+      <g id="fx"></g>
+    </svg>
+  </div>
+
+  <div id="packs" hidden>
+    <h2>Choose your software packs</h2>
+    <p>Click a pack to commit it to the GitOps repo. Argo CD picks it up and wires it into routing, TLS and OIDC. Click up to 12; they queue.</p>
+    <div class="packgrid" id="packgrid"></div>
+    <button id="finish" disabled>Build my application</button>
+  </div>
+
+  <div class="controls">
+    <button id="change" disabled>Start over</button>
+  </div>
+  <p class="note">The YAML is illustrative, not Nebari's exact config schema.</p>
+</main>
+
+<script>
+(() => {
+const NS = 'http://www.w3.org/2000/svg', INK = '#1E1B2E';
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const S = reduce ? 0.35 : 1;
+const $ = id => document.getElementById(id);
+
+const P = {
+  aws:   {name:'AWS', base:'cloud', lines:['project_name: my-platform','domain: data.example.com','provider: aws','aws:','  region: us-east-1','  node_groups:','    general: m5.2xlarge','    gpu: g5.xlarge']},
+  gcp:   {name:'GCP', base:'cloud', lines:['project_name: my-platform','domain: data.example.com','provider: gcp','gcp:','  region: us-central1','  node_groups:','    general: e2-standard-8','    gpu: g2-standard-8']},
+  azure: {name:'Azure', base:'cloud', lines:['project_name: my-platform','domain: data.example.com','provider: azure','azure:','  region: eastus','  node_groups:','    general: D8s_v5','    gpu: NC6s_v3']},
+  govcloud:{name:'AWS GovCloud', base:'cloud', lines:['project_name: my-platform','domain: data.agency.gov','provider: aws','aws:','  region: us-gov-west-1','  node_groups:','    general: m5.2xlarge','    gpu: g4dn.xlarge']},
+  hetzner:{name:'Hetzner', base:'cloud', lines:['project_name: my-platform','domain: data.example.eu','provider: hetzner','hetzner:','  location: fsn1','  node_groups:','    general: ccx33','    workers: 3']},
+  onprem:{name:'your hardware', base:'rack', lines:['project_name: my-platform','domain: data.lab.internal','provider: on-prem','on_prem:','  nodes: 12','  storage: ceph','  load_balancer: metallb','  gpus: true']}
+};
+
+// from packs.nebari.dev (Sept 2026)
+const PACKS = [
+  {label:'Data Science', short:'Data Science', m:'beta', c:'#EF5B5B'},
+  {label:'LLM Serving', short:'LLM Serving', m:'beta', c:'#9B6BE8'},
+  {label:'Chat', short:'Chat', m:'alpha', c:'#FF6FAE'},
+  {label:'Nebi', short:'Nebi', m:'beta', c:'#3CC47C'},
+  {label:'LGTM observability', short:'LGTM', m:'beta', c:'#4D8FEA'},
+  {label:'Superset', short:'Superset', m:'beta', c:'#1FA3C9'},
+  {label:'Ray Serve', short:'Ray Serve', m:'beta', c:'#FF8C42'},
+  {label:'MLflow', short:'MLflow', m:'alpha', c:'#2F80ED'},
+  {label:'Provenance Collector', short:'Provenance', m:'alpha', c:'#8A6A4B'},
+  {label:'Pi Coding Agent', short:'Pi Agent', m:'experimental', c:'#C2410C'},
+  {label:'skillsctl', short:'skillsctl', m:'beta', c:'#0F766E'},
+  {label:'Langfuse', short:'Langfuse', m:'alpha', c:'#DB2777'},
+  {label:'Nebari Frames', short:'Frames', m:'beta', c:'#7C3AED'},
+  {label:'Apps', short:'Apps', m:'experimental', c:'#16A34A'},
+  {label:'Harbor', short:'Harbor', m:'alpha', c:'#475569'}
+];
+const MAX = 12;
+const BASE_TOP = 355;
+const slot = i => ({x: 638 + 102*(i%3), y: BASE_TOP - 50 - 50*Math.floor(i/3), w:100});
+const FOUNDATION = [
+  {label:'OIDC login', c:'#2E7D6B'},
+  {label:'Routing',  c:'#3559A8'},
+  {label:'TLS',      c:'#6B4FA0'}
+];
+const flashes = [];
+FOUNDATION.forEach((f, i) => {
+  const x = 638 + 102*i, g = el('g',{}, $('found'));
+  [x+17, x+50, x+83].forEach(sx => el('rect',{x:sx-9, y:BASE_TOP-9, width:18, height:12, rx:3, fill:f.c, stroke:INK, 'stroke-width':4}, g));
+  el('rect',{x, y:BASE_TOP, width:100, height:40, rx:6, fill:f.c, stroke:INK, 'stroke-width':4}, g);
+  el('text',{x:x+50, y:BASE_TOP+25, 'text-anchor':'middle', class:'lbl', 'font-size':13.5, fill:'#fff'}, g).textContent = f.label;
+  flashes.push(el('rect',{x:x+2, y:BASE_TOP+2, width:96, height:36, rx:5, fill:'#fff', opacity:0}, g));
+});
+function flashFoundation(){
+  return Promise.all(flashes.map((f,i) => anim(f, [{opacity:0},{opacity:.75, offset:.35},{opacity:0}], {d:520, delay:i*90})));
+}
+async function plugIn(b){
+  const cx = b.x + b.w/2, y0 = b.y + 25, dist = BASE_TOP + 20 - y0;
+  const dots = [0,1,2].map(k => {
+    const c = el('circle',{cx, cy:y0, r:5.5, fill:'#7CF2C4', stroke:INK, 'stroke-width':2, opacity:0}, $('fx'));
+    return anim(c, [{opacity:0, transform:'translateY(0)'},{opacity:1, offset:.15},{opacity:1, transform:`translateY(${dist*.9}px)`, offset:.85},{opacity:0, transform:`translateY(${dist}px)`}], {d:420 + dist*1.2, delay:k*110, e:'ease-in'});
+  });
+  await Promise.all(dots);
+  await flashFoundation();
+}
+let placed = 0, flights = [], stageOpen = false;
+
+function el(tag, attrs, parent){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms * S));
+function anim(node, kf, o = {}){
+  return node.animate(kf, {duration:(o.d||600)*S, delay:(o.delay||0)*S, easing:o.e||'ease', fill:'forwards', iterations:o.it||1}).finished;
+}
+
+// static pieces
+for (let i = 0; i < 9; i++) el('rect',{x:642+35*i, y:386, width:18, height:12, rx:3, fill:'#2BB3A3', stroke:INK, 'stroke-width':4}, $('pstuds'));
+$('pstuds').parentNode.insertBefore($('pstuds'), $('pstuds').parentNode.firstChild);
+[652,747,842].forEach(x => {
+  const g = el('g',{}, $('racks'));
+  el('rect',{x, y:445, width:88, height:127, rx:9, fill:'#5B6378', stroke:INK, 'stroke-width':5}, g);
+  const leds = el('g',{}, g);
+  for (let i = 0; i < 5; i++){
+    el('rect',{x:x+10, y:458+22*i, width:68, height:15, rx:4, fill:'#3A4052'}, g);
+    el('circle',{cx:x+66, cy:465.5+22*i, r:3.5, fill:'#3CC47C', class:'blink'}, leds);
+  }
+  g.appendChild(leds);
+});
+
+// captions
+function step(n, text){
+  $('caption').textContent = text;
+  [...$('dots').children].forEach((d,i) => d.classList.toggle('on', i === n));
+}
+
+let token = 0, last = null;
+const guard = t => { if (t !== token) throw 'cancel'; };
+
+function reset(){
+  document.getAnimations().forEach(a => {
+    if (typeof CSSAnimation !== 'undefined' && a instanceof CSSAnimation) return;
+    a.cancel();
+  });
+  $('machine').classList.remove('on');
+  placed = 0; flights = []; stageOpen = false;
+  robotPos = {...HOME}; carried = null; queue = []; working = false; pending = 0; placedBricks = [];
+  setBadge(); $('robot').classList.remove('idle');
+  live = false; tiles = 0; degree.fill(0); shown.fill(false);
+  $('nedges').replaceChildren(); $('ptiles').replaceChildren();
+  $('packs').hidden = true; $('finish').disabled = true;
+  $('packgrid').querySelectorAll('button').forEach(b => b.disabled = false);
+  ['lines','bricks','fx','puffs'].forEach(id => $(id).replaceChildren());
+}
+
+function typeLine(text, i){
+  const t = el('text',{x:14, y:62+21*i, class:'mono', opacity:0}, $('lines'));
+  t.setAttributeNS('http://www.w3.org/XML/1998/namespace','xml:space','preserve');
+  const m = text.match(/^(\s*)([\w_-]+:)(.*)$/);
+  if (m){
+    el('tspan',{fill:'#7C6CF2','font-weight':700}, t).textContent = m[1] + m[2];
+    el('tspan',{fill:INK}, t).textContent = m[3];
+  } else t.textContent = text;
+  return anim(t, [{opacity:0, transform:'translateX(-6px)'},{opacity:1, transform:'none'}], {d:220});
+}
+
+function burst(cx, cy, n, colors, spread){
+  const ps = [];
+  for (let i = 0; i < n; i++){
+    const a = (Math.PI*2*i)/n + Math.random()*.4, r = spread*(.6+Math.random()*.6);
+    const s = el('polygon',{points:'0,-8 2.4,-2.4 8,0 2.4,2.4 0,8 -2.4,2.4 -8,0 -2.4,-2.4', fill:colors[i%colors.length], stroke:INK, 'stroke-width':1.5, transform:`translate(${cx},${cy})`}, $('fx'));
+    const inner = s; 
+    ps.push(anim(inner, [{transform:`translate(${cx}px,${cy}px) scale(.2)`, opacity:1},{transform:`translate(${cx+Math.cos(a)*r}px,${cy+Math.sin(a)*r}px) scale(1.3) rotate(90deg)`, opacity:0}], {d:900, e:'cubic-bezier(.2,.8,.3,1)'}));
+  }
+  return Promise.all(ps);
+}
+
+function makeBrick(b){
+  const outer = el('g',{transform:`translate(${b.x},${b.y})`}, $('bricks'));
+  const inner = el('g',{class:'fb', style:'transform-origin:50% 100%', opacity:0}, outer);
+  const n = Math.round(b.w/38), gap = b.w/n;
+  for (let i = 0; i < n; i++) el('rect',{x:gap*i+gap/2-9, y:-9, width:18, height:12, rx:3, fill:b.c, stroke:INK, 'stroke-width':4}, inner);
+  el('rect',{x:0, y:0, width:b.w, height:50, rx:7, fill:b.c, stroke:INK, 'stroke-width':5}, inner);
+  el('rect',{x:6, y:37, width:b.w-12, height:7, rx:3, fill:'#000', opacity:.14}, inner);
+  el('text',{x:b.w/2, y:31, 'text-anchor':'middle', class:'lbl', 'font-size':b.w < 120 ? 13.5 : 17, fill:b.t||'#fff'}, inner).textContent = b.short || b.label;
+  return inner;
+}
+
+const HOME = {x:415, y:440};
+// landing page network
+const PC = {x:1130, y:318};
+const USERS = [[1000,110],[1110,90],[1235,125],[1272,235],[1268,365],[1232,488],[1125,522],[1012,480],[992,330],[1000,215]];
+const SKIN = ['#F2C9A0','#D9A06B','#8D5A3B','#F5D6B8','#6B4226'];
+const SHIRT = ['#EF5B5B','#4D8FEA','#3CC47C','#9B6BE8','#FF8C42','#FF6FAE','#1FA3C9','#FFC93C'];
+const userEls = USERS.map(([x,y], i) => {
+  const g = el('g',{class:'fb', style:'transform-origin:50% 100%', opacity:0}, $('users'));
+  el('rect',{x:x-15, y:y+2, width:30, height:22, rx:11, fill:SHIRT[i%SHIRT.length], stroke:INK, 'stroke-width':3}, g);
+  el('circle',{cx:x, cy:y-10, r:11, fill:SKIN[i%SKIN.length], stroke:INK, 'stroke-width':3}, g);
+  el('circle',{cx:x-4, cy:y-11, r:1.8, fill:INK}, g); el('circle',{cx:x+4, cy:y-11, r:1.8, fill:INK}, g);
+  return g;
+});
+let live = false, tiles = 0;
+function drawEdge(x1, y1, x2, y2, color, w, o = {}){
+  const l = el('line',{x1, y1, x2, y2, stroke:color, 'stroke-width':w, 'stroke-linecap':'round', pathLength:1, 'stroke-dasharray':1, 'stroke-dashoffset':1, opacity:o.op || 1}, $('nedges'));
+  return anim(l, [{strokeDashoffset:1},{strokeDashoffset:0}], {d:o.d || 600, delay:o.delay || 0, e:'ease-out'});
+}
+function bounce(u, delay){
+  return anim(u, [{transform:'scale(1)'},{transform:'scale(1.2,.85)', offset:.3},{transform:'translateY(-10px) scale(1)', offset:.6},{transform:'scale(1)'}], {d:480, delay});
+}
+// each connection is a curve from the landing page to a user; repeat links to the same user fan out
+const degree = USERS.map(() => 0), shown = USERS.map(() => false);
+function drawLink(i, color, delay){
+  const [x, y] = USERS[i], k = degree[i]++;
+  const dx = x - PC.x, dy = y - PC.y, len = Math.hypot(dx, dy) || 1;
+  const off = (k === 0 ? 0 : Math.ceil(k/2) * 22 * (k % 2 ? 1 : -1));
+  const cx = (PC.x + x)/2 - dy/len*off, cy = (PC.y + y)/2 + dx/len*off;
+  const path = el('path',{d:`M${PC.x} ${PC.y} Q${cx} ${cy} ${x} ${y}`, fill:'none', stroke:color, 'stroke-width':4, 'stroke-linecap':'round', pathLength:1, 'stroke-dasharray':1, 'stroke-dashoffset':1}, $('nedges'));
+  if (!shown[i]){
+    shown[i] = true;
+    anim(userEls[i], [{opacity:0, transform:'scale(.2)'},{opacity:1, transform:'scale(1.15)', offset:.7},{opacity:1, transform:'scale(1)'}], {d:420, delay: delay + 380});
+  } else bounce(userEls[i], delay + 450);
+  return anim(path, [{strokeDashoffset:1},{strokeDashoffset:0}], {d:600, delay, e:'ease-out'});
+}
+function pickUsers(n){
+  const order = USERS.map((_, i) => i).sort((a, b) => (degree[a] - degree[b]) || (Math.random() - .5));
+  return order.slice(0, n);
+}
+async function netAdd(b, t){
+  const first = !live;
+  if (first){
+    live = true;
+    anim($('poff'), [{opacity:1},{opacity:0}], {d:300});
+    anim($('portal'), [{opacity:.55},{opacity:1}], {d:400});
+    anim($('pglow'), [{opacity:0},{opacity:.9}], {d:500});
+    await drawEdge(950, 375, 1048, 330, '#2BB3A3', 6, {d:500}); guard(t);
+  }
+  if (!b.onDone && tiles < 12){
+    const i = tiles++, tl = el('rect',{x:1064+34*(i%4), y:271+32*Math.floor(i/4), width:30, height:28, rx:5, fill:b.c, stroke:INK, 'stroke-width':2, opacity:0, class:'fb', style:'transform-origin:50% 50%'}, $('ptiles'));
+    anim(tl, [{opacity:0, transform:'scale(.2)'},{opacity:1, transform:'scale(1.15)', offset:.7},{opacity:1, transform:'scale(1)'}], {d:400});
+  }
+  const draws = pickUsers(3).map((i, k) => drawLink(i, b.c, k*200));
+  if (first) step(5, `The landing page goes live. ${b.short || b.label} reaches its first users.`);
+  else if (!b.onDone) step(5, `${b.short || b.label} is on the landing page, connecting to more users.`);
+  await Promise.all(draws); guard(t);
+}
+
+let robotPos = {...HOME}, carried = null, queue = [], working = false, pending = 0, placedBricks = [];
+function setBadge(){ $('badge').setAttribute('opacity', pending ? 1 : 0); $('badgeN').textContent = pending; }
+const clawT = (b, x, y, extra='') => `translate(${x - b.w/2 - b.x}px,${y + 4 - b.y}px)${extra}`;
+const stackTop = () => placedBricks.length ? Math.min(...placedBricks.map(b => b.y)) - 9 : BASE_TOP - 9;
+
+async function robotTo(x, y, d, t){
+  const from = robotPos;
+  const ps = [anim($('robot'), [{transform:`translate(${from.x}px,${from.y}px)`},{transform:`translate(${x}px,${y}px)`}], {d, e:'ease-in-out'})];
+  if (carried) ps.push(anim(carried.inner, [{transform:clawT(carried, from.x, from.y)},{transform:clawT(carried, x, y)}], {d, e:'ease-in-out'}));
+  await Promise.all(ps); guard(t);
+  robotPos = {x, y};
+}
+
+// pack box -> GitOps repo
+async function commit(b, t){
+  b.inner = makeBrick(b);
+  // rises in from the pack picker below the stage
+  const sx = 200 - b.w/2 - b.x, sy = 660 - b.y;
+  await anim(b.inner, [
+    {transform:`translate(${sx}px,${sy}px) rotate(-10deg) scale(.8)`, opacity:1},
+    {transform:`translate(${285 - b.w/2 - b.x}px,${300 - b.y}px) rotate(8deg) scale(.8)`, opacity:1, offset:.55},
+    {transform:`translate(${415 - b.w/2 - b.x}px,${470 - b.y}px) scale(.3)`, opacity:0}
+  ], {d:900, e:'ease-in-out'}); guard(t);
+  pending++; setBadge();
+  queue.push(b); work(t);
+}
+
+async function work(t){
+  if (working) return;
+  working = true;
+  try { while (queue.length) await deliver(queue.shift(), t); }
+  catch (e) { if (e !== 'cancel') console.error(e); }
+  finally { if (t === token) working = false; }
+}
+
+// Argo CD: repo -> platform
+async function deliver(b, t){
+  $('robot').classList.remove('idle');
+  await robotTo(415, 462, 350, t);
+  pending--; setBadge();
+  await anim(b.inner, [{transform:clawT(b, 415, 478, ' scale(.3)'), opacity:0},{transform:clawT(b, 415, 462), opacity:1}], {d:320, e:'ease-out'}); guard(t);
+  carried = b;
+  const place = b.y - 4, tx = b.x + b.w/2;
+  const alt = Math.max(95, Math.min(place - 40, stackTop() - 70, 330));
+  await robotTo(415, alt, 550, t);
+  await robotTo(tx, alt, 650, t);
+  await robotTo(tx, place, 380, t);
+  carried = null; placedBricks.push(b);
+  await anim(b.inner, [{transform:'translate(0,0) scale(1)'},{transform:'translate(0,0) scale(1.07,.86)', offset:.5},{transform:'translate(0,0) scale(1)'}], {d:260}); guard(t);
+  step(5, b.done || `${b.label} plugged in. Argo CD keeps it in sync with the repo.`);
+  await Promise.all([plugIn(b), netAdd(b, t), (async () => { await robotTo(tx, alt, 300, t); await robotTo(HOME.x, HOME.y, 650, t); })()]);
+  guard(t);
+  $('robot').classList.add('idle');
+  if (b.onDone) b.onDone();
+}
+
+async function run(key){
+  const t = ++token, p = P[key]; last = key;
+  reset();
+  $('chooser').hidden = true; $('wrap').classList.remove('choosing');
+  $('change').disabled = false;
+  try {
+    // 1. foundation + config
+    step(1, p.base === 'cloud' ? `Running on ${p.name}. Everything starts with one config file.` : 'Running on your own hardware. Everything starts with one config file.');
+    $('cloudLabel').textContent = p.name;
+    $('platLabel').textContent = `Kubernetes on ${p.name}`;
+    const base = $(p.base === 'cloud' ? 'baseCloud' : 'baseRack');
+    anim(base, [{opacity:0, transform:'scale(.6)'},{opacity:1, transform:'scale(1.05)', offset:.7},{opacity:1, transform:'scale(1)'}], {d:700});
+    await anim($('ci'), [{opacity:0, transform:'scale(.5) rotate(-8deg)'},{opacity:1, transform:'scale(1.06)', offset:.7},{opacity:1, transform:'scale(1)'}], {d:600}); guard(t);
+    for (let i = 0; i < p.lines.length; i++){ await typeLine(p.lines[i], i); guard(t); await sleep(90); }
+    await sleep(700); guard(t);
+
+    // 2. into NIC
+    step(2, 'Feed it to NIC, the Nebari Infrastructure Core.');
+    await anim($('ci'), [
+      {transform:'translate(0,0) rotate(0) scale(1)', opacity:1},
+      {transform:'translate(150px,-110px) rotate(14deg) scale(.75)', opacity:1, offset:.5},
+      {transform:'translate(305px,70px) rotate(28deg) scale(.12)', opacity:0}
+    ], {d:1100, e:'ease-in-out'}); guard(t);
+    $('machine').classList.add('on');
+    for (let i = 0; i < 3; i++){
+      const c = el('circle',{cx:430+30*i, cy:262, r:12, opacity:0}, $('puffs'));
+      anim(c, [{opacity:.9, transform:'translate(0,0) scale(.6)'},{opacity:0, transform:'translate(0,-60px) scale(1.6)'}], {d:1100, delay:i*250, it:2, e:'ease-out'});
+    }
+    await anim($('machine'), [{transform:'translate(0,0)'},{transform:'translate(-3px,1px)'},{transform:'translate(3px,-1px)'},{transform:'translate(0,0)'}], {d:160, it:12}); guard(t);
+
+    // 3. platform out
+    step(3, p.base === 'cloud' ? `NIC provisions a Kubernetes platform on ${p.name}.` : 'NIC provisions a Kubernetes platform on your servers.');
+    burst(630, 418, 8, ['#FFC93C','#7CF2C4','#fff'], 55);
+    await anim($('pi'), [
+      {opacity:0, transform:'translate(-160px,20px) scale(.2)'},
+      {opacity:1, transform:'translate(0,-40px) scale(1)', offset:.6, easing:'ease-in'},
+      {opacity:1, transform:'translate(0,0)', offset:.8},
+      {opacity:1, transform:'translate(0,-10px)', offset:.9},
+      {opacity:1, transform:'translate(0,0)'}
+    ], {d:1000}); guard(t);
+    $('machine').classList.remove('on');
+    await sleep(300); guard(t);
+    step(3, 'It arrives with the foundation already running: identity (OIDC), routing and TLS.');
+    await flashFoundation(); guard(t);
+    await sleep(200); guard(t);
+    await flashFoundation(); guard(t);
+    await sleep(1400); guard(t);
+
+    // 4. open box
+    step(4, 'NIC’s job is done. From here, GitOps takes over: Argo CD deploys whatever lands in the repo.');
+    anim($('machine'), [{opacity:1, transform:'translate(0,0) scale(1)'},{opacity:0, transform:'translate(0,60px) scale(.7)'}], {d:600, e:'ease-in'});
+    await sleep(350); guard(t);
+    await anim($('gi'), [{opacity:0, transform:'scale(.3)'},{opacity:1, transform:'scale(1.08)', offset:.7},{opacity:1, transform:'scale(1)'}], {d:600}); guard(t);
+    await anim($('robot'), [{opacity:0, transform:`translate(${HOME.x}px,-120px)`},{opacity:1, transform:`translate(${HOME.x}px,${HOME.y+10}px)`, offset:.8},{opacity:1, transform:`translate(${HOME.x}px,${HOME.y}px)`}], {d:1000, e:'ease-out'}); guard(t);
+    robotPos = {...HOME}; $('robot').classList.add('idle');
+    anim($('portal'), [{opacity:0, transform:'scale(.5)'},{opacity:.55, transform:'scale(1.05)', offset:.7},{opacity:.55, transform:'scale(1)'}], {d:600});
+    await sleep(1600); guard(t);
+    step(4, 'Now open the box of software packs…');
+    await anim($('bi'), [{opacity:0, transform:'scale(.3)'},{opacity:1, transform:'scale(1.08)', offset:.7},{opacity:1, transform:'scale(1)'}], {d:600}); guard(t);
+    await sleep(250); guard(t);
+    await anim($('lid'), [{transform:'rotate(0)'},{transform:'rotate(-128deg)', offset:.75},{transform:'rotate(-112deg)'}], {d:700, e:'ease-out'}); guard(t);
+    burst(155, 440, 6, ['#FFC93C','#fff'], 40);
+    await sleep(300); guard(t);
+
+    // 5. user picks packs
+    step(5, 'Pick your packs. Each one is committed to git, and Argo CD delivers it.');
+    stageOpen = true;
+    $('packs').hidden = false;
+    anim($('bi'), [{opacity:1, transform:'scale(1)'},{opacity:1, transform:'scale(1.08)', offset:.25},{opacity:0, transform:'scale(.2)'}], {d:500, delay:500, e:'ease-in'});
+    $('packs').scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block:'nearest'});
+    $('packgrid').querySelector('button').focus({preventScroll:true});
+  } catch (e) { if (e !== 'cancel') console.error(e); }
+}
+
+PACKS.forEach(pk => {
+  const b = document.createElement('button');
+  b.textContent = pk.label; b.style.setProperty('--c', pk.c);
+  b.addEventListener('click', () => {
+    if (!stageOpen || placed >= MAX) return;
+    b.disabled = true;
+    step(5, `${pk.label} committed to the GitOps repo. Argo CD picks it up next.`);
+    commit({...slot(placed++), label:pk.label, short:pk.short, c:pk.c}, token).catch(() => {});
+    if (placed >= MAX) {
+      $('packgrid').querySelectorAll('button').forEach(x => x.disabled = true);
+      step(5, 'The stack is full. Build your application to finish.');
+    }
+    $('finish').disabled = false;
+  });
+  $('packgrid').appendChild(b);
+});
+$('finish').addEventListener('click', () => {
+  if (!stageOpen || !placed) return;
+  stageOpen = false;
+  $('packs').hidden = true;
+  const y = BASE_TOP - 50 - 50*Math.ceil(placed/3);
+  step(5, 'Your application goes through git too. Same repo, same robot.');
+  commit({x:638, y, w:304, label:'Your application ★', c:'#FFC93C', t:INK,
+    done:'Your application is plugged in.',
+    onDone: () => {
+      step(5, 'Config in, platform out, packs committed to git. Argo CD does the rest. That’s Nebari.');
+      burst(790, y + 10, 14, ['#FFC93C','#EF5B5B','#4D8FEA','#3CC47C','#9B6BE8'], 130);
+    }}, token).catch(() => {});
+});
+
+document.querySelectorAll('#chooser [data-p]').forEach(b => b.addEventListener('click', () => run(b.dataset.p)));
+$('change').addEventListener('click', () => {
+  token++; reset();
+  $('chooser').hidden = false; $('wrap').classList.add('choosing');
+  step(0, 'Pick where Nebari should run.');
+  $('chooser').querySelector('button').focus();
+});
+})();
+</script>
+</body>
+</html>
