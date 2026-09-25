@@ -10,8 +10,8 @@ Each page lives in its own folder as a single `index.html` with no build step.
 
 | Page | What it covers |
 |---|---|
-| [GitHub–Plane multi-repo sync](https://openteams-ai.github.io/artifacts/github-plane-sync/) | Assessment, design, scope-based estimate, hosting options and runbook for syncing multiple GitHub repos to one Plane project. |
 | [How Nebari works](https://openteams-ai.github.io/artifacts/nebari-explainer/) | Interactive explainer: pick where Nebari runs (cloud, GovCloud, Hetzner, on-prem), then choose software packs and watch Argo CD wire them in from the GitOps repo. |
+| [GitHub–Plane multi-repo sync](https://openteams-ai.github.io/artifacts/github-plane-sync/) | Assessment, design, scope-based estimate, hosting options and runbook for syncing multiple GitHub repos to one Plane project. |
 
 ## Adding a page
 

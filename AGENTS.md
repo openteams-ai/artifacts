@@ -14,7 +14,7 @@ This repo publishes standalone HTML pages (plans, assessments, reference materia
 
 1. **Pick a slug.** Short, kebab-case, named for the subject: `github-plane-sync`, not `assessment-2`. It becomes the URL, so don't rename it later. Don't start it with `_` or `.` (Jekyll skips those).
 2. **Create `<slug>/index.html`.** One folder per page. Put images or data files the page needs in the same folder and reference them with relative paths (`./chart.png`). Never use root-relative paths like `/chart.png`, because the site lives under `/artifacts/`.
-3. **Add a row to the table in `README.md`** in the same commit as the page, sorted alphabetically by page name. Link the page name to its full GitHub Pages URL (`https://openteams-ai.github.io/artifacts/<slug>/`), not the repo path, so the link opens the rendered page from both GitHub and the site. The second column is one sentence on what the page covers, written from the page's own content.
+3. **Add a row to the table in `README.md`** in the same commit as the page. New rows go at the top of the table, so it reads newest first. Link the page name to its full GitHub Pages URL (`https://openteams-ai.github.io/artifacts/<slug>/`), not the repo path, so the link opens the rendered page from both GitHub and the site. The second column is one sentence on what the page covers, written from the page's own content.
 4. **Run the public-content check** (see below). Do this even for a page the user wrote themselves.
 5. **Check it locally** (see below).
 6. **Run the README check** (see below). It also catches pages other people added without a row.
@@ -76,7 +76,7 @@ for d in */; do s=${d%/}; grep -q "artifacts/$s/" README.md || echo "MISSING REA
 grep -oE 'artifacts/[a-z0-9-]+/' README.md | sed 's#artifacts/##;s#/##' | sort -u | while read s; do [ -d "$s" ] || echo "README ROW WITHOUT FOLDER: $s"; done
 ```
 
-No output means the index is complete. If a page someone else added is missing, add its row (describe it from the page's `<title>` and content) and commit that directly to `main`. Also check that the rows are still in alphabetical order by page name and that each link is the full `https://openteams-ai.github.io/artifacts/<slug>/` URL.
+No output means the index is complete. If a page someone else added is missing, add its row (describe it from the page's `<title>` and content) and commit that directly to `main`. Also check that the newest page is at the top of the table and that each link is the full `https://openteams-ai.github.io/artifacts/<slug>/` URL.
 
 ## Checking locally
 
