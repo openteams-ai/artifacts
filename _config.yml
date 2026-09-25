@@ -1,0 +1,4 @@
+# GitHub Pages / Jekyll settings for the site root (README.md).
+# Page folders (<slug>/index.html) have no front matter, so Jekyll copies them through untouched.
+title: OpenTeams Artifacts
+description: Standalone HTML pages published by OpenTeams

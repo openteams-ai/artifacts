@@ -4,7 +4,7 @@ This repo publishes standalone HTML pages (plans, assessments, reference materia
 
 - Site: https://openteams-ai.github.io/artifacts/
 - A page at `<slug>/index.html` is served at `https://openteams-ai.github.io/artifacts/<slug>/`
-- The site root renders `README.md`, which is the index of pages
+- The site root renders `README.md`, which is the index of pages. Its header title and description come from `_config.yml`.
 
 **The repo and the site are public.** Never add secrets, credentials, customer names or data, internal hostnames, or anything the user hasn't agreed to publish. Run the [public-content check](#public-content-check) on every page before it goes in. If a page's content looks internal-only, ask before pushing.
 
