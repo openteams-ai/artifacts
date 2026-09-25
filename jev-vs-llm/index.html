@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jev vs. LLMs: one writes, one decides</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0F3; --surface:#FFFFFF; --ink:#16222E; --muted:#5B6875; --line:#CDD5DD;
+  --llm:#A86A12; --llm-soft:#F6EAD6; --jev:#2B63A8; --jev-soft:#DCE8F6;
+  --good:#2F7D4F; --warn:#A86A12; --bad:#B03A2E;
+  --sans:"Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#111921; --surface:#18222C; --ink:#E4EAF0; --muted:#95A2AF; --line:#2B3743;
+    --llm:#E3A94F; --llm-soft:#33291A; --jev:#6FA9EE; --jev-soft:#1C2C40;
+    --good:#5DBB84; --warn:#E3A94F; --bad:#E57368;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111921; --surface:#18222C; --ink:#E4EAF0; --muted:#95A2AF; --line:#2B3743;
+  --llm:#E3A94F; --llm-soft:#33291A; --jev:#6FA9EE; --jev-soft:#1C2C40;
+  --good:#5DBB84; --warn:#E3A94F; --bad:#E57368;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased}
+main{max-width:1040px;margin:0 auto;padding:28px 18px 64px}
+h1{font-size:clamp(2.1rem,7vw,3.6rem);line-height:1.02;letter-spacing:-.025em;margin:0 0 14px;font-weight:700}
+h1 .w{color:var(--llm)} h1 .d{color:var(--jev)}
+h2{font-size:1.45rem;letter-spacing:-.01em;margin:0 0 6px;line-height:1.2}
+p{margin:0 0 12px;max-width:68ch}
+.lede{color:var(--muted);font-size:1.05rem;max-width:62ch}
+section{margin-top:52px}
+.muted{color:var(--muted)}
+small,.small{font-size:.85rem}
+
+/* Input */
+.composer{margin-top:24px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.samples{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{font:inherit;font-size:.88rem;border:1px solid var(--line);background:transparent;color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+textarea{width:100%;min-height:92px;resize:vertical;font:inherit;font-size:1rem;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px}
+.qs{display:grid;gap:6px;margin:14px 0 4px;font-size:.9rem}
+.q{display:flex;gap:10px;align-items:baseline}
+.q code{font-family:var(--mono);font-size:.8rem;background:var(--paper);border:1px solid var(--line);padding:1px 7px;border-radius:5px;white-space:nowrap}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:14px}
+.run{font:inherit;font-weight:600;font-size:1rem;background:var(--ink);color:var(--paper);border:0;border-radius:10px;padding:12px 22px;cursor:pointer}
+.run:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--jev);outline-offset:2px}
+
+/* Lanes */
+.lanes{display:grid;gap:14px;margin-top:18px}
+@media (min-width:760px){.lanes{grid-template-columns:1fr 1fr}}
+.lane{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;min-width:0}
+.lane.llm{border-top:5px solid var(--llm)} .lane.jev{border-top:5px solid var(--jev)}
+.lane-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.lane-head h3{margin:0;font-size:1.1rem}
+.timer{font-family:var(--mono);font-size:1.25rem;font-variant-numeric:tabular-nums}
+.llm .timer{color:var(--llm)} .jev .timer{color:var(--jev)}
+.sub{color:var(--muted);font-size:.85rem;margin:2px 0 12px}
+.status{font-size:.88rem;min-height:1.4em;margin-bottom:10px}
+.stream{font-family:var(--mono);font-size:.8rem;line-height:1.55;background:var(--llm-soft);border-radius:10px;padding:12px;min-height:168px;white-space:pre-wrap;word-break:break-word;overflow-x:auto}
+.stream .cur{display:inline-block;width:.55em;height:1.05em;background:var(--llm);vertical-align:text-bottom;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.stream .badval{background:var(--bad);color:#fff;border-radius:3px}
+.checks{list-style:none;padding:0;margin:12px 0 0;font-size:.85rem;display:grid;gap:4px}
+.checks li::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;background:var(--line)}
+.checks li.ok::before{background:var(--good)} .checks li.fail::before{background:var(--bad)} .checks li.on::before{background:var(--llm)}
+.meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:auto;padding-top:12px;font-size:.82rem;color:var(--muted)}
+.meta b{color:var(--ink);font-variant-numeric:tabular-nums}
+
+.answers{display:grid;gap:14px;background:var(--jev-soft);border-radius:10px;padding:12px;min-height:168px}
+.ans h4{margin:0 0 6px;font-size:.82rem;font-family:var(--mono);font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.ans h4 span{font-family:var(--sans);font-weight:500;color:var(--muted)}
+.bar{display:grid;grid-template-columns:78px 1fr 42px;gap:8px;align-items:center;font-size:.82rem;margin:3px 0}
+.track{height:10px;background:var(--surface);border-radius:5px;overflow:hidden}
+.fill{height:100%;width:0;background:var(--jev);opacity:.45;transition:width .45s ease}
+.bar.top .fill{opacity:1} .bar.top{font-weight:600}
+.pct{text-align:right;font-variant-numeric:tabular-nums}
+.hist{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;align-items:end;height:54px}
+.hist div{background:var(--jev);opacity:.45;border-radius:3px 3px 0 0;height:0;transition:height .45s ease}
+.hist div.top{opacity:1}
+.hist-l{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;font-size:.72rem;color:var(--muted);text-align:center;margin-top:3px}
+.placeholder{color:var(--muted);font-size:.88rem;align-self:center;text-align:center}
+
+.verdict{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:none}
+.verdict.show{display:block}
+.race{display:grid;gap:8px;margin:10px 0 6px}
+.race-row{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;font-size:.85rem}
+.race-track{height:14px;border-radius:7px;background:var(--paper);overflow:hidden}
+.race-fill{height:100%;border-radius:7px;width:0;transition:width .6s ease}
+
+/* Routing */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
+.sliders{display:grid;gap:14px}
+@media (min-width:760px){.sliders{grid-template-columns:1fr 1fr}}
+label{font-size:.9rem;display:block;margin-bottom:4px}
+input[type=range]{width:100%;accent-color:var(--jev)}
+.zones{position:relative;height:34px;border-radius:8px;overflow:hidden;display:flex;margin:18px 0 6px}
+.zones div{display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden}
+.z-esc{background:var(--bad)} .z-rev{background:var(--warn)} .z-auto{background:var(--good)}
+.needle{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--ink);border-radius:2px;transition:left .3s ease;display:none}
+.scale{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+.outcome{margin-top:12px;font-size:1rem}
+.outcome b{font-weight:700}
+
+/* Cost */
+.cost-grid{display:grid;gap:14px}
+@media (min-width:760px){.cost-grid{grid-template-columns:repeat(2,1fr)}}
+.num{font:inherit;width:90px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+.prices{display:flex;gap:14px;flex-wrap:wrap}
+.totals{display:grid;gap:10px;margin-top:16px}
+@media (min-width:760px){.totals{grid-template-columns:1fr 1fr}}
+.total{border-radius:10px;padding:14px}
+.total.llm{background:var(--llm-soft)} .total.jev{background:var(--jev-soft)}
+.total .big{font-size:1.8rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.total.llm .big{color:var(--llm)} .total.jev .big{color:var(--jev)}
+
+/* Table */
+.tablewrap{overflow-x:auto;margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.9rem}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+thead th{font-size:.95rem}
+thead th:nth-child(2){color:var(--llm)} thead th:nth-child(3){color:var(--jev)}
+tbody th{font-weight:600;color:var(--muted);width:24%}
+
+.flow{display:grid;gap:10px;margin-top:14px;counter-reset:s}
+@media (min-width:760px){.flow{grid-template-columns:repeat(3,1fr)}}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;position:relative}
+.step::before{counter-increment:s;content:counter(s);display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;font-weight:700;font-size:.85rem;margin-bottom:8px;color:var(--surface)}
+.step.s1::before{background:var(--jev)} .step.s2::before{background:var(--llm)} .step.s3::before{background:var(--ink)}
+.step h3{margin:0 0 4px;font-size:1rem}
+.step p{font-size:.9rem;margin:0;color:var(--muted)}
+.note{margin-top:40px;font-size:.82rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+
+/* Pipeline */
+.pipes{display:grid;gap:14px;margin-top:14px}
+@media (min-width:760px){.pipes{grid-template-columns:1fr 1fr;align-items:start}}
+.pipe{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0}
+.pipe.llm{border-top:5px solid var(--llm)} .pipe.jev{border-top:5px solid var(--jev)}
+.pipe h3{margin:0 0 10px;font-size:1.05rem}
+.pipe svg{display:block;width:100%;max-width:380px;height:auto;margin:0 auto}
+.pipe figcaption{font-size:.85rem;color:var(--muted);margin-top:10px}
+.pipe .t{font-family:var(--sans);font-size:13.5px;font-weight:600;fill:var(--ink)}
+.pipe .s{font-family:var(--sans);font-size:11.5px;fill:var(--muted)}
+.pipe .m{font-family:var(--mono);font-size:10.5px;fill:var(--ink)}
+.pipe .ln{stroke:var(--muted);stroke-width:1.5;fill:none}
+.pipe .b-llm{fill:var(--llm-soft);stroke:var(--llm);stroke-width:1.5}
+.pipe .b-jev{fill:var(--jev-soft);stroke:var(--jev);stroke-width:1.5}
+.pipe .b-code{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
+.pipe .zone{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:5 4}
+.pipe .retry{stroke:var(--bad);stroke-width:1.5;fill:none;stroke-dasharray:4 3}
+.pipe .rt{font-family:var(--sans);font-size:11px;font-weight:600;fill:var(--bad)}
+@media (prefers-reduced-motion: reduce){.fill,.hist div,.race-fill,.needle{transition:none}.stream .cur{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1><span class="w">One writes.</span><br><span class="d">One decides.</span></h1>
+    <p class="lede">An LLM answers by writing text one token at a time, which your code then has to parse and trust. Jev, from TypeSafe AI, never writes. It reads the input once and returns a pick from answers you defined, with a probability for each. Send the same support ticket to both and watch what comes back.</p>
+  </header>
+
+  <div class="composer">
+    <div class="samples" role="group" aria-label="Sample messages" id="samples"></div>
+    <label for="msg" class="muted small">Incoming support message (edit it or write your own)</label>
+    <textarea id="msg"></textarea>
+    <div class="qs" aria-label="Questions asked">
+      <div class="q"><code>department</code><span>Choice: billing, technical or sales</span></div>
+      <div class="q"><code>is_urgent</code><span>Yes/no: the message is time-sensitive</span></div>
+      <div class="q"><code>sentiment</code><span>Score: 1 (angry) to 5 (happy)</span></div>
+    </div>
+    <div class="row">
+      <span class="muted small" id="hint">Both models get the same message and the same three questions.</span>
+      <button class="run" id="run">Send to both</button>
+    </div>
+  </div>
+
+  <div class="lanes">
+    <div class="lane llm">
+      <div class="lane-head"><h3>Typical LLM</h3><span class="timer" id="llmTimer">0.00 s</span></div>
+      <p class="sub">Asked to reply in JSON. Writes it token by token.</p>
+      <div class="status" id="llmStatus" aria-live="polite">Idle</div>
+      <div class="stream" id="llmStream"><span class="muted">The generated text appears here.</span></div>
+      <ul class="checks" id="llmChecks">
+        <li id="c1">Parse the text as JSON</li>
+        <li id="c2">Check each value is an allowed answer</li>
+        <li id="c3">Read how sure the model is</li>
+      </ul>
+      <div class="meta"><span>Output tokens <b id="llmTok">0</b></span><span>Attempts <b id="llmTry">0</b></span></div>
+    </div>
+
+    <div class="lane jev">
+      <div class="lane-head"><h3>Jev</h3><span class="timer" id="jevTimer">0 ms</span></div>
+      <p class="sub">Reads once. Answers all three questions in the same pass.</p>
+      <div class="status" id="jevStatus" aria-live="polite">Idle</div>
+      <div class="answers" id="jevAnswers"><div class="placeholder">Typed answers with probabilities appear here.</div></div>
+      <ul class="checks" id="jevChecks">
+        <li id="j1">Parse: nothing to parse, values are already typed</li>
+        <li id="j2">Validate: only allowed answers can come back</li>
+        <li id="j3">Confidence: returned with every answer</li>
+      </ul>
+      <div class="meta"><span>Output tokens <b>0 (not billed)</b></span><span>Passes <b id="jevTry">0</b></span></div>
+    </div>
+  </div>
+
+  <div class="verdict" id="verdict" aria-live="polite">
+    <strong id="vHead"></strong>
+    <div class="race">
+      <div class="race-row"><span>Jev</span><div class="race-track"><div class="race-fill" id="rJev" style="background:var(--jev)"></div></div><span id="rJevT"></span></div>
+      <div class="race-row"><span>LLM</span><div class="race-track"><div class="race-fill" id="rLlm" style="background:var(--llm)"></div></div><span id="rLlmT"></span></div>
+    </div>
+    <p class="small muted" id="vBody" style="margin:8px 0 0"></p>
+  </div>
+
+
+  <section>
+    <h2>Where the extra steps live</h2>
+    <p class="muted">An LLM's answer is text, so your code has to turn it back into data and handle the times it can't. Jev never produces text, so that whole layer disappears.</p>
+    <div class="pipes">
+      <figure class="pipe llm">
+        <h3>Typical LLM</h3>
+        <svg viewBox="0 0 320 452" role="img" aria-labelledby="pl-t pl-d">
+          <title id="pl-t">LLM pipeline</title>
+          <desc id="pl-d">The message and questions go into a prompt with a JSON schema. The model generates tokens one at a time into free-form text. Your code parses the text and checks the values are allowed, retrying the model on failure, then acts without knowing how confident the model was.</desc>
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--muted)"/></marker>
+            <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--bad)"/></marker>
+            <marker id="ahl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--llm)"/></marker>
+          </defs>
+          <rect class="b-llm" x="50" y="8" width="220" height="48" rx="10"/>
+          <text class="t" x="160" y="28" text-anchor="middle">Message + questions</text>
+          <text class="s" x="160" y="45" text-anchor="middle">in a prompt with a JSON schema</text>
+          <line class="ln" x1="160" y1="56" x2="160" y2="75" marker-end="url(#ah)"/>
+
+          <rect class="b-llm" x="50" y="78" width="220" height="48" rx="10"/>
+          <text class="t" x="160" y="98" text-anchor="middle">Generate the next token</text>
+          <text class="s" x="160" y="115" text-anchor="middle">repeats once per token, in order</text>
+          <path d="M270 90 C 304 90, 304 114, 273 114" style="stroke:var(--llm);stroke-width:1.5;fill:none" marker-end="url(#ahl)"/>
+          <line class="ln" x1="160" y1="126" x2="160" y2="145" marker-end="url(#ah)"/>
+
+          <rect class="b-llm" x="50" y="148" width="220" height="48" rx="10"/>
+          <text class="t" x="160" y="168" text-anchor="middle">Free-form text</text>
+          <text class="m" x="160" y="185" text-anchor="middle">{"department": "techn…</text>
+          <line class="ln" x1="160" y1="196" x2="160" y2="233" marker-end="url(#ah)"/>
+
+          <rect class="zone" x="36" y="212" width="248" height="160" rx="12"/>
+          <text class="s" x="274" y="227" text-anchor="end">translation layer</text>
+
+          <rect class="b-code" x="50" y="236" width="220" height="44" rx="10"/>
+          <text class="t" x="160" y="263" text-anchor="middle">Parse the text as JSON</text>
+          <line class="ln" x1="160" y1="280" x2="160" y2="299" marker-end="url(#ah)"/>
+          <rect class="b-code" x="50" y="302" width="220" height="44" rx="10"/>
+          <text class="t" x="160" y="329" text-anchor="middle">Check values are allowed</text>
+
+          <path class="retry" d="M50 324 H22 V102 H47" marker-end="url(#ahr)"/>
+          <path class="retry" d="M50 258 H22"/>
+          <text class="rt" transform="translate(15 190) rotate(-90)" text-anchor="middle">retry on failure</text>
+
+          <line class="ln" x1="160" y1="346" x2="160" y2="391" marker-end="url(#ah)"/>
+          <rect class="b-code" x="50" y="394" width="220" height="50" rx="10"/>
+          <text class="t" x="160" y="415" text-anchor="middle">Your code acts</text>
+          <text class="s" x="160" y="433" text-anchor="middle">no signal of how sure it was</text>
+        </svg>
+        <figcaption>Every answer passes through parsing and validation, and any failure sends the whole generation back around.</figcaption>
+      </figure>
+
+      <figure class="pipe jev">
+        <h3>Jev</h3>
+        <svg viewBox="0 0 320 382" role="img" aria-labelledby="pj-t pj-d">
+          <title id="pj-t">Jev pipeline</title>
+          <desc id="pj-d">The message and typed questions go in. Jev makes one pass and answers all three questions at once: department as a choice with probabilities, urgency as a probability of yes, and sentiment as a score with probabilities. There is no parsing, validation or retry. Your code acts and branches on the confidence.</desc>
+          <defs>
+            <marker id="ahj" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--muted)"/></marker>
+          </defs>
+          <rect class="b-jev" x="50" y="8" width="220" height="48" rx="10"/>
+          <text class="t" x="160" y="28" text-anchor="middle">Message + questions</text>
+          <text class="s" x="160" y="45" text-anchor="middle">questions list allowed answers</text>
+          <line class="ln" x1="160" y1="56" x2="160" y2="75" marker-end="url(#ahj)"/>
+
+          <rect class="b-jev" x="50" y="78" width="220" height="48" rx="10"/>
+          <text class="t" x="160" y="98" text-anchor="middle">One pass over the message</text>
+          <text class="s" x="160" y="115" text-anchor="middle">all questions answered together</text>
+
+          <line class="ln" x1="160" y1="126" x2="70" y2="155" marker-end="url(#ahj)"/>
+          <line class="ln" x1="160" y1="126" x2="160" y2="155" marker-end="url(#ahj)"/>
+          <line class="ln" x1="160" y1="126" x2="250" y2="155" marker-end="url(#ahj)"/>
+
+          <rect class="b-jev" x="28" y="158" width="84" height="52" rx="9"/>
+          <text class="m" x="70" y="180" text-anchor="middle">department</text>
+          <text class="s" x="70" y="197" text-anchor="middle">pick + probs</text>
+          <rect class="b-jev" x="118" y="158" width="84" height="52" rx="9"/>
+          <text class="m" x="160" y="180" text-anchor="middle">is_urgent</text>
+          <text class="s" x="160" y="197" text-anchor="middle">P(yes)</text>
+          <rect class="b-jev" x="208" y="158" width="84" height="52" rx="9"/>
+          <text class="m" x="250" y="180" text-anchor="middle">sentiment</text>
+          <text class="s" x="250" y="197" text-anchor="middle">score + probs</text>
+
+          <path class="ln" d="M70 210 L160 238"/>
+          <path class="ln" d="M250 210 L160 238"/>
+          <line class="ln" x1="160" y1="210" x2="160" y2="319" marker-end="url(#ahj)"/>
+
+          <rect class="zone" x="36" y="244" width="248" height="56" rx="12" style="fill:var(--surface)"/>
+          <text class="t" x="160" y="266" text-anchor="middle" style="fill:var(--muted)">No parse, validate or retry</text>
+          <text class="s" x="160" y="284" text-anchor="middle">only allowed values can come back</text>
+
+          <rect class="b-code" x="50" y="322" width="220" height="50" rx="10"/>
+          <text class="t" x="160" y="343" text-anchor="middle">Your code acts</text>
+          <text class="s" x="160" y="361" text-anchor="middle">and branches on the confidence</text>
+        </svg>
+        <figcaption>The answers arrive as data. The only thing left for your code is deciding what confidence is high enough to act on.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>What code does with "how sure"</h2>
+    <p class="muted">Jev can still pick the wrong answer. What it adds is a confidence number your code can branch on. Drag the thresholds to decide when the ticket routes itself, when a person checks it, and when it escalates.</p>
+    <div class="panel">
+      <div class="sliders">
+        <div><label for="tAuto">Route automatically at confidence ≥ <b id="tAutoV"></b></label><input type="range" id="tAuto" min="0.3" max="0.95" step="0.05" value="0.6"></div>
+        <div><label for="tRev">Send for review at confidence ≥ <b id="tRevV"></b></label><input type="range" id="tRev" min="0.05" max="0.9" step="0.05" value="0.25"></div>
+      </div>
+      <div class="zones" id="zones">
+        <div class="z-esc" id="zEsc">Escalate</div><div class="z-rev" id="zRev">Review</div><div class="z-auto" id="zAuto">Auto-route</div>
+        <span class="needle" id="needle" aria-hidden="true"></span>
+      </div>
+      <div class="scale"><span>0</span><span>0.5</span><span>1.0</span></div>
+      <p class="outcome" id="outcome">Send a message above to see where it lands.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>What it costs at volume</h2>
+    <p class="muted">An LLM bills for the JSON it writes. Jev bills only for what it reads. Jev's price is TypeSafe's published rate; set your own LLM's prices to compare.</p>
+    <div class="panel">
+      <div class="cost-grid">
+        <div><label for="calls">Decisions per day: <b id="callsV"></b></label><input type="range" id="calls" min="3" max="7" step="0.1" value="5"></div>
+        <div><label for="inTok">Input tokens per decision: <b id="inTokV"></b></label><input type="range" id="inTok" min="100" max="4000" step="50" value="400"></div>
+        <div class="prices">
+          <div><label for="pIn">LLM $ / M input</label><input class="num" type="number" id="pIn" value="3" min="0" step="0.1"></div>
+          <div><label for="pOut">LLM $ / M output</label><input class="num" type="number" id="pOut" value="15" min="0" step="0.5"></div>
+          <div><label for="oTok">LLM output tokens</label><input class="num" type="number" id="oTok" value="60" min="1" step="5"></div>
+        </div>
+      </div>
+      <div class="totals">
+        <div class="total llm"><div class="small">LLM, per month</div><div class="big" id="costLlm"></div></div>
+        <div class="total jev"><div class="small">Jev, per month ($0.042 / M input, output free)</div><div class="big" id="costJev"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Side by side</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th></th><th>Typical LLM</th><th>Jev</th></tr></thead>
+        <tbody>
+          <tr><th>Trained for</th><td>Answers people prefer (RLHF) or checkable results like math and code (RLVR)</td><td>Probabilities that match how often it's right (RLCD, "calibrated decisions")</td></tr>
+          <tr><th>Output</th><td>Free-form text you parse and validate</td><td>A value from answers you defined: a choice, a score, or a yes/no probability</td></tr>
+          <tr><th>How it answers</th><td>Sequentially, one token after another</td><td>All questions in parallel, in one pass</td></tr>
+          <tr><th>Uncertainty</th><td>Only if you ask, and self-reports tend to be unreliable</td><td>Probabilities and confidence on every answer</td></tr>
+          <tr><th>Can it be wrong?</th><td>Yes, including inventing values that don't exist</td><td>Yes, but only by picking the wrong allowed answer</td></tr>
+          <tr><th>Speed (vendor figures)</th><td>Seconds for frontier models</td><td>70–500 ms per call</td></tr>
+          <tr><th>Good at</th><td>Writing, summarizing, code, dialogue, multi-step reasoning</td><td>Routing, triage, scoring, guardrail checks</td></tr>
+          <tr><th>Can't do</th><td>Guarantee a valid, typed answer</td><td>Write a reply, summarize, or explain its choice</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Most teams use both</h2>
+    <p class="muted">Jev works like a smart if-statement inside ordinary code. Your program keeps control of the workflow; each model does the part it's built for.</p>
+    <div class="flow">
+      <div class="step s1"><h3>Jev decides</h3><p>Classifies the ticket, scores urgency and checks policy in a few hundred milliseconds.</p></div>
+      <div class="step s2"><h3>An LLM writes</h3><p>Drafts the reply only when a reply is actually needed.</p></div>
+      <div class="step s3"><h3>A person steps in</h3><p>Picks up whatever falls below your confidence threshold.</p></div>
+    </div>
+  </section>
+
+  <p class="note">This page is a simulation. Both lanes run a small keyword model in your browser, not the real APIs, so the probabilities are illustrative. Timings are scaled to match typical frontier-LLM latency and TypeSafe's reported 70–500 ms; TypeSafe claims 20–200× speedups on real workloads. Jev launched in early access on September 15, 2026, and independent benchmarks were still thin at the time of writing.</p>
+</main>
+
+<script>
+(function(){
+const SAMPLES = [
+  {label:"Integration outage", text:"Our Stripe connection has been failing for three days and every checkout errors out. We're losing sales, please help ASAP."},
+  {label:"Sales inquiry", text:"Hi! We're thinking about moving our team of 40 to the Enterprise plan. Could someone send pricing and set up a demo?"},
+  {label:"Ambiguous", text:"I got charged twice this month and now the app won't even load when I log in."},
+  {label:"Happy customer", text:"Just wanted to say the new dashboard is great. No rush, but is there a way to export charts?"}
+];
+const TERMS = {
+  billing:[["charged",1.6],["charge",1.4],["refund",1.5],["invoice",1.2],["payment",1.2],["card",1],["subscription",1],["billing",1.5],["stripe",0.9],["receipt",1]],
+  technical:[["integration",1],["failing",0.9],["error",0.9],["errors",0.9],["connection",0.8],["connect",0.8],["bug",1.2],["crash",1.2],["crashes",1.2],["load",0.9],["log in",0.8],["login",0.8],["broken",1],["export",0.7],["dashboard",0.4],["api",0.9],["outage",1.2]],
+  sales:[["pricing",1.2],["price",1],["demo",1.2],["enterprise",1],["plan",0.8],["upgrade",1],["quote",1],["seats",0.9],["trial",0.9],["discount",1]]
+};
+const URG = [["asap",1.5],["urgent",1.5],["urgently",1.5],["immediately",1.2],["losing",1],["right now",1],["emergency",1.5],["down",0.8],["please help",0.8],["days",0.5],["won't",0.4],["twice",0.3],["no rush",-2],["whenever",-1]];
+const NEG = [["losing",1],["failing",0.8],["frustrated",1.2],["angry",1.4],["terrible",1.4],["broken",0.8],["twice",0.5],["won't",0.6],["errors",0.5],["unacceptable",1.5],["worst",1.4],["annoyed",1]];
+const POS = [["great",1],["love",1],["thanks",0.6],["thank you",0.6],["awesome",1],["wanted to say",0.3],["excellent",1],["amazing",1]];
+const DEPTS = ["billing","technical","sales"];
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+function score(text, list){
+  let s = 0;
+  for (const [t,w] of list){
+    const re = new RegExp("(^|[^a-z])" + t.replace(/'/g,"'").replace(/ /g,"\\s+") + "(?![a-z])","i");
+    if (re.test(text)) s += w;
+  }
+  return s;
+}
+function analyze(raw){
+  const text = raw.replace(/[’‘]/g,"'").toLowerCase();
+  const s = DEPTS.map(d => score(text, TERMS[d]));
+  const ex = s.map(v => Math.exp(v)); const sum = ex.reduce((a,b)=>a+b,0);
+  const probs = ex.map(v => v/sum);
+  const order = [0,1,2].sort((a,b)=>probs[b]-probs[a]);
+  const deptConf = Math.max(0, probs[order[0]] - probs[order[1]]);
+  const u = score(text, URG);
+  const pUrg = 1/(1+Math.exp(-(-1.5 + 1.6*u)));
+  const mean = Math.min(5, Math.max(1, 3 + score(text,POS) - score(text,NEG)));
+  let dist = [1,2,3,4,5].map(k => Math.exp(-((k-mean)**2)/(2*0.7*0.7)));
+  const ds = dist.reduce((a,b)=>a+b,0); dist = dist.map(v=>v/ds);
+  const sVal = dist.indexOf(Math.max(...dist)) + 1;
+  return {
+    probs, choice: DEPTS[order[0]], second: DEPTS[order[1]], deptConf,
+    ambiguous: (probs[order[0]] - probs[order[1]]) < 0.15,
+    pUrg, dist, sVal, sConf: Math.max(...dist)
+  };
+}
+
+const REASONS = {
+  technical:"The customer describes a product or integration problem that needs engineering attention.",
+  billing:"The message is about a charge or payment on the customer's account.",
+  sales:"The customer is asking about plans, pricing, or a demo."
+};
+function llmJson(a, dept){
+  const reason = dept.includes("_and_") ? "The message mentions both a billing charge and a technical failure." : REASONS[dept];
+  return '{\n  "department": "' + dept + '",\n  "is_urgent": ' + (a.pUrg >= 0.5) + ',\n  "sentiment": ' + a.sVal + ',\n  "reason": "' + reason + '"\n}';
+}
+const tokenize = s => s.match(/\s*[A-Za-z_']+|\s*\d+|\s*[^\sA-Za-z\d]/g) || [];
+
+/* samples */
+const samplesEl = $("samples"), msg = $("msg");
+SAMPLES.forEach((s,i) => {
+  const b = document.createElement("button");
+  b.className = "chip"; b.type = "button"; b.textContent = s.label;
+  b.setAttribute("aria-pressed", i===0 ? "true" : "false");
+  b.addEventListener("click", () => {
+    msg.value = s.text;
+    [...samplesEl.children].forEach(c => c.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed","true");
+    updateRun();
+  });
+  samplesEl.appendChild(b);
+});
+msg.value = SAMPLES[0].text;
+msg.addEventListener("input", () => { [...samplesEl.children].forEach(c => c.setAttribute("aria-pressed","false")); updateRun(); });
+function updateRun(){
+  const empty = !msg.value.trim();
+  $("run").disabled = empty;
+  $("hint").textContent = empty ? "Type a message or pick a sample to send." : "Both models get the same message and the same three questions.";
+}
+
+/* run */
+let runId = 0, last = null;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function setCheck(id, cls, text){ const el = $(id); el.className = cls; if (text) el.textContent = text; }
+
+async function run(){
+  const id = ++runId;
+  const a = analyze(msg.value);
+  last = null; renderRouting();
+  $("verdict").classList.remove("show");
+  $("rJev").style.width = "0"; $("rLlm").style.width = "0";
+
+  // reset LLM
+  const stream = $("llmStream");
+  stream.innerHTML = '<span class="cur"></span>';
+  $("llmTok").textContent = "0"; $("llmTry").textContent = "1";
+  setCheck("c1","","Parse the text as JSON");
+  setCheck("c2","","Check each value is an allowed answer");
+  setCheck("c3","","Read how sure the model is");
+  // reset Jev
+  $("jevAnswers").innerHTML = '<div class="placeholder">Reading…</div>';
+  $("jevTry").textContent = "1";
+  ["j1","j2","j3"].forEach(j => $(j).className = "");
+
+  const t0 = performance.now();
+  let llmDone = null, jevDone = null;
+  (function tick(){
+    if (id !== runId) return;
+    const now = performance.now();
+    $("llmTimer").textContent = (((llmDone ?? now) - t0)/1000).toFixed(2) + " s";
+    $("jevTimer").textContent = Math.round((jevDone ?? now) - t0) + " ms";
+    if (llmDone === null || jevDone === null) requestAnimationFrame(tick);
+  })();
+
+  // Jev lane
+  const jevLatency = Math.min(480, 140 + msg.value.length/4);
+  $("jevStatus").textContent = "Reading the message once, answering all three questions together…";
+  const jevP = (async () => {
+    await sleep(jevLatency);
+    if (id !== runId) return;
+    jevDone = performance.now();
+    renderJev(a);
+    $("jevStatus").textContent = "Done. Three typed answers in one pass.";
+    ["j1","j2","j3"].forEach(j => $(j).className = "ok");
+  })();
+
+  // LLM lane
+  const llmP = (async () => {
+    let tokCount = 0;
+    const attempt = async (dept, n) => {
+      $("llmTry").textContent = n;
+      $("llmStatus").textContent = n === 1 ? "Waiting for the first token…" : "Retrying with an error message in the prompt…";
+      await sleep(850); if (id !== runId) return false;
+      $("llmStatus").textContent = "Writing, one token at a time…";
+      const toks = tokenize(llmJson(a, dept));
+      let out = "";
+      for (const t of toks){
+        out += t; tokCount++;
+        stream.innerHTML = esc(out) + '<span class="cur"></span>';
+        $("llmTok").textContent = tokCount;
+        await sleep(/^\s*$/.test(t) ? 0 : 36);
+        if (id !== runId) return false;
+      }
+      stream.innerHTML = esc(out);
+      $("llmStatus").textContent = "Finished writing. Now your code has to check it.";
+      setCheck("c1","on"); await sleep(140); if (id !== runId) return false;
+      setCheck("c1","ok","Parse the text as JSON: OK");
+      setCheck("c2","on"); await sleep(120); if (id !== runId) return false;
+      if (dept.includes("_and_")){
+        stream.innerHTML = esc(out).replace(dept, '<span class="badval">' + dept + '</span>');
+        setCheck("c2","fail", 'Check allowed answers: "' + dept + '" isn\'t one of the options');
+        return "retry";
+      }
+      setCheck("c2","ok","Check allowed answers: OK");
+      return true;
+    };
+    let r = await attempt(a.ambiguous ? a.choice === "technical" ? "billing_and_technical" : a.choice + "_and_" + a.second : a.choice, 1);
+    if (r === "retry"){
+      await sleep(400); if (id !== runId) return;
+      stream.innerHTML = '<span class="cur"></span>';
+      setCheck("c1","","Parse the text as JSON");
+      setCheck("c2","","Check each value is an allowed answer");
+      r = await attempt(a.choice, 2);
+    }
+    if (!r || id !== runId) return;
+    setCheck("c3","fail","Confidence: not included. The text sounds equally sure either way.");
+    llmDone = performance.now();
+    $("llmStatus").textContent = "Done. Valid JSON, but no signal for how much to trust it.";
+  })();
+
+  await Promise.all([jevP, llmP]);
+  if (id !== runId) return;
+  last = a; renderRouting();
+  const jl = jevDone - t0, ll = llmDone - t0;
+  $("vHead").textContent = "Jev answered " + Math.round(ll/jl) + "× sooner" + (a.ambiguous ? ", and the LLM needed a retry." : ".");
+  $("rJevT").textContent = Math.round(jl) + " ms"; $("rLlmT").textContent = (ll/1000).toFixed(2) + " s";
+  $("verdict").classList.add("show");
+  requestAnimationFrame(() => { $("rJev").style.width = Math.max(1.5, jl/ll*100) + "%"; $("rLlm").style.width = "100%"; });
+  $("vBody").textContent = a.ambiguous
+    ? "This message fits two departments. The LLM invented a label that isn't on the list, so the code had to reject it and ask again. Jev can't return an invalid label; it split its probability between the two and reported low confidence, which the routing below uses to hand the ticket to a person."
+    : "Both reached the same department here. The difference is what arrived: the LLM sent prose your code had to parse, while Jev sent typed values with probabilities your code can act on directly.";
+}
+$("run").addEventListener("click", run);
+
+function renderJev(a){
+  const bars = DEPTS.map((d,i) => '<div class="bar' + (d===a.choice?' top':'') + '"><span>' + d + '</span><div class="track"><div class="fill" data-w="' + (a.probs[i]*100).toFixed(1) + '"></div></div><span class="pct">' + Math.round(a.probs[i]*100) + '%</span></div>').join("");
+  const urgConf = Math.abs(2*a.pUrg - 1);
+  const hist = a.dist.map((p,i) => '<div class="' + (i+1===a.sVal?'top':'') + '" data-h="' + (p*100).toFixed(1) + '"></div>').join("");
+  $("jevAnswers").innerHTML =
+    '<div class="ans"><h4>department <span>choice: ' + a.choice + ', confidence ' + a.deptConf.toFixed(2) + '</span></h4>' + bars + '</div>' +
+    '<div class="ans"><h4>is_urgent <span>P(yes) ' + a.pUrg.toFixed(2) + ', confidence ' + urgConf.toFixed(2) + '</span></h4>' +
+      '<div class="bar' + (a.pUrg>=0.5?' top':'') + '"><span>yes</span><div class="track"><div class="fill" data-w="' + (a.pUrg*100).toFixed(1) + '"></div></div><span class="pct">' + Math.round(a.pUrg*100) + '%</span></div></div>' +
+    '<div class="ans"><h4>sentiment <span>score: ' + a.sVal + ', confidence ' + a.sConf.toFixed(2) + '</span></h4><div class="hist">' + hist + '</div><div class="hist-l"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div></div>';
+  requestAnimationFrame(() => {
+    document.querySelectorAll("#jevAnswers .fill").forEach(f => f.style.width = f.dataset.w + "%");
+    document.querySelectorAll("#jevAnswers .hist div").forEach(h => h.style.height = Math.max(4, h.dataset.h) + "%");
+  });
+}
+
+/* routing */
+const tAuto = $("tAuto"), tRev = $("tRev");
+function renderRouting(){
+  let au = +tAuto.value, rv = +tRev.value;
+  if (rv >= au){ rv = Math.max(0.05, au - 0.05); tRev.value = rv; }
+  $("tAutoV").textContent = au.toFixed(2); $("tRevV").textContent = rv.toFixed(2);
+  $("zEsc").style.width = rv*100 + "%"; $("zRev").style.width = (au-rv)*100 + "%"; $("zAuto").style.width = (1-au)*100 + "%";
+  const needle = $("needle"), out = $("outcome");
+  if (!last){ needle.style.display = "none"; out.textContent = "Send a message above to see where it lands."; return; }
+  const c = last.deptConf;
+  needle.style.display = "block"; needle.style.left = "calc(" + (c*100) + "% - 1.5px)";
+  const dept = "<b>" + last.choice + "</b>";
+  if (c >= au) out.innerHTML = "Confidence " + c.toFixed(2) + ": the ticket goes straight to " + dept + ". No one touches it.";
+  else if (c >= rv) out.innerHTML = "Confidence " + c.toFixed(2) + ": Jev leans " + dept + ", so the ticket is queued there and flagged for a person to confirm.";
+  else out.innerHTML = "Confidence " + c.toFixed(2) + ": too uncertain to act on. The ticket escalates to a human or a slower reasoning model.";
+}
+tAuto.addEventListener("input", renderRouting);
+tRev.addEventListener("input", renderRouting);
+renderRouting();
+
+/* cost */
+const fmtN = n => n >= 1e6 ? (n/1e6).toFixed(n>=1e7?0:1) + "M" : n >= 1e3 ? Math.round(n/1e3) + "K" : Math.round(n);
+const fmt$ = v => v >= 1000 ? "$" + Math.round(v).toLocaleString() : v >= 1 ? "$" + v.toFixed(2) : "$" + v.toFixed(3);
+function renderCost(){
+  const calls = Math.round(10 ** +$("calls").value), inT = +$("inTok").value;
+  const pIn = Math.max(0, +$("pIn").value || 0), pOut = Math.max(0, +$("pOut").value || 0), oT = Math.max(0, +$("oTok").value || 0);
+  $("callsV").textContent = fmtN(calls); $("inTokV").textContent = inT.toLocaleString();
+  const month = calls * 30;
+  $("costLlm").textContent = fmt$(month * (inT*pIn + oT*pOut) / 1e6);
+  $("costJev").textContent = fmt$(month * inT * 0.042 / 1e6);
+}
+["calls","inTok","pIn","pOut","oTok"].forEach(i => $(i).addEventListener("input", renderCost));
+renderCost(); updateRun();
+})();
+</script>
+</body>
+</html>
