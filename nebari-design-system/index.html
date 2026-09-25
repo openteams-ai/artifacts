@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adopting Nebari Design</title>
+<meta name="description" content="How the Nebari design system reaches your app: the shadcn registry, the theme token contract, Base UI composition, the shared app header, and motion tokens.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+/* Same job as themeBootstrapScript() from @nebari/use-theme-preference: resolve the saved
+   preference before first paint so a dark-mode reader never sees a light flash. */
+(function(){try{var m=localStorage.getItem("nebari-design-system:themeMode");if(m==="dark"||m==="light"){document.documentElement.setAttribute("data-theme",m);}}catch(e){}})();
+</script>
+<style>
+/* ── Nebari semantic tokens, light (values are the registry's own, from globals.css) ── */
+:root{
+  color-scheme:light;
+  --radius:0.625rem;
+  --canvas:#ffffff; --canvas-foreground:#262628;
+  --header:#f8f8f8; --header-foreground:#262628;
+  --card:#ffffff; --card-foreground:#262628;
+  --popover:#ffffff; --popover-foreground:#262628;
+  --primary:#9547c0; --primary-foreground:#ffffff; --primary-hover:#77399a;
+  --secondary:#eceff1; --secondary-foreground:#2e3640;
+  --muted:#eeeeef; --muted-foreground:#70707a; --muted-foreground-strong:#5a5a61;
+  --info:#e7efff; --info-foreground:#2e63ed;
+  --destructive:#ffe9e5; --destructive-foreground:#d2161c;
+  --warning:#ffeeba; --warning-foreground:#6e5800;
+  --success:#dbf7df; --success-foreground:#006e2e;
+  --border:#b7b7bb; --input:#9d9da6; --border-strong:#85858e; --ring:#b053e2;
+  --scrim:rgba(0,0,0,.5);
+  --header-action-hover:#d9d9dc;
+  --duration-fast:100ms; --duration-base:200ms; --duration-slow:350ms; --duration-loading:1600ms;
+  --ease-standard:cubic-bezier(.4,0,.2,1); --ease-emphasized:cubic-bezier(.2,0,0,1);
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+/* ── Dark (the registry's .dark block); follows the OS unless the picker overrides ── */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --canvas:#1a1a1c; --canvas-foreground:#f8f8f8;
+    --header:#262628; --header-foreground:#f8f8f8;
+    --card:#353538; --card-foreground:#f8f8f8;
+    --popover:#353538; --popover-foreground:#f8f8f8;
+    --primary:#b053e2; --primary-foreground:#000000; --primary-hover:#c575f4;
+    --secondary:#3d4956; --secondary-foreground:#eceff1;
+    --muted:#47474b; --muted-foreground:#9d9da6; --muted-foreground-strong:#b7b7bb;
+    --info:#0f2c7b; --info-foreground:#719bf7;
+    --destructive:#6a0206; --destructive-foreground:#f29e93;
+    --warning:#423400; --warning-foreground:#f2d26e;
+    --success:#03411a; --success-foreground:#afe4b8;
+    --border:#5a5a61; --input:#70707a; --border-strong:#85858e; --ring:#c575f4;
+    --scrim:rgba(0,0,0,.6);
+    --header-action-hover:#4a4a50;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --canvas:#1a1a1c; --canvas-foreground:#f8f8f8;
+  --header:#262628; --header-foreground:#f8f8f8;
+  --card:#353538; --card-foreground:#f8f8f8;
+  --popover:#353538; --popover-foreground:#f8f8f8;
+  --primary:#b053e2; --primary-foreground:#000000; --primary-hover:#c575f4;
+  --secondary:#3d4956; --secondary-foreground:#eceff1;
+  --muted:#47474b; --muted-foreground:#9d9da6; --muted-foreground-strong:#b7b7bb;
+  --info:#0f2c7b; --info-foreground:#719bf7;
+  --destructive:#6a0206; --destructive-foreground:#f29e93;
+  --warning:#423400; --warning-foreground:#f2d26e;
+  --success:#03411a; --success-foreground:#afe4b8;
+  --border:#5a5a61; --input:#70707a; --border-strong:#85858e; --ring:#c575f4;
+  --scrim:rgba(0,0,0,.6);
+  --header-action-hover:#4a4a50;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--canvas);color:var(--canvas-foreground);font-family:var(--font-sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+img{max-width:100%}
+[hidden]{display:none!important}
+a{color:var(--primary);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.15em}
+a:hover{color:var(--primary-hover)}
+code,kbd,pre{font-family:var(--font-mono);font-size:.875em}
+code{background:var(--muted);color:var(--muted-foreground-strong);padding:.1em .35em;border-radius:calc(var(--radius)*.6)}
+pre{margin:0;background:var(--muted);color:var(--canvas-foreground);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;line-height:1.5;font-size:.8125rem}
+pre code{background:none;padding:0;color:inherit;font-size:inherit}
+pre .c{color:var(--muted-foreground)}
+pre .k{color:var(--primary)}
+pre .s{color:var(--success-foreground)}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2rem,5vw,3rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:clamp(1.5rem,3vw,1.9rem);font-weight:600;letter-spacing:-.015em}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0}
+.eyebrow{font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground)}
+.lede{font-size:1.125rem;color:var(--muted-foreground-strong);max-width:62ch}
+.prose{max-width:68ch;display:grid;gap:12px}
+.prose li{margin:0}
+.prose ul{margin:0;padding-left:1.2em;display:grid;gap:6px}
+
+/* ── App header: the canonical recipe, rendered with the header tokens ── */
+.menubar{position:sticky;top:0;z-index:20;height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 12px 0 16px;background:var(--header);color:var(--header-foreground);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none;font-weight:600;font-size:.95rem;white-space:nowrap}
+.brand svg{height:32px;width:32px}
+.nav{display:flex;gap:2px;margin:0;padding:0;list-style:none}
+.nav a{display:inline-block;padding:6px 10px;border-radius:calc(var(--radius)*.8);color:var(--muted-foreground-strong);text-decoration:none;font-size:.9rem;font-weight:500}
+.nav a:hover{background:var(--header-action-hover);color:var(--header-foreground)}
+.actions{display:flex;align-items:center;gap:8px;position:relative}
+.ghost{appearance:none;border:0;background:transparent;color:inherit;font:inherit;font-size:.9rem;font-weight:500;padding:6px 10px;border-radius:calc(var(--radius)*.8);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background-color var(--duration-fast) var(--ease-standard)}
+.ghost:hover,.ghost[aria-expanded="true"]{background:var(--header-action-hover)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--primary);color:var(--primary-foreground);display:inline-grid;place-items:center;font-size:.8rem;font-weight:600}
+.menu{position:absolute;right:0;top:calc(100% + 6px);width:248px;padding:8px;background:var(--popover);color:var(--popover-foreground);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;transform:translateY(4px);pointer-events:none;transition:opacity var(--duration-base) var(--ease-emphasized),transform var(--duration-base) var(--ease-emphasized)}
+.menu.open{opacity:1;transform:none;pointer-events:auto}
+.menu-id{padding:0 6px 8px;border-bottom:1px solid var(--border)}
+.menu-id p:first-child{font-size:.875rem;font-weight:500}
+.menu-id p+p{font-size:.75rem;color:var(--muted-foreground)}
+.radiogroup{display:flex;height:34px;align-items:center;gap:4px;padding:4px;margin:8px 0;background:var(--muted);border-radius:calc(var(--radius)*.8)}
+.radiogroup button{flex:1;height:100%;appearance:none;border:1px solid transparent;background:transparent;color:var(--muted-foreground-strong);font:inherit;font-size:.85rem;font-weight:500;border-radius:calc(var(--radius)*.6);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+.radiogroup button:hover{color:var(--canvas-foreground)}
+.radiogroup button[aria-checked="true"]{border-color:var(--border-strong);background:var(--card);color:var(--card-foreground);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.menu-sep{height:1px;background:var(--border);margin:4px 0}
+.menu-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:calc(var(--radius)*.6);font-size:.875rem;color:var(--destructive-foreground)}
+.menu-note{font-size:.72rem;color:var(--muted-foreground);padding:4px 6px 0}
+@media (max-width:640px){.nav{display:none}}
+
+/* ── Page layout ── */
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.hero{padding-block:56px 40px;display:grid;gap:18px}
+.hero-links{display:flex;flex-wrap:wrap;gap:10px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border);border-radius:999px;font-size:.85rem;font-weight:500;color:var(--canvas-foreground);text-decoration:none;background:var(--card);transition:border-color var(--duration-fast) var(--ease-standard)}
+.pill:hover{border-color:var(--border-strong);color:var(--canvas-foreground)}
+.pill svg{width:14px;height:14px}
+section{padding-block:48px;border-top:1px solid var(--border)}
+.sec-head{display:grid;gap:8px;margin-bottom:28px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:start}
+.stack{display:grid;gap:20px}
+.card{background:var(--card);color:var(--card-foreground);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.card h3{margin-bottom:8px}
+.card p{color:var(--muted-foreground-strong);font-size:.95rem}
+.card p+pre,.card p+p{margin-top:10px}
+.callout{border-left:3px solid var(--primary);padding:4px 0 4px 14px;color:var(--muted-foreground-strong);font-size:.95rem}
+.callout strong{color:var(--canvas-foreground)}
+
+/* ── Flow diagram ── */
+figure{margin:0}
+.fig-scroll{overflow-x:auto;padding-bottom:6px}
+.fig-scroll svg{display:block;min-width:880px;width:100%;height:auto}
+figcaption{margin-top:12px;font-size:.9rem;color:var(--muted-foreground)}
+.flow text{font-family:var(--font-sans);font-size:12.5px;fill:currentColor}
+.flow .mono{font-family:var(--font-mono);font-size:10.5px}
+.flow .dim{fill:var(--muted-foreground)}
+.flow .node{fill:var(--card);stroke:var(--border);stroke-width:1.25}
+.flow .edge{stroke:currentColor;stroke-width:1.25;fill:none}
+.flow .hot{stroke:var(--primary)}
+.flow .hot-text{fill:var(--primary);font-weight:600}
+.flow .managed{fill:none;stroke:var(--primary);stroke-width:1.5;stroke-dasharray:5 4}
+.flow .title{font-weight:600;font-size:13px}
+
+/* ── Steps ── */
+.steps{display:grid;gap:18px;counter-reset:step}
+.step{display:grid;grid-template-columns:36px minmax(0,1fr);gap:14px;align-items:start}
+.step>*,.grid2>*,.catalog>*,.dd>*,.motion>*,.eco>*,.stack>*{min-width:0}
+.step::before{counter-increment:step;content:counter(step);width:32px;height:32px;border-radius:50%;background:var(--primary);color:var(--primary-foreground);display:grid;place-items:center;font-weight:600;font-size:.9rem;font-variant-numeric:tabular-nums}
+.step h3{margin-bottom:6px}
+.step p{color:var(--muted-foreground-strong);font-size:.95rem;max-width:64ch}
+.step pre{margin-top:10px}
+
+/* ── Catalog explorer ── */
+.catalog{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.catalog{grid-template-columns:1fr}}
+.cat-group{margin-bottom:16px}
+.cat-group h3{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-foreground);margin-bottom:8px;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{appearance:none;font:inherit;font-family:var(--font-mono);font-size:.8rem;padding:5px 10px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--card-foreground);cursor:pointer;transition:border-color var(--duration-fast) var(--ease-standard),background-color var(--duration-fast) var(--ease-standard)}
+.chip:hover{border-color:var(--border-strong)}
+.chip[aria-pressed="true"]{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary)}
+.chip.dep{border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
+.detail{position:sticky;top:72px}
+.detail .kind{display:inline-block;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--secondary);color:var(--secondary-foreground);margin-bottom:8px}
+.detail h3{font-family:var(--font-mono);font-weight:500;font-size:1.05rem}
+.detail dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:14px 0 0;font-size:.875rem}
+.detail dt{color:var(--muted-foreground);font-weight:500}
+.detail dd{margin:0}
+.detail .tags{display:flex;flex-wrap:wrap;gap:4px}
+.detail .tags span{font-family:var(--font-mono);font-size:.78rem;padding:2px 7px;border-radius:calc(var(--radius)*.6);background:var(--muted);color:var(--muted-foreground-strong)}
+.detail pre{margin-top:14px}
+
+/* ── Surface stack demo ── */
+.surface{border-radius:var(--radius);padding:14px;position:relative}
+.surface>.lab{display:flex;justify-content:space-between;gap:8px;font-family:var(--font-mono);font-size:.75rem;margin-bottom:10px}
+.surface>.lab b{font-weight:500}
+.surface>.lab span{color:var(--muted-foreground)}
+.s-canvas{background:var(--canvas);border:1px dashed var(--border-strong);color:var(--canvas-foreground)}
+.s-header{background:var(--header);color:var(--header-foreground);border:1px solid var(--border)}
+.s-card{background:var(--card);color:var(--card-foreground);border:1px solid var(--border)}
+.s-muted{background:var(--muted);color:var(--muted-foreground-strong);border:0}
+.s-muted .lab span{color:var(--muted-foreground-strong)}
+.s-muted .fake-input{height:34px;border:1px solid var(--input);border-radius:calc(var(--radius)*.8);background:var(--card);display:flex;align-items:center;padding:0 10px;font-size:.85rem;color:var(--muted-foreground)}
+.swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.sw{border-radius:var(--radius);padding:12px;display:grid;gap:4px;font-size:.85rem;border:1px solid transparent}
+.sw b{font-weight:600}
+.sw code{background:transparent;padding:0;color:inherit;opacity:.85;font-size:.75rem}
+.sw-primary{background:var(--primary);color:var(--primary-foreground)}
+.sw-hover{background:var(--primary-hover);color:var(--primary-foreground)}
+.sw-secondary{background:var(--secondary);color:var(--secondary-foreground)}
+.sw-info{background:var(--info);color:var(--info-foreground);border-color:var(--info-foreground)}
+.sw-success{background:var(--success);color:var(--success-foreground);border-color:var(--success-foreground)}
+.sw-warning{background:var(--warning);color:var(--warning-foreground);border-color:var(--warning-foreground)}
+.sw-destructive{background:var(--destructive);color:var(--destructive-foreground);border-color:var(--destructive-foreground)}
+.lines{display:grid;gap:8px;font-size:.85rem}
+.lines div{display:grid;grid-template-columns:150px 1fr;align-items:center;gap:10px}
+.lines code{background:transparent;padding:0}
+.lines i{display:block;height:0;border-top:2px solid}
+.tok-table{width:100%;border-collapse:collapse;font-size:.875rem}
+.tok-table th,.tok-table td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+.tok-table th{font-weight:600;color:var(--muted-foreground);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
+.table-scroll{overflow-x:auto}
+
+/* ── Do / don't ── */
+.dd{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px}
+.dd .card{border-top:3px solid var(--success-foreground)}
+.dd .card.no{border-top-color:var(--destructive-foreground)}
+.dd .tag{font-size:.75rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;color:var(--success-foreground)}
+.dd .no .tag{color:var(--destructive-foreground)}
+
+/* ── Motion demos ── */
+.motion{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.mdemo{display:grid;gap:10px}
+.mdemo .stage{height:88px;border:1px solid var(--border);border-radius:var(--radius);background:var(--muted);display:grid;place-items:center;overflow:hidden}
+.mdemo .tile{width:120px;height:44px;border-radius:calc(var(--radius)*.8);background:var(--card);border:1px solid var(--border);display:grid;place-items:center;font-size:.8rem;font-weight:500}
+.mdemo .tile.skel{background:var(--border);border:0;width:160px;height:14px;border-radius:999px}
+.mdemo .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mdemo code{font-size:.75rem}
+.btn{appearance:none;font:inherit;font-size:.85rem;font-weight:500;padding:6px 12px;border-radius:calc(var(--radius)*.8);border:1px solid var(--border-strong);background:var(--card);color:var(--card-foreground);cursor:pointer;transition:background-color var(--duration-fast) var(--ease-standard),transform var(--duration-fast) var(--ease-standard)}
+.btn:hover{background:var(--muted)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+.btn.primary:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+@keyframes nebari-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes nebari-slide-up-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes nebari-skeleton-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@media (prefers-reduced-motion:no-preference){
+  .play-fade{animation:nebari-fade-in var(--duration-base) var(--ease-standard) both}
+  .play-slide{animation:nebari-slide-up-fade var(--duration-base) var(--ease-emphasized) both}
+  .play-pulse{animation:nebari-skeleton-pulse var(--duration-loading) var(--ease-standard) infinite}
+  .btn.press:active{transform:scale(.95)}
+}
+@media (prefers-reduced-motion:reduce){
+  .menu,.chip,.ghost,.btn,.pill{transition:none}
+  html{scroll-behavior:auto}
+}
+
+/* ── Ecosystem map ── */
+.eco{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.eco .card ul{margin:10px 0 0;padding-left:1.1em;font-size:.9rem;color:var(--muted-foreground-strong);display:grid;gap:4px}
+.eco .card.core{border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
+
+footer{padding-block:32px 48px;border-top:1px solid var(--border);font-size:.85rem;color:var(--muted-foreground);display:grid;gap:6px}
+</style>
+</head>
+<body>
+
+<header class="menubar" aria-label="App header, built to the Nebari header recipe">
+  <a class="brand" href="#top" aria-label="Back to top">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="var(--primary)"/><circle cx="16" cy="16" r="6.5" fill="var(--header)"/><circle cx="16" cy="16" r="2.5" fill="var(--primary)"/></svg>
+    Nebari design
+  </a>
+  <nav aria-label="Sections"><ul class="nav">
+    <li><a href="#flow">Flow</a></li>
+    <li><a href="#install">Install</a></li>
+    <li><a href="#catalog">Catalog</a></li>
+    <li><a href="#tokens">Tokens</a></li>
+    <li><a href="#compose">Compose</a></li>
+    <li><a href="#header">Header</a></li>
+    <li><a href="#motion">Motion</a></li>
+    <li><a href="#ecosystem">Ecosystem</a></li>
+  </ul></nav>
+  <div class="actions">
+    <button class="ghost" id="profile-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-menu" aria-label="Account menu">
+      <span class="avatar" aria-hidden="true">AE</span>
+      <span>Adopting engineer</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="menu" id="profile-menu" role="menu" aria-labelledby="profile-trigger">
+      <div class="menu-id"><p>Adopting engineer</p><p>example placeholder, not a real account</p></div>
+      <div class="radiogroup" role="group" aria-label="Theme" id="theme-picker">
+        <button type="button" role="menuitemradio" aria-checked="false" data-mode="light" title="Light mode">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4"/></svg>Light</button>
+        <button type="button" role="menuitemradio" aria-checked="false" data-mode="dark" title="Dark mode">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>Dark</button>
+        <button type="button" role="menuitemradio" aria-checked="true" data-mode="system" title="System">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>System</button>
+      </div>
+      <div class="menu-sep"></div>
+      <div class="menu-item" role="menuitem" aria-disabled="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9"/></svg>Sign out
+      </div>
+      <p class="menu-note">This menu is the header recipe: profile section, a <code>menuitemradio</code> theme picker, then sign out. The picker really does re-theme this page.</p>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="top">
+
+<div class="hero">
+  <p class="eyebrow">For engineers adopting the system</p>
+  <h1>How Nebari design reaches your app</h1>
+  <p class="lede">Nebari design is a shadcn component registry, not an npm package. Components are copied into your repo as source, styled with one set of semantic tokens, and composed with Base UI. This page shows the pipeline from the registry to your call site, and the handful of rules that keep an app on the system after the first install.</p>
+  <div class="hero-links">
+    <a class="pill" href="https://github.com/nebari-dev/nebari-design"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>nebari-dev/nebari-design</a>
+    <a class="pill" href="https://nebari-dev.github.io/nebari-design/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Storybook</a>
+    <a class="pill" href="https://nebari-dev.github.io/nebari-design/r/registry.json"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M10 13l-2 2 2 2m4-4 2 2-2 2"/></svg>registry.json</a>
+    <a class="pill" href="https://github.com/nebari-dev/nebari-design/blob/main/registry/nebari/globals.css"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.6 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.6 1.6-1.6H16c3.3 0 6-2.7 6-6 0-4.9-4.5-8.6-10-8.6z"/></svg>globals.css (the tokens)</a>
+  </div>
+</div>
+
+<!-- ─────────────────────────── FLOW ─────────────────────────── -->
+<section id="flow">
+  <div class="sec-head">
+    <p class="eyebrow">The pipeline</p>
+    <h2>From Figma variables to your call site</h2>
+    <p class="lede">Every hop is public. The one that matters most is the last one: once the CLI has copied a component into your repo, the file is yours to run but not yours to edit.</p>
+  </div>
+  <figure>
+    <div class="fig-scroll">
+    <svg class="flow" viewBox="0 0 1100 340" role="img" aria-label="Flow: Figma variables are mirrored into the nebari-design repo, CI deploys the registry and Storybook to GitHub Pages, the shadcn CLI resolves an item and its registry dependencies and copies the source into your app under components/ui, lib and globals.css, where it is upstream-managed, and your own code composes it at the call site.">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+        <marker id="arr-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--primary)"/></marker>
+      </defs>
+
+      <!-- Figma -->
+      <rect class="node" x="10" y="110" width="130" height="74" rx="8"/>
+      <text class="title" x="75" y="140" text-anchor="middle">Figma library</text>
+      <text class="dim" x="75" y="160" text-anchor="middle">color variables</text>
+      <text class="dim" x="75" y="175" text-anchor="middle">Light / Dark</text>
+
+      <line class="edge" x1="140" y1="147" x2="218" y2="147" marker-end="url(#arr)"/>
+      <text class="dim" x="180" y="136" text-anchor="middle">mirrored 1:1</text>
+
+      <!-- Repo -->
+      <rect class="node" x="220" y="70" width="230" height="154" rx="8"/>
+      <text class="title" x="335" y="94" text-anchor="middle">nebari-design repo</text>
+      <text class="mono" x="234" y="118">registry/nebari/ui/*.tsx</text>
+      <text class="mono" x="234" y="134">registry/nebari/lib, hooks</text>
+      <text class="mono" x="234" y="150">registry/nebari/globals.css</text>
+      <text class="mono" x="234" y="166">registry.json  (manifest)</text>
+      <text class="mono" x="234" y="182">stories/  tests/</text>
+      <text class="dim" x="234" y="208">CI: biome, vitest, storybook</text>
+
+      <line class="edge" x1="450" y1="147" x2="528" y2="147" marker-end="url(#arr)"/>
+      <text class="dim" x="490" y="136" text-anchor="middle">pages.yml</text>
+
+      <!-- Pages -->
+      <rect class="node" x="530" y="90" width="180" height="114" rx="8"/>
+      <text class="title" x="620" y="114" text-anchor="middle">GitHub Pages</text>
+      <text class="mono" x="544" y="138">/r/registry.json</text>
+      <text class="mono" x="544" y="154">/r/{name}.json</text>
+      <text class="dim" x="544" y="176">Storybook at the root</text>
+      <text class="dim" x="544" y="191">docs + live examples</text>
+
+      <line class="edge hot" x1="710" y1="147" x2="788" y2="147" marker-end="url(#arr-hot)"/>
+      <text class="hot-text" x="750" y="136" text-anchor="middle">shadcn add</text>
+
+      <!-- Your app -->
+      <rect class="node" x="790" y="30" width="300" height="290" rx="8"/>
+      <text class="title" x="940" y="54" text-anchor="middle">Your app</text>
+
+      <!-- managed zone -->
+      <rect class="managed" x="804" y="68" width="272" height="128" rx="6"/>
+      <text class="hot-text" x="816" y="86">upstream-managed: do not edit</text>
+      <text class="mono" x="816" y="108">components/ui/button.tsx</text>
+      <text class="mono" x="816" y="124">components/ui/spinner.tsx</text>
+      <text class="mono" x="816" y="140">lib/utils.ts  (cn)</text>
+      <text class="mono" x="816" y="156">globals.css  :root .dark @theme</text>
+      <text class="dim" x="816" y="182">re-running shadcn add overwrites</text>
+
+      <line class="edge" x1="940" y1="196" x2="940" y2="222" marker-end="url(#arr)"/>
+      <text class="dim" x="950" y="213">imports</text>
+
+      <!-- call site -->
+      <rect class="node" x="804" y="224" width="272" height="80" rx="6"/>
+      <text class="title" x="816" y="246">Your code (call site)</text>
+      <text class="mono" x="816" y="268">&lt;Button className=… render=… /&gt;</text>
+      <text class="mono" x="816" y="286">:root { app overrides } after theme</text>
+
+      <!-- CLI dependency note -->
+      <path class="edge hot" d="M750 147 V 264 H 786" fill="none" marker-end="url(#arr-hot)"/>
+      <text class="dim" x="530" y="236">CLI resolves registryDependencies</text>
+      <text class="mono dim" x="530" y="253">button → utils, spinner, theme</text>
+      <text class="dim" x="530" y="273">theme is appended if missing;</text>
+      <text class="dim" x="530" y="288">only a theme install overwrites it</text>
+    </svg>
+    </div>
+    <figcaption>The registry is served as static JSON from the design repo's Pages build. The shadcn CLI copies each item and its dependencies into your repo, where they stay upstream-managed. Your own code lives at the call site and in a separate overrides block.</figcaption>
+  </figure>
+</section>
+
+<!-- ─────────────────────────── INSTALL ─────────────────────────── -->
+<section id="install">
+  <div class="sec-head">
+    <p class="eyebrow">Setup</p>
+    <h2>Four steps to a themed app</h2>
+    <p class="lede">The only prerequisite is a shadcn-initialized project. Everything else is the CLI reading the public registry.</p>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div>
+        <h3>Register the <code>@nebari</code> namespace</h3>
+        <p>Add the registry to <code>components.json</code> next to your existing style, tailwind and alias config. The <code>{name}</code> placeholder is what the CLI substitutes per item.</p>
+<pre><code>{
+  <span class="s">"$schema"</span>: <span class="s">"https://ui.shadcn.com/schema.json"</span>,
+  <span class="s">"registries"</span>: {
+    <span class="s">"@nebari"</span>: <span class="s">"https://nebari-dev.github.io/nebari-design/r/{name}.json"</span>
+  }
+}</code></pre>
+      </div>
+    </div>
+    <div class="step">
+      <div>
+        <h3>Install the theme, then components</h3>
+        <p>The theme is a <code>registry:theme</code> item. Installing it writes the token blocks into your global stylesheet. Components pull it in transitively, but install it explicitly once so the tokens are complete.</p>
+<pre><code><span class="c"># tokens: one :root, one .dark, one @theme inline</span>
+npx shadcn add @nebari/theme
+<span class="c"># any component; registryDependencies come along</span>
+npx shadcn add @nebari/button @nebari/dialog
+<span class="c"># shared light/dark/system state + ThemeProvider</span>
+npx shadcn add @nebari/use-theme-preference</code></pre>
+      </div>
+    </div>
+    <div class="step">
+      <div>
+        <h3>Load the fonts</h3>
+        <p>The tokens name Geist and IBM Plex Mono but the registry does not ship webfonts. Without this step the app falls back to the system stacks, which is fine for a prototype and wrong for a product.</p>
+<pre><code>npm i @fontsource-variable/geist @fontsource/ibm-plex-mono</code>
+<code><span class="c">// app entry</span>
+<span class="k">import</span> <span class="s">'@fontsource-variable/geist'</span>;
+<span class="k">import</span> <span class="s">'@fontsource/ibm-plex-mono/400.css'</span>;
+<span class="k">import</span> <span class="s">'@fontsource/ibm-plex-mono/500.css'</span>;</code></pre>
+      </div>
+    </div>
+    <div class="step">
+      <div>
+        <h3>Mount the theme hook once and prevent the flash</h3>
+        <p>Wrap the app in <code>ThemeProvider</code> so one hook instance owns the <code>.dark</code> class on <code>&lt;html&gt;</code>. Paste the output of <code>themeBootstrapScript()</code> at the top of <code>&lt;head&gt;</code> so a dark-preference user never sees a light frame while the bundle loads. This page runs the same trick with its own storage key.</p>
+<pre><code><span class="k">import</span> { ThemeProvider } <span class="k">from</span> <span class="s">'@/hooks/theme-provider'</span>;
+
+&lt;ThemeProvider&gt;
+  &lt;App /&gt;
+&lt;/ThemeProvider&gt;</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────── CATALOG ─────────────────────────── -->
+<section id="catalog">
+  <div class="sec-head">
+    <p class="eyebrow">The registry</p>
+    <h2>What one install pulls in</h2>
+    <p class="lede">Pick an item to see its description, what the CLI will resolve alongside it, and the npm packages it needs. The manifest is the source of truth; this snapshot lists the 37 items published at the time of writing.</p>
+  </div>
+  <div class="catalog">
+    <div id="cat-groups"></div>
+    <aside class="card detail" id="cat-detail" aria-live="polite">
+      <span class="kind">ui</span>
+      <h3>button</h3>
+      <p>Pick an item on the left.</p>
+    </aside>
+  </div>
+</section>
+
+<!-- ─────────────────────────── TOKENS ─────────────────────────── -->
+<section id="tokens">
+  <div class="sec-head">
+    <p class="eyebrow">The token contract</p>
+    <h2>One semantic palette, both themes</h2>
+    <p class="lede">Components consume role-based tokens, never primitives. This page is painted with the same values, so the theme picker in the header re-themes every block below. Switch it and watch the hex values change.</p>
+  </div>
+  <div class="grid2">
+    <div class="stack">
+      <div>
+        <h3 style="margin-bottom:10px">Surface stack</h3>
+        <p class="lede" style="font-size:.95rem;margin-bottom:14px">Four layers in stacking order. In light mode a card is separated from the canvas by its border, not its fill. In dark mode recessed surfaces lift instead of digging.</p>
+        <div class="surface s-canvas" data-token="canvas">
+          <div class="lab"><b>--canvas</b><span data-hex="canvas"></span></div>
+          <div class="surface s-header" data-token="header">
+            <div class="lab"><b>--header</b><span data-hex="header"></span></div>
+            <div class="surface s-card" data-token="card">
+              <div class="lab"><b>--card / --popover</b><span data-hex="card"></span></div>
+              <div class="surface s-muted" data-token="muted">
+                <div class="lab"><b>--muted</b><span data-hex="muted"></span></div>
+                <div class="fake-input">input fill, zebra row, slider track</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="callout"><strong><code>--background</code> is deprecated.</strong> Its light value equals the header layer, which made headers invisible on pages painted with it. It stays for existing consumers. New page shells use <code>bg-canvas</code>.</p>
+      <p class="callout"><strong>Muted text on a muted surface</strong> uses <code>text-muted-foreground-strong</code>, not <code>text-muted-foreground</code>. The regular muted foreground fails contrast on the recessed fill.</p>
+    </div>
+    <div class="stack">
+      <div>
+        <h3 style="margin-bottom:10px">Brand and feedback pairs</h3>
+        <div class="swatches">
+          <div class="sw sw-primary"><b>--primary</b><code data-hex="primary"></code><span style="font-size:.75rem">magenta-600 light, 500 dark</span></div>
+          <div class="sw sw-hover"><b>--primary-hover</b><code data-hex="primary-hover"></code><span style="font-size:.75rem">pressed and hover fill</span></div>
+          <div class="sw sw-secondary"><b>--secondary</b><code data-hex="secondary"></code><span style="font-size:.75rem">neutral ramp, no brand hue</span></div>
+          <div class="sw sw-info"><b>info</b><code data-hex="info"></code><span style="font-size:.75rem">soft bg + strong fg</span></div>
+          <div class="sw sw-success"><b>success</b><code data-hex="success"></code><span style="font-size:.75rem">soft bg + strong fg</span></div>
+          <div class="sw sw-warning"><b>warning</b><code data-hex="warning"></code><span style="font-size:.75rem">soft bg + strong fg</span></div>
+          <div class="sw sw-destructive"><b>destructive</b><code data-hex="destructive"></code><span style="font-size:.75rem">soft bg + strong fg</span></div>
+        </div>
+      </div>
+      <div>
+        <h3 style="margin-bottom:10px">Edges</h3>
+        <div class="lines">
+          <div><code>--border</code><i style="border-color:var(--border)"></i></div>
+          <div><code>--border-strong</code><i style="border-color:var(--border-strong)"></i></div>
+          <div><code>--input</code><i style="border-color:var(--input)"></i></div>
+          <div><code>--ring</code><i style="border-color:var(--ring)"></i></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Keep your overrides out of the Nebari block</h3>
+        <p>A theme install overwrites every value it owns in the first matching <code>:root</code>, <code>.dark</code> and <code>@theme inline</code> block. That is how token updates reach apps. Put app-owned tokens in a second block after it; the cascade lets the later declaration win and the CLI never touches it.</p>
+<pre><code><span class="c">/* App overrides: keep below the Nebari theme blocks. */</span>
+:root {
+  --header-action-hover: #d9d9dc;
+  --notification-badge: #d00000;
+}
+.dark {
+  --header-action-hover: #4a4a50;
+  --notification-badge: #e00000;
+}
+@theme inline {
+  --color-header-action-hover: var(--header-action-hover);
+  --color-notification-badge: var(--notification-badge);
+}</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────── COMPOSE ─────────────────────────── -->
+<section id="compose">
+  <div class="sec-head">
+    <p class="eyebrow">Composition</p>
+    <h2>Extend at the call site, never in <code>ui/</code></h2>
+    <p class="lede">Every component has the same shape: semantic token classes, stable <code>data-slot</code> and <code>data-variant</code> attributes, an exported <code>cva</code> function, and Base UI's <code>render</code> prop where the element is polymorphic. Once you have read one, you can use any.</p>
+  </div>
+  <div class="dd">
+    <div class="card">
+      <div class="tag">Do</div>
+      <h3>Pass classes; <code>cn()</code> lets yours win</h3>
+<pre><code>&lt;Button variant=<span class="s">"outline"</span> size=<span class="s">"sm"</span>
+        className=<span class="s">"w-full"</span>&gt;
+  Cancel
+&lt;/Button&gt;</code></pre>
+    </div>
+    <div class="card">
+      <div class="tag">Do</div>
+      <h3>Swap the element with <code>render</code></h3>
+      <p>Nebari's equivalent of Radix's <code>asChild</code>. Classes, <code>data-*</code> attributes and props are merged onto the element you pass.</p>
+<pre><code>&lt;Button render={&lt;a href=<span class="s">"/docs"</span> /&gt;}&gt;Docs&lt;/Button&gt;
+&lt;Badge variant=<span class="s">"outline"</span>
+       render={&lt;a href=<span class="s">"/tag/new"</span> /&gt;}&gt;new&lt;/Badge&gt;</code></pre>
+    </div>
+    <div class="card no">
+      <div class="tag">Don't</div>
+      <h3>Edit <code>components/ui/button.tsx</code></h3>
+      <p>The next <code>shadcn add</code> regenerates the file and your change is gone. It also forks your app away from every other consumer of the same component, which is the thing a design system exists to prevent.</p>
+    </div>
+    <div class="card no">
+      <div class="tag">Don't</div>
+      <h3>Restyle with raw hex or <code>dark:</code> variants</h3>
+      <p>Tokens flip with the <code>.dark</code> class on their own. A hard-coded color or a <code>dark:</code> override is a second theme system that drifts from the first.</p>
+<pre><code><span class="c">// no</span>
+&lt;Card className=<span class="s">"bg-[#f6e9ff] dark:bg-[#442655]"</span> /&gt;
+<span class="c">// yes</span>
+&lt;Card className=<span class="s">"bg-muted"</span> /&gt;</code></pre>
+    </div>
+  </div>
+  <div class="stack" style="margin-top:20px">
+    <p class="callout"><strong>Need a component the catalog lacks?</strong> Fall back to the upstream shadcn component and style it with the same semantic tokens. Check the manifest first with <code>curl -s https://nebari-dev.github.io/nebari-design/r/registry.json</code>, and inspect any item before installing with <code>npx shadcn view @nebari/&lt;name&gt;</code>.</p>
+    <p class="callout"><strong>The installed source is the API reference.</strong> Exact variant and size names live in each component's <code>cva</code> block and props type. That file, not any doc, is authoritative.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────── HEADER ─────────────────────────── -->
+<section id="header">
+  <div class="sec-head">
+    <p class="eyebrow">Shared chrome</p>
+    <h2>One header, so many apps read as one product</h2>
+    <p class="lede">The bar at the top of this page follows the recipe. Nebari apps deployed together share it, so nobody re-derives the layout from another app's source.</p>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3>Composition</h3>
+      <p><code>NavigationMenu</code> is a semantic <code>&lt;header&gt;</code> at <code>h-14 pl-4</code> on <code>bg-header text-header-foreground</code> with a plain <code>border-border</code>. <code>MenuBarBrand</code> holds the logo at <code>h-8 w-auto</code>, linking home. <code>MenuBarNav</code> is optional. <code>MenuBarActions</code> holds, in order, the notifications menu and the profile menu.</p>
+<pre><code>npx shadcn add @nebari/navigation-menu \
+  @nebari/dropdown-menu @nebari/button</code>
+<code>&lt;NavigationMenu className=<span class="s">"h-14 justify-between border-border
+  bg-header pl-4 text-header-foreground"</span>&gt;
+  &lt;MenuBarBrand href=<span class="s">"/"</span>&gt;&lt;img className=<span class="s">"h-8 w-auto"</span> … /&gt;&lt;/MenuBarBrand&gt;
+  &lt;MenuBarNav&gt;…&lt;/MenuBarNav&gt;
+  &lt;MenuBarActions className=<span class="s">"gap-2"</span>&gt;…&lt;/MenuBarActions&gt;
+&lt;/NavigationMenu&gt;</code></pre>
+    </div>
+    <div class="stack">
+      <div class="card">
+        <h3>The theme picker is a menu radio group</h3>
+        <p>Light, Dark and System live inside the profile menu as Base UI <code>Menu.RadioItem</code>s, which render <code>role="menuitemradio"</code> with <code>aria-checked</code>. It only looks like a segmented control. Tabs would promise a tab panel that does not exist and fight the menu's arrow-key navigation. Set <code>closeOnClick={false}</code> so people can try modes without the menu snapping shut. Open the account menu above to see it work.</p>
+      </div>
+      <div class="card">
+        <h3>Three app-defined tokens</h3>
+        <p>Everything else in the header comes from the registry. These three are declared by the app, in both themes, with their Tailwind mappings.</p>
+        <div class="table-scroll"><table class="tok-table">
+          <thead><tr><th>Token</th><th>Light</th><th>Dark</th></tr></thead>
+          <tbody>
+            <tr><td><code>--header-action-hover</code></td><td><code>#d9d9dc</code></td><td><code>#4a4a50</code></td></tr>
+            <tr><td><code>--notification-badge</code></td><td><code>#d00000</code></td><td><code>#e00000</code></td></tr>
+            <tr><td><code>--sign-out-foreground</code></td><td><code>#d2161c</code></td><td><code>#ff6b6b</code></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="card">
+        <h3>There is no avatar in the registry</h3>
+        <p>Each app owns a small <code>Avatar</code> built on Base UI's primitive, kept outside <code>components/ui/</code> so a later install cannot overwrite it. Base UI owns the image loading state, so the fallback renders whenever the image is missing or fails. Only render the notifications bell if the app has notifications.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────── MOTION ─────────────────────────── -->
+<section id="motion">
+  <div class="sec-head">
+    <p class="eyebrow">Motion</p>
+    <h2>Tokens for time, not magic numbers</h2>
+    <p class="lede">The theme ships four durations, two easings and five ready-made <code>animate-*</code> utilities. Replay each demo below; they run on the real token values.</p>
+  </div>
+  <div class="motion">
+    <div class="mdemo card">
+      <div class="stage"><div class="tile" id="m-fade">fade-in</div></div>
+      <div class="row"><code>animate-fade-in</code><button class="btn" type="button" data-play="m-fade" data-cls="play-fade">Replay</button></div>
+      <p><code>--duration-base</code> 200ms, <code>--ease-standard</code></p>
+    </div>
+    <div class="mdemo card">
+      <div class="stage"><div class="tile" id="m-slide">slide-up-fade</div></div>
+      <div class="row"><code>animate-slide-up-fade</code><button class="btn" type="button" data-play="m-slide" data-cls="play-slide">Replay</button></div>
+      <p><code>--duration-base</code> 200ms, <code>--ease-emphasized</code></p>
+    </div>
+    <div class="mdemo card">
+      <div class="stage"><div class="tile skel play-pulse" aria-label="Skeleton pulse"></div></div>
+      <div class="row"><code>animate-skeleton-pulse</code><span class="btn" aria-hidden="true" style="visibility:hidden">Replay</span></div>
+      <p><code>--duration-loading</code> 1600ms, infinite</p>
+    </div>
+    <div class="mdemo card">
+      <div class="stage"><button class="btn primary press" type="button">Press me</button></div>
+      <div class="row"><code>active:scale-95</code><span class="btn" aria-hidden="true" style="visibility:hidden">Replay</span></div>
+      <p><code>--duration-fast</code> 100ms, transform only</p>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:20px">
+    <div class="card">
+      <h3>Hard rules</h3>
+      <div class="prose"><ul>
+        <li><strong>Gate on <code>motion-safe:</code></strong> for every animation class. Nebari targets WCAG 2.1 SC 2.3.3. This page honors reduced motion the same way.</li>
+        <li><strong>Reference tokens with parentheses</strong> in Tailwind v4: <code>motion-safe:duration-(--duration-base)</code>. The v3 bracket form silently resets the duration to zero.</li>
+        <li><strong>Animate opacity and transform only.</strong> Height, width, padding and top force reflows.</li>
+        <li><strong>CSS and Base UI first.</strong> Base UI popups expose <code>data-starting-style</code> and <code>data-ending-style</code> for enter and exit transitions in plain CSS.</li>
+      </ul></div>
+    </div>
+    <div class="card">
+      <h3>The <code>cn()</code> merge gotcha</h3>
+      <p><code>tailwind-merge</code> deduplicates your transition classes against the ones already in the component's <code>cva</code> block. A bare <code>transition</code> overwrites the component's transition-property and its color transition disappears. Re-enumerate every property you need.</p>
+<pre><code>&lt;Button className={cn(
+  <span class="s">'motion-safe:transition-[color,background-color,transform]'</span>,
+  <span class="s">'motion-safe:duration-(--duration-base)'</span>,
+  <span class="s">'motion-safe:active:scale-95'</span>,
+)} /&gt;</code></pre>
+      <p>For sequences CSS cannot express, use the Motion library through the <code>render</code> prop: <code>&lt;Button render={&lt;motion.button … /&gt;}&gt;</code>. It is not a default dependency; install it only when needed.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────── ECOSYSTEM ─────────────────────────── -->
+<section id="ecosystem">
+  <div class="sec-head">
+    <p class="eyebrow">Ecosystem</p>
+    <h2>What sits around the registry</h2>
+    <p class="lede">The design repo is the center. Everything else either feeds it, is built from it, or teaches tools how to use it.</p>
+  </div>
+  <div class="eco">
+    <div class="card core">
+      <h3>nebari-design</h3>
+      <p>The registry source, Storybook, tests, logo mark and symbol assets. Licensed CC BY-NC-ND 4.0.</p>
+      <ul>
+        <li><a href="https://github.com/nebari-dev/nebari-design">Repository</a></li>
+        <li><a href="https://nebari-dev.github.io/nebari-design/">Storybook, with docs per component</a></li>
+        <li><a href="https://nebari-dev.github.io/nebari-design/r/registry.json">Registry manifest</a></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Upstream it builds on</h3>
+      <p>Components are thin, typed wrappers over these. Knowing them is most of knowing Nebari.</p>
+      <ul>
+        <li><a href="https://ui.shadcn.com/docs/registry">shadcn registry spec and CLI</a></li>
+        <li><a href="https://base-ui.com/">Base UI</a>: unstyled primitives, the <code>render</code> prop</li>
+        <li><a href="https://tailwindcss.com/">Tailwind v4</a> with <code>@theme inline</code> token mappings</li>
+        <li><a href="https://cva.style/">class-variance-authority</a> for variants</li>
+        <li><a href="https://lucide.dev/">lucide-react</a> icons, <a href="https://tanstack.com/table">TanStack Table</a> under <code>data-table</code></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Design source</h3>
+      <p>The Figma variables library is the source of the color system. The primitive ramps and semantic tokens in <code>globals.css</code> are mirrored from it one to one, with the source hex recorded in comments. A test derives the <code>theme</code> item from that file and fails if they drift.</p>
+    </div>
+    <div class="card">
+      <h3>Reference consumer</h3>
+      <p>The Nebari landing app is the reference implementation of the shared header, and the pattern every other Nebari app matches.</p>
+      <ul>
+        <li><a href="https://github.com/nebari-dev/nebari-landing">nebari-dev/nebari-landing</a></li>
+        <li><a href="https://github.com/nebari-dev/nebari-landing/blob/main/frontend/src/components/Header.tsx">Header.tsx</a></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>The Claude Code skill</h3>
+      <p>The registry ships its own skill as a <code>registry:file</code> item. Install it and a coding agent knows the setup, the catalog, the composition rules and the header recipe on this page.</p>
+<pre><code>npx shadcn add @nebari/claude-skill</code></pre>
+    </div>
+    <div class="card">
+      <h3>Fonts</h3>
+      <p>Geist for interface text and IBM Plex Mono for code, loaded by the app through Fontsource. This page loads the same families from Google Fonts.</p>
+      <ul>
+        <li><a href="https://vercel.com/font">Geist</a></li>
+        <li><a href="https://www.ibm.com/plex/">IBM Plex Mono</a></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Written from the public nebari-design repository, its registry manifest and its Claude Code skill. The catalog snapshot and token values are current as of September 2026; the manifest and <code>globals.css</code> are always authoritative.</p>
+  <p>Part of <a href="https://openteams-ai.github.io/artifacts/">OpenTeams Artifacts</a>.</p>
+</footer>
+
+</main>
+
+<script>
+(function(){
+  /* ── Theme preference: same contract as @nebari/use-theme-preference ── */
+  var KEY="nebari-design-system:themeMode";
+  var root=document.documentElement;
+  var picker=document.getElementById("theme-picker");
+  function readMode(){try{var m=localStorage.getItem(KEY);return (m==="light"||m==="dark")?m:"system";}catch(e){return "system";}}
+  function isDark(){var m=readMode();if(m==="dark")return true;if(m==="light")return false;return window.matchMedia("(prefers-color-scheme: dark)").matches;}
+  function apply(mode){
+    if(mode==="system"){root.removeAttribute("data-theme");}else{root.setAttribute("data-theme",mode);}
+    try{if(mode==="system")localStorage.removeItem(KEY);else localStorage.setItem(KEY,mode);}catch(e){}
+    picker.querySelectorAll("[role=menuitemradio]").forEach(function(b){b.setAttribute("aria-checked",String(b.dataset.mode===mode));});
+    paintHex();
+  }
+  picker.addEventListener("click",function(e){var b=e.target.closest("[data-mode]");if(b)apply(b.dataset.mode);});
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",paintHex);
+
+  /* ── Hex readouts (the registry's source hex for each token) ── */
+  var HEX={
+    light:{canvas:"#ffffff",header:"#f8f8f8",card:"#ffffff",muted:"#eeeeef",primary:"#9547c0","primary-hover":"#77399a",secondary:"#eceff1",info:"#e7efff / #2e63ed",success:"#dbf7df / #006e2e",warning:"#ffeeba / #6e5800",destructive:"#ffe9e5 / #d2161c"},
+    dark:{canvas:"#1a1a1c",header:"#262628",card:"#353538",muted:"#47474b",primary:"#b053e2","primary-hover":"#c575f4",secondary:"#3d4956",info:"#0f2c7b / #719bf7",success:"#03411a / #afe4b8",warning:"#423400 / #f2d26e",destructive:"#6a0206 / #f29e93"}
+  };
+  function paintHex(){var t=isDark()?HEX.dark:HEX.light;document.querySelectorAll("[data-hex]").forEach(function(el){el.textContent=t[el.dataset.hex]||"";});}
+
+  /* ── Profile menu ── */
+  var trig=document.getElementById("profile-trigger"),menu=document.getElementById("profile-menu");
+  function setOpen(o){menu.classList.toggle("open",o);trig.setAttribute("aria-expanded",String(o));}
+  trig.addEventListener("click",function(){setOpen(!menu.classList.contains("open"));});
+  document.addEventListener("click",function(e){if(!menu.contains(e.target)&&!trig.contains(e.target))setOpen(false);});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape")setOpen(false);});
+
+  /* ── Motion replays ── */
+  document.querySelectorAll("[data-play]").forEach(function(b){
+    b.addEventListener("click",function(){var el=document.getElementById(b.dataset.play),c=b.dataset.cls;el.classList.remove(c);void el.offsetWidth;el.classList.add(c);});
+  });
+
+  /* ── Catalog explorer ── */
+  var CATALOG=[{"n":"utils","g":"Foundations","t":"cn() utility","k":"lib","d":"Class-name merge helper built on clsx and tailwind-merge.","r":[],"p":[]},{"n":"date-utils","g":"Foundations","t":"Date utilities","k":"lib","d":"Small calendar-date helpers for arithmetic, comparison, formatting, and segmented entry parsing.","r":[],"p":[]},{"n":"theme","g":"Foundations","t":"Nebari theme","k":"theme","d":"Nebari brand color tokens and radius for light and dark modes.","r":[],"p":[]},{"n":"claude-skill","g":"Foundations","t":"Nebari UI Claude Code skill","k":"file","d":"Claude Code skill that teaches an AI assistant how to install and use Nebari components in a consumer app \u2014 registry setup, the component catalog, the Base UI render-prop convention, and theming.","r":[],"p":[]},{"n":"use-theme-preference","g":"Hooks","t":"useThemePreference","k":"hook","d":"Theme/dark-mode state: persists a light/dark/system preference, follows the OS in system mode, and toggles the .dark class on <html>. Ships a ThemeProvider/useTheme context wrapper and a pre-paint bootstrap script builder that eliminates the theme flash.","r":["theme"],"p":[]},{"n":"button","g":"Forms & inputs","t":"Button","k":"ui","d":"Button with variants, sizes, a loading state, and polymorphic render-prop composition.","r":["utils","spinner","theme"],"p":["@base-ui/react","class-variance-authority","lucide-react"]},{"n":"button-group","g":"Forms & inputs","t":"Button Group","k":"ui","d":"Groups related actions into horizontal or vertical segmented controls with shared borders and unified outer corners.","r":["button","utils","theme"],"p":["@base-ui/react","class-variance-authority"]},{"n":"input","g":"Forms & inputs","t":"Input","k":"ui","d":"Single-line text-entry field with hover, focus, disabled, and invalid states, built on Base UI's Input and auto-wired to Field.","r":["utils","theme"],"p":["@base-ui/react","lucide-react"]},{"n":"textarea","g":"Forms & inputs","t":"Textarea","k":"ui","d":"Multi-line text-entry field \u2014 a styled native textarea mirroring Input's border, focus ring, disabled, and invalid states.","r":["utils","theme"],"p":["lucide-react"]},{"n":"label","g":"Forms & inputs","t":"Label","k":"ui","d":"Accessible label for a form control, paired via htmlFor or composed with Field.","r":["utils"],"p":[]},{"n":"field","g":"Forms & inputs","t":"Field","k":"ui","d":"Groups a control with its label, description, and validation message, wiring accessible-name and description associations automatically. Built on Base UI's Field.","r":["utils"],"p":["@base-ui/react"]},{"n":"checkbox","g":"Forms & inputs","t":"Checkbox","k":"ui","d":"Labeled checkbox with default and boxed variants, checked, unchecked, and indeterminate states, validation feedback, and Base UI behavior.","r":["utils","theme"],"p":["@base-ui/react","class-variance-authority","lucide-react"]},{"n":"radio-group","g":"Forms & inputs","t":"Radio Group","k":"ui","d":"Mutually exclusive radio group with default and boxed item variants, stable selected targets, and group-level validation feedback.","r":["utils","theme"],"p":["@base-ui/react","class-variance-authority"]},{"n":"switch","g":"Forms & inputs","t":"Switch","k":"ui","d":"Toggle a single setting on or off with immediate effect, built on Base UI's Switch.","r":["utils","theme"],"p":["@base-ui/react"]},{"n":"slider","g":"Forms & inputs","t":"Slider","k":"ui","d":"Bounded numeric input with single-value and range behavior, keyboard navigation, and Nebari track and thumb styling.","r":["utils","theme"],"p":["@base-ui/react"]},{"n":"select","g":"Forms & inputs","t":"Select","k":"ui","d":"Accessible standard-size select menu with grouped labels, separators, validation states, and anchored popup positioning.","r":["utils","theme"],"p":["@base-ui/react","lucide-react"]},{"n":"combobox","g":"Forms & inputs","t":"Combobox","k":"ui","d":"Autocomplete input paired with a filterable option list. Supports single and multi-select chips, grouped options, an empty state, and a clear affordance, built on Base UI's Combobox.","r":["utils","badge","theme"],"p":["@base-ui/react","lucide-react"]},{"n":"calendar","g":"Forms & inputs","t":"Calendar","k":"ui","d":"Single-month calendar grid with reusable day cells, range states, keyboard navigation, and Nebari popover-surface styling.","r":["utils","date-utils","button","theme"],"p":["@base-ui/react","class-variance-authority","lucide-react"]},{"n":"date-picker","g":"Forms & inputs","t":"Date Picker","k":"ui","d":"Date picker field for single dates, ranges, date and time selection, and segmented typed entry, backed by Base UI Popover.","r":["utils","date-utils","field","calendar","theme"],"p":["@base-ui/react","class-variance-authority","lucide-react"]},{"n":"dialog","g":"Overlays & menus","t":"Dialog","k":"ui","d":"Modal dialog with overlay, close control, header, footer, title, and description parts, built on Base UI's Dialog.","r":["utils","button","theme"],"p":["@base-ui/react","lucide-react"]},{"n":"drawer","g":"Overlays & menus","t":"Drawer","k":"ui","d":"Edge-anchored panel for secondary tasks, contextual detail, or short forms, with right-side and bottom-sheet variants built on Base UI Drawer.","r":["utils","button","theme"],"p":["@base-ui/react","lucide-react"]},{"n":"dropdown-menu","g":"Overlays & menus","t":"Dropdown Menu","k":"ui","d":"Action menu triggered by a button, with grouped items, labels, separators, checkbox items, and nested submenus.","r":["utils","theme"],"p":["@base-ui/react","class-variance-authority","lucide-react"]},{"n":"tooltip","g":"Overlays & menus","t":"Tooltip","k":"ui","d":"Compact supplemental information shown on hover or keyboard focus, with anchored positioning and optional arrow. Touch devices don't trigger tooltips so critical information shouldn't live only in a tooltip.","r":["utils","theme"],"p":["@base-ui/react"]},{"n":"toast","g":"Overlays & menus","t":"Toast","k":"ui","d":"Transient notification with status types, actions, promise updates, a five-item stack, and swipe dismissal, built on Base UI Toast.","r":["button","theme","utils"],"p":["@base-ui/react","class-variance-authority","lucide-react"]},{"n":"navigation-menu","g":"Navigation & layout","t":"Navigation Menu","k":"ui","d":"Application navigation bar with anchor-first NavLink items, NavDropdownMenu composition, and brand/actions slots.","r":["dropdown-menu","utils","theme"],"p":["@base-ui/react","class-variance-authority"]},{"n":"breadcrumb","g":"Navigation & layout","t":"Breadcrumb","k":"ui","d":"Hierarchy navigation trail with default, ellipsis-triggered, and current-route dropdown compositions.","r":["utils","theme"],"p":["@base-ui/react","lucide-react"]},{"n":"tabs","g":"Navigation & layout","t":"Tabs","k":"ui","d":"Tabs for switching between related panels, with pill and underline variants built on Base UI.","r":["utils"],"p":["@base-ui/react","class-variance-authority"]},{"n":"sidebar","g":"Navigation & layout","t":"Sidebar","k":"ui","d":"Collapsible app-shell sidebar whose menu button composes via Base UI's render prop into links, dropdown, select, and tooltip triggers.","r":["utils","theme","tooltip"],"p":["@base-ui/react","class-variance-authority","lucide-react"]},{"n":"accordion","g":"Navigation & layout","t":"Accordion","k":"ui","d":"Accessible disclosure set with single or multiple expansion, semantic heading wrappers, and animated panels.","r":["utils","theme"],"p":["@base-ui/react","lucide-react"]},{"n":"alert","g":"Feedback & display","t":"Alert","k":"ui","d":"Inline status message with default, success, warning, and destructive variants, composed of Alert, AlertTitle, AlertDescription, and AlertAction.","r":["utils"],"p":["class-variance-authority","lucide-react"]},{"n":"badge","g":"Feedback & display","t":"Badge","k":"ui","d":"Small status/label chip with variants, composable via Base UI's render prop.","r":["utils"],"p":["@base-ui/react","class-variance-authority"]},{"n":"card","g":"Feedback & display","t":"Card","k":"ui","d":"Static content surface composed from header, title, description, action, content, and footer sections.","r":["utils"],"p":["class-variance-authority"]},{"n":"table","g":"Feedback & display","t":"Table","k":"ui","d":"Responsive data table with Nebari header, cell, row, footer, caption, and hover styling.","r":["utils","theme"],"p":[]},{"n":"data-table","g":"Feedback & display","t":"Data Table","k":"ui","d":"Reusable TanStack Table with sorting, filtering, row selection, column visibility, pagination, and complete empty, loading, and error states.","r":["button","checkbox","dropdown-menu","input","select","table","theme","utils"],"p":["@tanstack/react-table","lucide-react"]},{"n":"code-block","g":"Feedback & display","t":"Code Block","k":"ui","d":"Formatted, monospaced code snippet with an optional language/filename header, a copy-to-clipboard button, and optional line numbers. Composed of CodeBlock, CodeBlockHeader, CodeBlockBody, and CodeBlockCopyButton.","r":["utils","theme"],"p":["class-variance-authority","lucide-react"]},{"n":"spinner","g":"Feedback & display","t":"Spinner","k":"ui","d":"Animated loading spinner built on lucide-react.","r":["utils"],"p":["lucide-react"]},{"n":"skeleton","g":"Feedback & display","t":"Skeleton","k":"ui","d":"Decorative placeholder primitives for loading states, with line, circle, and block shapes.","r":["utils","theme"],"p":["class-variance-authority"]}];
+  var byName={};CATALOG.forEach(function(i){byName[i.n]=i;});
+  var groupsEl=document.getElementById("cat-groups"),detail=document.getElementById("cat-detail");
+  var order=[];CATALOG.forEach(function(i){if(order.indexOf(i.g)<0)order.push(i.g);});
+  order.forEach(function(g){
+    var wrap=document.createElement("div");wrap.className="cat-group";
+    var h=document.createElement("h3");h.textContent=g;wrap.appendChild(h);
+    var chips=document.createElement("div");chips.className="chips";
+    CATALOG.filter(function(i){return i.g===g;}).forEach(function(i){
+      var b=document.createElement("button");b.type="button";b.className="chip";b.textContent=i.n;b.dataset.name=i.n;b.setAttribute("aria-pressed","false");
+      b.addEventListener("click",function(){select(i.n);});
+      chips.appendChild(b);
+    });
+    wrap.appendChild(chips);groupsEl.appendChild(wrap);
+  });
+  function closure(name){var seen={},stack=[name];while(stack.length){var n=stack.pop();if(seen[n])continue;seen[n]=true;(byName[n]?byName[n].r:[]).forEach(function(d){if(!seen[d])stack.push(d);});}delete seen[name];return Object.keys(seen);}
+  function esc(s){return s.replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+  function select(name){
+    var it=byName[name];if(!it)return;
+    var deps=closure(name);
+    var npm={};deps.concat([name]).forEach(function(n){(byName[n].p||[]).forEach(function(p){npm[p]=true;});});
+    var npmList=Object.keys(npm).sort();
+    groupsEl.querySelectorAll(".chip").forEach(function(c){c.setAttribute("aria-pressed",String(c.dataset.name===name));c.classList.toggle("dep",deps.indexOf(c.dataset.name)>=0);});
+    var html='<span class="kind">'+esc(it.k)+'</span><h3>@nebari/'+esc(it.n)+'</h3><p>'+esc(it.d)+'</p><dl>';
+    html+='<dt>Also installs</dt><dd class="tags">'+(deps.length?deps.map(function(d){return '<span>'+esc(d)+'</span>';}).join(''):'<span>nothing else</span>')+'</dd>';
+    html+='<dt>npm</dt><dd class="tags">'+(npmList.length?npmList.map(function(d){return '<span>'+esc(d)+'</span>';}).join(''):'<span>none</span>')+'</dd>';
+    html+='</dl><pre><code>npx shadcn add @nebari/'+esc(it.n)+'</code></pre>';
+    detail.innerHTML=html;
+  }
+  select("button");
+  paintHex();
+  apply(readMode());
+})();
+</script>
+</body>
+</html>
