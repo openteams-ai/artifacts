@@ -123,6 +123,20 @@ input[type=range]{width:100%;accent-color:var(--jev)}
 .total.llm{background:var(--llm-soft)} .total.jev{background:var(--jev-soft)}
 .total .big{font-size:1.8rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .total.llm .big{color:var(--llm)} .total.jev .big{color:var(--jev)}
+.total.eng{background:var(--paper);border:1px solid var(--line)} .total.eng .big{color:var(--ink)}
+
+/* Integration */
+.payback{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.pb-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:.9rem}
+.pb-head b{font-size:1.4rem;font-variant-numeric:tabular-nums;letter-spacing:-.01em;text-align:right}
+.pb-track{position:relative;height:14px;border-radius:7px;background:var(--paper);border:1px solid var(--line);overflow:hidden;margin:8px 0 6px}
+.pb-fill{height:100%;width:0;border-radius:7px;background:var(--good);transition:width .45s ease}
+.pb-fill.warn{background:var(--warn)} .pb-fill.bad{background:var(--bad)}
+.days{display:grid;gap:10px;margin-top:14px}
+@media (min-width:760px){.days{grid-template-columns:repeat(2,1fr)}}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.day h3{margin:0 0 4px;font-size:1rem}
+.day p{font-size:.9rem;margin:0;color:var(--muted)}
 
 /* Table */
 .tablewrap{overflow-x:auto;margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
@@ -160,7 +174,7 @@ tbody th{font-weight:600;color:var(--muted);width:24%}
 .pipe .zone{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:5 4}
 .pipe .retry{stroke:var(--bad);stroke-width:1.5;fill:none;stroke-dasharray:4 3}
 .pipe .rt{font-family:var(--sans);font-size:11px;font-weight:600;fill:var(--bad)}
-@media (prefers-reduced-motion: reduce){.fill,.hist div,.race-fill,.needle{transition:none}.stream .cur{animation:none}}
+@media (prefers-reduced-motion: reduce){.fill,.hist div,.race-fill,.needle,.pb-fill{transition:none}.stream .cur{animation:none}}
 </style>
 </head>
 <body>
@@ -341,7 +355,7 @@ tbody th{font-weight:600;color:var(--muted);width:24%}
 
   <section>
     <h2>What it costs at volume</h2>
-    <p class="muted">An LLM bills for the JSON it writes. Jev bills only for what it reads. Jev's price is TypeSafe's published rate; set your own LLM's prices to compare.</p>
+    <p class="muted">An LLM bills for the JSON it writes. Jev bills only for what it reads. Jev's price is TypeSafe's published rate; set your own LLM's prices to compare. This is only the API bill. The next section adds the engineering time.</p>
     <div class="panel">
       <div class="cost-grid">
         <div><label for="calls">Decisions per day: <b id="callsV"></b></label><input type="range" id="calls" min="3" max="7" step="0.1" value="5"></div>
@@ -360,6 +374,37 @@ tbody th{font-weight:600;color:var(--muted);width:24%}
   </section>
 
   <section>
+    <h2>What it costs to wire in</h2>
+    <p class="muted">The monthly bill is the small number. The big one is the engineering time to get Jev into every place a decision is made, and to keep it there. Saving $1,000 a month on API calls is moot if adoption costs $50,000 of engineering. Estimate the build here; the savings come from the calculator above.</p>
+    <div class="panel">
+      <div class="cost-grid">
+        <div><label for="points">Decision points to integrate: <b id="pointsV"></b></label><input type="range" id="points" min="1" max="40" step="1" value="6"></div>
+        <div><label for="daysPer">Engineering days per decision point: <b id="daysPerV"></b></label><input type="range" id="daysPer" min="1" max="20" step="1" value="5"></div>
+        <div class="prices">
+          <div><label for="rate">$ per engineering day</label><input class="num" type="number" id="rate" value="1200" min="0" step="100"></div>
+          <div><label for="upkeep">Upkeep, days / month</label><input class="num" type="number" id="upkeep" value="2" min="0" step="0.5"></div>
+        </div>
+      </div>
+      <div class="totals">
+        <div class="total eng"><div class="small">One-time integration</div><div class="big" id="costBuild"></div></div>
+        <div class="total eng"><div class="small">Net saving per month (API saving minus upkeep)</div><div class="big" id="netMonth"></div></div>
+      </div>
+      <div class="payback">
+        <div class="pb-head"><span>Time to pay back the build</span><b id="pbMonths"></b></div>
+        <div class="pb-track"><div class="pb-fill" id="pbFill"></div></div>
+        <div class="scale"><span>0</span><span>1 yr</span><span>2 yr</span><span>3 yr</span></div>
+        <p class="outcome" id="pbOutcome"></p>
+      </div>
+    </div>
+    <div class="days">
+      <div class="day"><h3>Finding the decision points</h3><p>Every place code branches on an LLM's label, score or yes/no is a candidate. Most are buried inside prompts, not listed anywhere.</p></div>
+      <div class="day"><h3>Defining each question</h3><p>The allowed answers, a labeled set of real inputs to measure accuracy against, and the thresholds for auto-route, review and escalate.</p></div>
+      <div class="day"><h3>Building the paths a threshold implies</h3><p>Review queues and escalation didn't exist while the LLM's answer was simply trusted. They are new product work, not a swap.</p></div>
+      <div class="day"><h3>Deleting the translation layer</h3><p>Parse, validate and retry code goes away, along with its tests. That is the one part of the migration that pays for itself.</p></div>
+    </div>
+  </section>
+
+  <section>
     <h2>Side by side</h2>
     <div class="tablewrap">
       <table>
@@ -373,6 +418,7 @@ tbody th{font-weight:600;color:var(--muted);width:24%}
           <tr><th>Speed (vendor figures)</th><td>Seconds for frontier models</td><td>70–500 ms per call</td></tr>
           <tr><th>Good at</th><td>Writing, summarizing, code, dialogue, multi-step reasoning</td><td>Routing, triage, scoring, guardrail checks</td></tr>
           <tr><th>Can't do</th><td>Guarantee a valid, typed answer</td><td>Write a reply, summarize, or explain its choice</td></tr>
+          <tr><th>Cost to adopt</th><td>Already wired in wherever you call it; switching vendors is a prompt edit</td><td>A new integration per decision point: questions, thresholds, evals and the review path</td></tr>
         </tbody>
       </table>
     </div>
@@ -380,7 +426,7 @@ tbody th{font-weight:600;color:var(--muted);width:24%}
 
   <section>
     <h2>Most teams use both</h2>
-    <p class="muted">Jev works like a smart if-statement inside ordinary code. Your program keeps control of the workflow; each model does the part it's built for.</p>
+    <p class="muted">Jev works like a smart if-statement inside ordinary code. Your program keeps control of the workflow; each model does the part it's built for. Start with the one decision point where volume or latency hurts most. Each further point is its own small integration, so the bet stays small.</p>
     <div class="flow">
       <div class="step s1"><h3>Jev decides</h3><p>Classifies the ticket, scores urgency and checks policy in a few hundred milliseconds.</p></div>
       <div class="step s2"><h3>An LLM writes</h3><p>Drafts the reply only when a reply is actually needed.</p></div>
@@ -614,15 +660,53 @@ renderRouting();
 /* cost */
 const fmtN = n => n >= 1e6 ? (n/1e6).toFixed(n>=1e7?0:1) + "M" : n >= 1e3 ? Math.round(n/1e3) + "K" : Math.round(n);
 const fmt$ = v => v >= 1000 ? "$" + Math.round(v).toLocaleString() : v >= 1 ? "$" + v.toFixed(2) : "$" + v.toFixed(3);
+let llmMonth = 0, jevMonth = 0;
 function renderCost(){
   const calls = Math.round(10 ** +$("calls").value), inT = +$("inTok").value;
   const pIn = Math.max(0, +$("pIn").value || 0), pOut = Math.max(0, +$("pOut").value || 0), oT = Math.max(0, +$("oTok").value || 0);
   $("callsV").textContent = fmtN(calls); $("inTokV").textContent = inT.toLocaleString();
   const month = calls * 30;
-  $("costLlm").textContent = fmt$(month * (inT*pIn + oT*pOut) / 1e6);
-  $("costJev").textContent = fmt$(month * inT * 0.042 / 1e6);
+  llmMonth = month * (inT*pIn + oT*pOut) / 1e6;
+  jevMonth = month * inT * 0.042 / 1e6;
+  $("costLlm").textContent = fmt$(llmMonth);
+  $("costJev").textContent = fmt$(jevMonth);
+  renderIntegration();
 }
 ["calls","inTok","pIn","pOut","oTok"].forEach(i => $(i).addEventListener("input", renderCost));
+
+/* integration */
+function renderIntegration(){
+  const pts = +$("points").value, dpp = +$("daysPer").value;
+  const rate = Math.max(0, +$("rate").value || 0), up = Math.max(0, +$("upkeep").value || 0);
+  $("pointsV").textContent = pts; $("daysPerV").textContent = dpp;
+  const build = pts * dpp * rate;
+  const net = llmMonth - jevMonth - up * rate;
+  $("costBuild").textContent = fmt$(build);
+  $("netMonth").textContent = (net < 0 ? "−" : "") + fmt$(Math.abs(net));
+  const fill = $("pbFill"), out = $("pbOutcome"), pb = $("pbMonths");
+  const months = net > 0 ? build / net : Infinity;
+  const mLabel = months < 1 ? "under a month" : months < 12 ? months.toFixed(1) + " months" : months < 36 ? (months/12).toFixed(1) + " years" : Math.round(months/12) + " years";
+  let cls = "", width = Math.min(100, months / 36 * 100), text;
+  if (!isFinite(months)){
+    cls = "bad"; width = 100; pb.textContent = "never";
+    text = "The API saving doesn't cover the upkeep, so on cost alone this never pays back. Do it only if the speed or the typed answers are worth it on their own.";
+  } else if (months <= 6){
+    pb.textContent = mLabel;
+    text = "The build is small next to the saving. This is the volume where a faster, cheaper decision model earns its integration quickly.";
+  } else if (months <= 18){
+    cls = "warn"; pb.textContent = mLabel;
+    text = "Worth it if these decision points are stable. If the product is still changing around them, the integration work gets redone before it pays off.";
+  } else if (months <= 36){
+    cls = "warn"; pb.textContent = mLabel;
+    text = "A long bet on today's API prices, which tend to fall. Make the case on speed and confidence, not on the bill.";
+  } else {
+    cls = "bad"; pb.textContent = mLabel;
+    text = "On cost alone, leave the LLM in place. The volume isn't there to justify the engineering.";
+  }
+  fill.className = "pb-fill " + cls; fill.style.width = width + "%";
+  out.textContent = text;
+}
+["points","daysPer","rate","upkeep"].forEach(i => $(i).addEventListener("input", renderIntegration));
 renderCost(); updateRun();
 })();
 </script>
