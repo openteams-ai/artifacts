@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Interactive UI/UX Community of Practice talk on WebGPU, with live demos that run on the viewer's GPU and speaker notes.">
+<title>WebGPU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* A committed dark deck, matching the original talk's palette. */
+:root{
+  color-scheme:dark;
+  --bg:#16171F; --panel:#242634; --panel2:#2E3142; --line:#3A3D4F;
+  --fg:#ECEDF2; --muted:#9CA0B4; --dim:#6E7290;
+  --mint:#02C39A; --mint-ink:#0B1F1A; --coral:#F9704B;
+  --sans:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,"Courier New",monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:clamp(1rem,1.45vw,1.35rem);line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--mint);text-decoration:underline;text-underline-offset:.15em;text-decoration-thickness:1px}
+a:hover{color:#5fe0c3}
+code,pre{font-family:var(--mono)}
+code{font-size:.88em;background:var(--panel2);color:var(--fg);padding:.08em .35em;border-radius:5px}
+pre{margin:0;background:#101118;color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:clamp(12px,1.4vw,22px);overflow-x:auto;font-size:clamp(.8rem,1.15vw,1.05rem);line-height:1.5}
+pre code{background:none;padding:0;font-size:inherit}
+pre .c{color:var(--dim)} pre .k{color:var(--mint)} pre .s{color:#F2C879} pre .a{color:var(--coral)}
+:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+h1,h2,h3,p{margin:0}
+h1{font-size:clamp(2.6rem,7vw,6.4rem);font-weight:700;letter-spacing:-.03em;line-height:1;text-wrap:balance}
+h2{font-size:clamp(1.7rem,3.6vw,3.2rem);font-weight:600;letter-spacing:-.02em;line-height:1.1;text-wrap:balance}
+h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
+.eyebrow{font-size:clamp(.75rem,1vw,.95rem);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mint)}
+.lede{color:var(--muted);max-width:60ch}
+.statement{font-size:clamp(1.4rem,2.6vw,2.3rem);font-weight:500;line-height:1.3;max-width:34ch;text-wrap:balance}
+.big{font-size:clamp(5rem,16vw,13rem);font-weight:700;letter-spacing:-.05em;line-height:.9;color:var(--mint);font-variant-numeric:tabular-nums}
+
+/* Bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 12px 0 16px;background:var(--bg);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:.95rem;white-space:nowrap;color:inherit;text-decoration:none}
+.brand i{width:12px;height:12px;border-radius:3px;background:var(--mint);display:inline-block}
+.brand span{color:var(--muted);font-weight:500}
+.bar-mid{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar-mid .pn{min-width:5ch;text-align:center}
+.iconbtn{appearance:none;border:0;background:transparent;color:inherit;font:inherit;width:34px;height:34px;border-radius:8px;cursor:pointer;display:inline-grid;place-items:center}
+.iconbtn:hover,.iconbtn[aria-pressed="true"]{background:var(--panel2)}
+.iconbtn svg{width:18px;height:18px}
+.gpu-pill{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted);padding:5px 10px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
+.gpu-pill i{width:8px;height:8px;border-radius:50%;background:var(--dim);display:inline-block}
+.gpu-pill.ok i{background:var(--mint)} .gpu-pill.no i{background:var(--coral)}
+.progress{position:fixed;left:0;right:0;top:calc(56px + env(safe-area-inset-top,0px));height:3px;z-index:31;pointer-events:none}
+.progress i{display:block;height:100%;background:var(--mint);width:0;transition:width .2s ease}
+
+/* Slides */
+.deck{min-height:calc(100% - 56px)}
+.slide{display:none;min-height:calc(100dvh - 56px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:clamp(28px,5vh,64px) clamp(16px,6vw,96px);flex-direction:column;gap:clamp(16px,2.6vh,30px);justify-content:center;max-width:1500px;margin:0 auto;width:100%}
+.slide.active{display:flex}
+.slide>.head{display:grid;gap:8px}
+.slide>aside{display:none}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:clamp(16px,2.5vw,36px);align-items:start}
+.two>*{min-width:0}
+.stack{display:grid;gap:14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:clamp(14px,1.6vw,24px);display:grid;gap:6px;align-content:start}
+.card h3{color:var(--fg)}
+.card p{color:var(--muted);font-size:.92em}
+.card .lang{font-family:var(--mono);font-size:.75em;color:var(--mint)}
+.callout{border-left:3px solid var(--mint);padding:2px 0 2px 14px;color:var(--muted)}
+.callout strong{color:var(--fg)}
+.callout.warn{border-color:var(--coral)}
+.foot{font-size:.8em;color:var(--dim)}
+.kbd{font-family:var(--mono);font-size:.78em;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;color:var(--muted)}
+.btn{appearance:none;font:inherit;font-size:.9rem;font-weight:600;padding:8px 16px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+.btn.mint{background:var(--mint);border-color:var(--mint);color:var(--mint-ink)}
+.btn.mint:hover{background:#2fd6b2;border-color:#2fd6b2}
+.btn:disabled{opacity:.5;cursor:default}
+.log{font-family:var(--mono);font-size:.8em;background:#101118;border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:4px;min-height:5em;color:var(--muted)}
+.log b{color:var(--fg);font-weight:500}
+.log .ok{color:var(--mint)} .log .no{color:var(--coral)}
+
+/* Title grid */
+.title-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:32px;align-items:center}
+@media (max-width:820px){.title-grid{grid-template-columns:1fr}}
+.inv{display:grid;grid-template-columns:repeat(16,1fr);gap:4px;aspect-ratio:16/9;max-width:100%}
+.inv i{display:block;background:var(--panel2);border-radius:2px;animation:inv 2.4s ease-in-out infinite;animation-delay:calc(var(--d) * 1ms)}
+@keyframes inv{0%,100%{background:var(--panel2)}12%{background:var(--mint)}40%{background:var(--panel2)}}
+.inv-cap{display:flex;gap:10px;justify-content:space-between;font-family:var(--mono);font-size:.78em;color:var(--dim);margin-top:8px}
+
+/* Running order */
+.order{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px;counter-reset:part}
+.order button{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:4px;cursor:pointer}
+.order button:hover{border-color:var(--mint)}
+.order button::before{counter-increment:part;content:counter(part);width:30px;height:30px;border-radius:50%;background:var(--mint);color:var(--mint-ink);display:grid;place-items:center;font-weight:700;font-size:.85rem;margin-bottom:6px}
+.order b{font-size:1.02em}
+.order span{color:var(--muted);font-size:.88em}
+.order em{font-style:normal;color:var(--dim);font-size:.8em;font-family:var(--mono)}
+
+/* Layer stack */
+.layers{display:grid;gap:8px}
+.layers button{appearance:none;font:inherit;color:inherit;text-align:left;border:1px solid var(--line);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;gap:12px;align-items:baseline;background:var(--panel);cursor:pointer}
+.layers button:hover{border-color:var(--muted)}
+.layers button[aria-pressed="true"]{border-color:var(--mint);box-shadow:inset 0 0 0 1px var(--mint)}
+.layers button.hot{background:var(--panel2)}
+.layers small{color:var(--dim);font-size:.8em;font-family:var(--mono);text-align:right}
+.explain{border:1px solid var(--line);border-radius:10px;padding:14px 18px;background:var(--panel);min-height:6em;display:grid;gap:4px}
+.explain b{color:var(--mint)} .explain p{color:var(--muted)}
+
+/* Compare */
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.cmp .card ul{margin:6px 0 0;padding-left:1.1em;display:grid;gap:6px;color:var(--muted);font-size:.92em}
+.cmp .card.win{border-color:var(--mint)}
+.cmp .card.old h3{color:var(--muted)}
+
+/* Support table */
+.tbl{width:100%;border-collapse:collapse;font-size:.9em}
+.tbl th,.tbl td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:.75em;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)}
+.tbl td:first-child{font-weight:600}
+.tbl .v{font-family:var(--mono);color:var(--mint)}
+.tbl .partial .v{color:var(--coral)}
+
+/* Object graph */
+.graph{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.graph{grid-template-columns:1fr}}
+.graph nav{display:grid;gap:6px}
+.graph nav button{appearance:none;text-align:left;font:inherit;color:inherit;background:transparent;border:1px solid transparent;border-radius:8px;padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:center}
+.graph nav button:hover{background:var(--panel)}
+.graph nav button[aria-current="step"]{background:var(--panel);border-color:var(--line)}
+.graph nav button i{width:26px;height:26px;border-radius:50%;background:var(--panel2);color:var(--muted);display:grid;place-items:center;font-style:normal;font-weight:700;font-size:.8rem;flex:none;font-family:var(--mono)}
+.graph nav button[aria-current="step"] i{background:var(--mint);color:var(--mint-ink)}
+.pane{display:none;gap:12px}
+.pane.on{display:grid}
+.pane p{color:var(--muted)}
+.pane .api{font-family:var(--mono);color:var(--mint);font-size:.95em}
+
+/* Mental model animation */
+.lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px}
+.lane{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:10px}
+.lane h3 span{color:var(--muted);font-weight:400}
+.track{position:relative;height:70px;border-radius:8px;background:#101118;overflow:hidden;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-family:var(--mono);font-size:.75em;color:var(--dim)}
+.track .dot{position:absolute;left:44px;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:var(--coral);opacity:0}
+.track .blk{position:absolute;left:44px;top:50%;width:120px;height:26px;margin-top:-13px;border-radius:6px;background:var(--mint);color:var(--mint-ink);display:grid;place-items:center;font-weight:600;opacity:0}
+@media (prefers-reduced-motion:no-preference){
+  .track.play .dot{animation:hop .9s linear both;animation-delay:calc(var(--d) * 1ms)}
+  .track.play .blk{animation:hop 1.2s ease-in-out both}
+}
+@keyframes hop{0%{transform:translateX(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateX(calc(100% * var(--w, 1) ));opacity:0}}
+.lane .n{font-family:var(--mono);font-size:.8em;color:var(--muted)}
+.lane .n b{color:var(--fg)}
+
+/* Workgroup grid */
+.wg{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,300px);gap:20px;align-items:start}
+@media (max-width:760px){.wg{grid-template-columns:1fr}}
+.wg-grid{display:grid;gap:4px;aspect-ratio:4/3;max-width:100%}
+.wg-grid i{display:block;background:var(--panel2);border-radius:3px;border:1px solid transparent;cursor:crosshair;min-height:0}
+.wg-grid i:hover{border-color:var(--mint);background:var(--mint)}
+.ctl{display:grid;gap:12px;font-size:.9em}
+.ctl label{display:grid;gap:4px;color:var(--muted)}
+.ctl input[type=range]{width:100%;accent-color:var(--mint)}
+.ctl select{font:inherit;background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+.ctl .out{font-family:var(--mono);color:var(--fg);font-size:.95em}
+.ctl .out b{color:var(--mint);font-weight:500}
+
+/* Demos */
+.demo{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px}
+.demo canvas{width:100%;aspect-ratio:16/9;display:block;border-radius:8px;background:#101118}
+.demo .row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.demo .st{font-family:var(--mono);font-size:.78em;color:var(--muted)}
+.demo .st b{color:var(--mint);font-weight:500}
+.nums{display:flex;flex-wrap:wrap;gap:6px;font-family:var(--mono);font-size:.8em}
+.nums span{padding:3px 8px;border-radius:5px;background:#101118;border:1px solid var(--line);color:var(--muted)}
+.nums span.o{border-color:var(--mint);color:var(--fg)}
+
+/* Uses */
+.uses{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:14px}
+.uses .card{cursor:pointer}
+.uses .card:hover{border-color:var(--muted)}
+.uses .card[aria-pressed="true"]{border-color:var(--mint);background:var(--panel2)}
+
+/* Resources */
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.res a{display:grid;gap:4px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);text-decoration:none;color:inherit}
+.res a:hover{border-color:var(--mint);color:inherit}
+.res b{font-family:var(--mono);font-weight:500;font-size:.92em;color:var(--mint)}
+.res span{color:var(--muted);font-size:.88em}
+
+/* Notes drawer */
+.notes{position:fixed;left:0;right:0;bottom:0;z-index:32;background:var(--panel);color:var(--fg);border-top:1px solid var(--line);padding:14px clamp(16px,6vw,96px) calc(14px + env(safe-area-inset-bottom,0px));font-size:.95rem;max-height:34vh;overflow:auto;transform:translateY(110%);transition:transform .35s cubic-bezier(.2,0,0,1)}
+.notes.open{transform:none}
+.notes .nl{font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mint);margin-bottom:6px}
+.notes p{max-width:80ch;color:var(--muted)}
+
+@media (prefers-reduced-motion:reduce){.inv i{animation:none}.notes,.progress i{transition:none}}
+@media (max-width:699px){
+  .slide{display:flex;min-height:0;border-bottom:1px solid var(--line)}
+  .bar-mid .nav,.progress,.notes,.gpu-pill{display:none}
+}
+</style>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<header class="bar" aria-label="Deck controls">
+  <a class="brand" href="#s1" id="brand-link"><i></i>WebGPU <span>· UI/UX CoP</span></a>
+  <div class="bar-mid">
+    <span class="nav"><button class="iconbtn" id="prev" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button></span>
+    <span class="pn" id="pn">1 / 18</span>
+    <span class="nav"><button class="iconbtn" id="next" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span class="gpu-pill" id="gpu-pill" title="WebGPU in this browser"><i></i><span id="gpu-pill-text">checking WebGPU…</span></span>
+    <button class="iconbtn" id="notes-btn" aria-pressed="false" aria-label="Toggle speaker notes" title="Speaker notes (N)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg></button>
+  </div>
+</header>
+<div class="progress" aria-hidden="true"><i id="prog"></i></div>
+
+<main class="deck" id="deck">
+
+<!-- 1 -->
+<section class="slide" id="s1">
+  <div class="title-grid">
+    <div class="stack" style="gap:18px">
+      <p class="eyebrow">UI/UX Community of Practice · 30 minutes</p>
+      <h1>WebGPU</h1>
+      <p class="statement" style="color:var(--muted);font-weight:400">Direct GPU access on the web: what it is, how it works, and where it actually earns its place.</p>
+      <p class="foot"><span class="kbd">←</span> <span class="kbd">→</span> to move, <span class="kbd">N</span> for speaker notes. The demos run on this machine's GPU when the browser allows it.</p>
+    </div>
+    <div>
+      <div class="inv" id="inv" aria-hidden="true"></div>
+      <div class="inv-cap"><span>one dispatch</span><span>thousands of parallel invocations</span></div>
+    </div>
+  </div>
+  <aside>Open by naming the moment: WebGPU is now shipping by default in every major browser, so this stopped being a "someday" API. Keep the intro to about 30 seconds.</aside>
+</section>
+
+<!-- 2 -->
+<section class="slide" id="s2">
+  <div class="head"><h2>Running order</h2><p class="lede">Click a part to jump to it.</p></div>
+  <div class="order">
+    <button data-goto="s3"><b>What it is</b><span>Definition, history, how it differs from WebGL</span><em>8 min</em></button>
+    <button data-goto="s9"><b>How it works</b><span>The seven objects, and the mental model underneath them</span><em>10 min</em></button>
+    <button data-goto="s14"><b>What it means for your hardware</b><span>Integrated, discrete, and no GPU at all</span><em>3 min</em></button>
+    <button data-goto="s15"><b>Where it fits, and where it does not</b><span>Real uses, and the honest counterweight</span><em>3 min</em></button>
+    <button data-goto="s17"><b>Demos</b><span>One rendering, one compute</span><em>5 min</em></button>
+    <button data-goto="s18"><b>Where to start</b><span>Plus questions</span><em>1 min</em></button>
+  </div>
+  <aside>Timings are tight. If you overrun, cut depth from "How it works" rather than the demos. The demos are what people remember.</aside>
+</section>
+
+<!-- 3 -->
+<section class="slide" id="s3">
+  <div class="head"><p class="eyebrow">Part one</p><h2>What WebGPU actually is</h2></div>
+  <div class="two">
+    <div class="stack">
+      <p class="lede">A W3C JavaScript API that gives web pages low-level access to the system GPU.</p>
+      <p class="lede">Not a graphics library like Three.js. A thin, portable layer the browser translates down to native APIs.</p>
+      <p class="lede">It does two things: rendering and general-purpose compute. WebGL only ever did the first.</p>
+      <p class="lede">The entry point is <code>navigator.gpu</code>.</p>
+    </div>
+    <div class="stack">
+      <div class="layers" aria-label="Layer stack, click a layer">
+        <button type="button" data-layer="0"><b>Your app · Three.js · Babylon.js</b><small>libraries</small></button>
+        <button type="button" data-layer="1" class="hot" aria-pressed="true"><b>WebGPU</b><small>navigator.gpu</small></button>
+        <button type="button" data-layer="2"><b>Metal · Direct3D 12 · Vulkan</b><small>native APIs</small></button>
+        <button type="button" data-layer="3"><b>GPU hardware</b><small>silicon</small></button>
+      </div>
+      <div class="explain" id="layer-explain"><b>WebGPU</b><p>The API you call. One portable surface over three native backends, with validation between your code and the driver.</p></div>
+    </div>
+  </div>
+  <aside>Emphasise the second bullet. People assume WebGPU competes with Three.js. It sits underneath it.</aside>
+</section>
+
+<!-- 4 -->
+<section class="slide" id="s4">
+  <div class="head"><p class="eyebrow">Part one</p><h2>Eight years, and one hard constraint</h2></div>
+  <div class="two" style="align-items:center">
+    <div>
+      <p class="big">8</p>
+      <p class="lede" style="margin-top:8px">years from the first spec work to shipping by default in every major browser</p>
+    </div>
+    <div class="stack">
+      <div class="card"><h3>Who built it</h3><p>The W3C "GPU for the Web" Working Group. Apple, Google, Mozilla, Intel and Microsoft all at the same table.</p></div>
+      <div class="card"><h3>Why it took so long</h3><p>Any random website can run code on your GPU. So everything is validated, bounds-checked, and free of undefined behaviour.</p></div>
+      <div class="card"><h3>What that constraint bought</h3><p>One API that behaves the same across Metal, Direct3D 12 and Vulkan. Safety shaped the entire design. It is why the API is explicit.</p></div>
+    </div>
+  </div>
+  <aside>The safety point is the interesting one for a design audience. It explains why the API feels verbose. Every bit of ceremony buys a guarantee that a webpage cannot crash or read another process's GPU memory.</aside>
+</section>
+
+<!-- 5 -->
+<section class="slide" id="s5">
+  <div class="head"><p class="eyebrow">Part one</p><h2>What it replaces</h2></div>
+  <div class="cmp">
+    <div class="card old"><h3>WebGL</h3><ul>
+      <li>OpenGL ES, a 2007-era mobile API, mapped onto the web</li>
+      <li>One global, mutable state machine</li>
+      <li>State re-validated on every single draw call</li>
+      <li>Rendering only</li>
+      <li>GLSL shaders</li>
+      <li>CPU-bound long before the GPU is</li>
+    </ul></div>
+    <div class="card win"><h3>WebGPU</h3><ul>
+      <li>Designed for modern GPU hardware from scratch</li>
+      <li>Explicit objects you create once and reuse</li>
+      <li>Validated once, when the pipeline is created</li>
+      <li>Rendering and compute</li>
+      <li>WGSL shaders</li>
+      <li>Work recorded on the CPU, submitted in batches</li>
+    </ul></div>
+  </div>
+  <aside>Do not let this turn into WebGL-bashing. WebGL still works everywhere and is still the right fallback. The point is that its design assumptions are eighteen years old.</aside>
+</section>
+
+<!-- 6 -->
+<section class="slide" id="s6">
+  <div class="head"><p class="eyebrow">Part one</p><h2>It brings its own shader language</h2></div>
+  <div class="two">
+    <div class="stack">
+<pre><code><span class="a">@group(0) @binding(0)</span>
+<span class="k">var</span>&lt;storage, read_write&gt; data: array&lt;f32&gt;;
+
+<span class="a">@compute @workgroup_size(64)</span>
+<span class="k">fn</span> main(
+  <span class="a">@builtin(global_invocation_id)</span> id: vec3&lt;u32&gt;
+) {
+  data[id.x] = data[id.x] * 2.0;
+}</code></pre>
+      <div class="demo" style="padding:12px">
+        <div class="row"><span class="st">Run this exact shader on this machine</span><button class="btn mint" type="button" id="wgsl-run">Run it</button></div>
+        <div class="nums" id="wgsl-in"></div>
+        <div class="nums" id="wgsl-out"></div>
+        <p class="st" id="wgsl-st">Input above; output appears after the dispatch.</p>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card"><h3>WGSL</h3><p>Rust-flavoured syntax, designed alongside the API rather than borrowed from an older one.</p></div>
+      <div class="card"><h3>Compiled at runtime</h3><p>The browser translates it to SPIR-V, Metal Shading Language or HLSL depending on the platform.</p></div>
+      <div class="card"><h3>It is not GLSL</h3><p>If anyone here has written shaders before, this is new syntax for them too.</p></div>
+    </div>
+  </div>
+  <aside>Do not teach WGSL. Show it for ten seconds so the room knows it exists and that it looks approachable. The example doubles every number in an array. That is a compute shader, not a rendering one. Press Run so they see the doubled numbers come back from the GPU.</aside>
+</section>
+
+<!-- 7 -->
+<section class="slide" id="s7">
+  <div class="head"><p class="eyebrow">Part one</p><h2>Three implementations underneath</h2></div>
+  <div class="cards">
+    <div class="card" id="impl-dawn"><span class="lang">C++</span><h3>Dawn</h3><p>Chrome, Edge, and every other Chromium browser. The most battle-tested. Shipping stable since 2023.</p></div>
+    <div class="card" id="impl-wgpu"><span class="lang">Rust</span><h3>wgpu</h3><p>Firefox. Also used widely outside the browser, in native Rust graphics projects.</p></div>
+    <div class="card" id="impl-webkit"><span class="lang">C++</span><h3>WebKit</h3><p>Safari on macOS, iOS, iPadOS and visionOS, mapping straight onto Metal.</p></div>
+  </div>
+  <p class="callout warn"><strong>Why you care:</strong> validation messages and edge-case behaviour differ between them. "Works in Chrome" is not "works".</p>
+  <p class="foot" id="impl-you"></p>
+  <aside>Keep this brief. Thirty seconds. It matters mostly as a warning that cross-browser testing is not optional here.</aside>
+</section>
+
+<!-- 8 -->
+<section class="slide" id="s8">
+  <div class="head"><p class="eyebrow">Part one</p><h2>Where it ships today</h2></div>
+  <div class="two">
+    <table class="tbl">
+      <thead><tr><th>Engine</th><th>Since</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Chrome / Edge</td><td class="v">113, in 2023</td><td>Android 12+ from Chrome 121, on Qualcomm and ARM GPUs.</td></tr>
+        <tr><td>Safari</td><td class="v">26.0</td><td>macOS Tahoe, iOS, iPadOS and visionOS, on by default.</td></tr>
+        <tr><td>Firefox</td><td class="v">141 on Windows</td><td>macOS followed in 145, on Apple Silicon.</td></tr>
+        <tr class="partial"><td>Linux / Android</td><td class="v">still rolling out</td><td>Partial and flag-gated in places. Verify before you rely on it.</td></tr>
+      </tbody>
+    </table>
+    <div class="stack">
+      <p class="callout"><strong>Shipping by default in all four major engines.</strong> That is the change that makes this worth a talk. Always feature-detect anyway.</p>
+      <div class="log" id="detect-log"><span>Detecting in this browser…</span></div>
+    </div>
+  </div>
+  <aside>Chrome has had this for three years. What changed recently is Safari and Firefox, which is what moves it from experiment to deployment target. The log on the right is this browser's own answer.</aside>
+</section>
+
+<!-- 9 -->
+<section class="slide" id="s9">
+  <div class="head"><p class="eyebrow">Part two · How it works</p><h2>The object graph, part one</h2></div>
+  <div class="graph">
+    <nav aria-label="Objects">
+      <button type="button" data-g="a1" aria-current="step"><i>1</i>Adapter</button>
+      <button type="button" data-g="a2"><i>2</i>Device</button>
+      <button type="button" data-g="a3"><i>3</i>Buffers and textures</button>
+      <button type="button" data-g="a4"><i>4</i>Shader modules</button>
+    </nav>
+    <div>
+      <div class="pane on" data-pane="a1"><h3>Adapter</h3><p class="api">navigator.gpu.requestAdapter()</p><p>Hands you a handle to a physical GPU and a backend. You can hint high-performance or low-power. It returns null when there is nothing usable. That null is your real detection point.</p></div>
+      <div class="pane" data-pane="a2"><h3>Device</h3><p class="api">adapter.requestDevice()</p><p>Opens your logical connection. You declare required features and limits here, and limits genuinely vary by hardware. This is where portability bites.</p></div>
+      <div class="pane" data-pane="a3"><h3>Buffers and textures</h3><p class="api">device.createBuffer() · device.createTexture()</p><p>You allocate GPU memory yourself and explicitly write data into it. Moving data across the CPU/GPU boundary is the expensive operation in all GPU work, so most optimisation is about uploading once and reusing.</p></div>
+      <div class="pane" data-pane="a4"><h3>Shader modules</h3><p class="api">device.createShaderModule({ code })</p><p>WGSL source, compiled once into a reusable object you hand to a pipeline.</p></div>
+    </div>
+  </div>
+  <aside>Walk these in order. Each one depends on the one before it. Do not read the slide; say the idea and move on.</aside>
+</section>
+
+<!-- 10 -->
+<section class="slide" id="s10">
+  <div class="head"><p class="eyebrow">Part two · How it works</p><h2>The object graph, part two</h2></div>
+  <div class="graph">
+    <nav aria-label="Objects">
+      <button type="button" data-g="b5" aria-current="step"><i>5</i>Pipelines</button>
+      <button type="button" data-g="b6"><i>6</i>Bind groups</button>
+      <button type="button" data-g="b7"><i>7</i>Command encoder → queue</button>
+    </nav>
+    <div>
+      <div class="pane on" data-pane="b5"><h3>Pipelines</h3><p class="api">device.createRenderPipeline() · device.createComputePipeline()</p><p>The load-bearing concept. A render pipeline bundles shaders, vertex layout, blend state and depth config into one immutable object, validated at creation time. WebGL re-validated its state on every draw. WebGPU does it once, then the draw is nearly free.</p></div>
+      <div class="pane" data-pane="b6"><h3>Bind groups</h3><p class="api">device.createBindGroup()</p><p>Pre-assembled sets of resources, buffers, textures, samplers, that a shader reads from. Instead of rebinding twelve things individually per draw, you swap one object.</p></div>
+      <div class="pane" data-pane="b7"><h3>Command encoder → queue</h3><p class="api">device.createCommandEncoder() · device.queue.submit()</p><p>You record a list of operations on the CPU, seal it into a command buffer, and submit the batch. Nothing blocks. The GPU works through it while your JavaScript carries on.</p></div>
+    </div>
+  </div>
+  <aside>If you only get one of these across, make it pipelines. Validate-once-then-draw-cheaply is the whole performance story in one sentence.</aside>
+</section>
+
+<!-- 11 -->
+<section class="slide" id="s11">
+  <div class="head"><p class="eyebrow">Part two · How it works</p><h2>The mental model underneath all of it</h2></div>
+  <div class="lanes">
+    <div class="lane">
+      <h3>WebGL <span>· A conversation.</span></h3>
+      <div class="track" id="track-gl"><span>CPU</span><span>GPU</span></div>
+      <p class="n"><b id="gl-count">0</b> driver calls this frame</p>
+      <p class="lede" style="font-size:.92em">Set state, draw. Set state, draw. Hundreds of driver calls every frame, and the CPU becomes the bottleneck long before the GPU does.</p>
+    </div>
+    <div class="lane">
+      <h3>WebGPU <span>· Declare, then batch.</span></h3>
+      <div class="track" id="track-gpu"><span>CPU</span><span>GPU</span></div>
+      <p class="n"><b id="gpu-count">0</b> submit this frame</p>
+      <p class="lede" style="font-size:.92em">Describe the work up front, pay a heavy setup cost once, and the frame loop gets cheap. You are building command lists, not having a dialogue.</p>
+    </div>
+  </div>
+  <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+    <button class="btn mint" type="button" id="frame-btn">Play one frame</button>
+    <p class="statement" style="font-size:clamp(1.1rem,1.8vw,1.5rem)">The win is mostly reduced CPU overhead, not raw GPU speed.</p>
+  </div>
+  <aside>This is the takeaway you actually want people to leave with. Play the frame, then say it slowly and let it sit for a beat.</aside>
+</section>
+
+<!-- 12 -->
+<section class="slide" id="s12">
+  <div class="head"><p class="eyebrow">Part two · How it works</p><h2>Compute: the same shape, minus the rendering</h2></div>
+  <div class="wg">
+    <div class="stack">
+      <div class="wg-grid" id="wg-grid" aria-label="Workgroup grid"></div>
+      <p class="st foot" id="wg-hover" style="font-family:var(--mono);min-height:1.5em">Hover a square.</p>
+    </div>
+    <div class="ctl">
+      <p class="out"><b id="wg-call">dispatchWorkgroups(8, 6, 1)</b></p>
+      <label>x <input type="range" id="wg-x" min="1" max="16" value="8"></label>
+      <label>y <input type="range" id="wg-y" min="1" max="12" value="6"></label>
+      <label>@workgroup_size <select id="wg-size"><option>1</option><option>4</option><option>16</option><option selected>64</option><option>256</option></select></label>
+      <p class="out"><span id="wg-groups">48</span> workgroups × <span id="wg-per">64</span> = <b id="wg-total">3072</b> invocations</p>
+      <div class="card" style="padding:12px"><h3 style="font-size:1em">What a workgroup is</h3><p>A grid of parallel invocations that can share fast local memory. You choose the grid size; the GPU runs them all at once.</p></div>
+      <div class="card" style="padding:12px"><h3 style="font-size:1em">Why it matters</h3><p>This is the entire mechanism behind browser-local machine learning. No server round trip, no upload of user data.</p></div>
+    </div>
+  </div>
+  <aside>Point at the grid. Every square is a workgroup of the same tiny shader on different data. Drag x and y, change the workgroup size, and watch the invocation count. That is the whole idea of GPU compute.</aside>
+</section>
+
+<!-- 13 -->
+<section class="slide" id="s13">
+  <div class="head"><p class="eyebrow">Part two · How it works</p><h2>Everything is asynchronous</h2></div>
+  <div class="two">
+<pre><code><span class="k">if</span> (!navigator.gpu) <span class="k">return</span> fallback();
+
+<span class="k">const</span> adapter = <span class="k">await</span> navigator.gpu
+  .requestAdapter();
+<span class="k">if</span> (!adapter) <span class="k">return</span> fallback();
+
+<span class="k">const</span> device = <span class="k">await</span> adapter.requestDevice();
+
+device.lost.then(info =&gt; {
+  <span class="k">if</span> (info.reason !== <span class="s">"destroyed"</span>) reinit();
+});</code></pre>
+    <div class="stack">
+      <div class="card"><h3>Two gates, not one</h3><p><code>navigator.gpu</code> only means the API exists. The non-null adapter means you can actually render.</p></div>
+      <div class="card"><h3>Errors arrive later</h3><p>Through <code>device.lost</code> and <code>pushErrorScope</code>, not thrown exceptions.</p></div>
+      <div class="card"><h3>It looks different</h3><p>Initialisation is structurally unlike WebGL. This is what people trip over first.</p></div>
+    </div>
+  </div>
+  <aside>This slide sets up the hardware slide that follows. The null adapter is the hinge between the two.</aside>
+</section>
+
+<!-- 14 -->
+<section class="slide" id="s14">
+  <div class="head"><p class="eyebrow">Part three</p><h2>What this means for different hardware</h2></div>
+  <div class="two">
+    <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))">
+      <div class="card"><h3>Integrated graphics count</h3><p>Intel Iris and UHD, AMD integrated, Apple Silicon's unified GPU. All real GPUs, all run WebGPU fine. "No GPU" usually just means no discrete card.</p></div>
+      <div class="card"><h3>Discrete GPUs</h3><p>More memory and headroom. <code>powerPreference: "high-performance"</code> hints toward one, but it costs battery, so only ask when you need it.</p></div>
+      <div class="card"><h3>No GPU at all</h3><p>Servers, containers, headless CI, some VMs. <code>requestAdapter()</code> resolves to null. There is no graphics card to describe.</p></div>
+      <div class="card"><h3>Software fallback</h3><p>Chrome's Dawn can run on SwiftShader, a CPU-based Vulkan. It needs the system Vulkan loader and Mesa drivers, or it still returns null. And it is 10 to 100× slower. Fine for tests, useless for a demo.</p></div>
+    </div>
+    <div class="stack">
+      <div class="card"><h3>This machine</h3><div class="log" id="hw-log"><span>Asking the adapter…</span></div></div>
+      <p class="callout"><strong>Even on supported hardware, capability varies.</strong> Read <code>adapter.limits</code> and <code>adapter.features</code>. Browsers also blocklist old GPUs and bad drivers.</p>
+    </div>
+  </div>
+  <aside>The practical rule for the room: always await requestAdapter(), check for null, and keep a WebGL2 or canvas2d path behind it. The "This machine" panel is why you demo on your own laptop rather than a borrowed one. Adapter limits differ per machine, and you can show that live.</aside>
+</section>
+
+<!-- 15 -->
+<section class="slide" id="s15">
+  <div class="head"><p class="eyebrow">Part four</p><h2>Where it earns its place</h2><p class="lede">Click the two closest to what this room builds.</p></div>
+  <div class="uses">
+    <button class="card" type="button" aria-pressed="false"><h3>Data visualisation at scale</h3><p>Hundreds of thousands of interactive points, past what SVG or canvas2d can hold up under.</p></button>
+    <button class="card" type="button" aria-pressed="false"><h3>Real-time image and video</h3><p>Filters, colour grading and effects applied per frame without leaving the GPU.</p></button>
+    <button class="card" type="button" aria-pressed="false"><h3>3D product configurators</h3><p>Commerce and marketing experiences that used to need a native app.</p></button>
+    <button class="card" type="button" aria-pressed="false"><h3>Design-tool canvases</h3><p>Infinite zoom, live effects, thousands of objects staying responsive.</p></button>
+    <button class="card" type="button" aria-pressed="false"><h3>Local ML inference</h3><p>transformers.js and WebLLM run models entirely client-side. No server round trip.</p></button>
+    <button class="card" type="button" aria-pressed="false"><h3>Games and XR</h3><p>Including WebXR on Vision Pro, rendered through WebGPU.</p></button>
+  </div>
+  <aside>Pick the two closest to what this room builds and dwell there. Skip the rest. Clicking a card highlights it so the room can see which two you chose.</aside>
+</section>
+
+<!-- 16 -->
+<section class="slide" id="s16">
+  <div class="head"><p class="eyebrow">Part four</p><h2>And where it does not belong</h2></div>
+  <p class="statement">Most UI does not need this.</p>
+  <div class="cards">
+    <div class="card"><h3>CSS, canvas2d and SVG are still correct</h3><p>For the overwhelming majority of what we build, they are simpler, more accessible and better supported.</p></div>
+    <div class="card"><h3>The setup cost is real</h3><p>Pipelines, buffers, bind groups and a new shader language before a single triangle appears on screen.</p></div>
+    <div class="card"><h3>Reach for a library first</h3><p>Three.js, Babylon.js and PlayCanvas already support it. For most cases the renderer swap is close to a one-line change.</p></div>
+  </div>
+  <aside>Being honest here buys you credibility for everything else you said. WebGPU earns its complexity at scale, or when you need compute. Not before.</aside>
+</section>
+
+<!-- 17 -->
+<section class="slide" id="s17">
+  <div class="head"><p class="eyebrow">Part five</p><h2>Demos</h2><p class="lede">Both run here, on this machine. Rendering falls back to WebGL2 when the adapter is null, which is the slide-14 advice in practice.</p></div>
+  <div class="two">
+    <div class="demo">
+      <div class="row"><h3>01 · Rendering</h3><span class="st" id="r-st">idle</span></div>
+      <canvas id="r-canvas" width="960" height="540" aria-label="A rotating triangle rendered on the GPU"></canvas>
+      <div class="row"><p class="st">Triangle, a time uniform, one render pipeline created once and reused every frame.</p><button class="btn" type="button" id="r-btn">Start</button></div>
+    </div>
+    <div class="demo">
+      <div class="row"><h3>02 · Compute</h3><span class="st" id="c-st">idle</span></div>
+      <div class="stack" style="gap:8px">
+        <p class="st">Sum 1 048 576 floats on the GPU: a parallel reduction, then the last step on the CPU. Same pieces as rendering, no canvas.</p>
+        <p class="out" style="font-family:var(--mono);font-size:1.4em" id="c-out">—</p>
+        <p class="st" id="c-time"></p>
+      </div>
+      <div class="row"><p class="st">This is the moment the compute section stops being abstract.</p><button class="btn mint" type="button" id="c-btn">Run compute</button></div>
+    </div>
+  </div>
+  <p class="callout warn"><strong>Run local copies, and have a recording ready.</strong> Drivers and conference wifi both fail at the worst possible moment. Present from your own laptop, not a borrowed one. Adapter limits differ per machine.</p>
+  <aside>Two demos, not three. The timing does not stretch further. Open the deck before you start so the adapter is already requested. The point to make out loud on the first: for most libraries, adopting WebGPU is close to a one-line renderer swap. On the second: something running entirely on-device. Run compute twice: the first run includes shader compilation and buffer upload, so it reads slower than the plain JS loop. That is the "upload once and reuse" point from slide 9, live, and for a sum of a million floats the CPU is genuinely fine. The GPU wins when the work per element is heavy, which is the ML case.</aside>
+</section>
+
+<!-- 18 -->
+<section class="slide" id="s18">
+  <div class="head"><h2>Where to start</h2></div>
+  <div class="res">
+    <a href="https://webgpufundamentals.org/"><b>webgpufundamentals.org</b><span>The best beginner path. Builds up from a single triangle.</span></a>
+    <a href="https://webgpu.github.io/webgpu-samples/"><b>webgpu.github.io/webgpu-samples</b><span>Official runnable samples, rendering and compute.</span></a>
+    <a href="https://github.com/gpuweb/gpuweb/wiki/Implementation-Status"><b>gpuweb wiki · Implementation Status</b><span>The authoritative page for what ships where.</span></a>
+    <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API"><b>MDN · WebGPU API</b><span>Reference for every object in the graph we just walked.</span></a>
+  </div>
+  <h2 style="margin-top:12px">Questions?</h2>
+  <aside>Leave the resource slide up during questions so people can photograph it.</aside>
+</section>
+
+</main>
+
+<div class="notes" id="notes" aria-live="polite"><div class="nl">Speaker notes</div><p id="notes-text"></p></div>
+
+<script>
+(function(){
+  /* ── Navigation ── */
+  var slides=Array.prototype.slice.call(document.querySelectorAll(".slide")),cur=0;
+  var pn=document.getElementById("pn"),prog=document.getElementById("prog"),notes=document.getElementById("notes"),notesText=document.getElementById("notes-text"),notesBtn=document.getElementById("notes-btn");
+  function phone(){return window.matchMedia("(max-width: 699px)").matches;}
+  var onLeave={};
+  function go(i,push){
+    i=Math.max(0,Math.min(slides.length-1,i));
+    if(onLeave[slides[cur].id])onLeave[slides[cur].id]();
+    cur=i;
+    slides.forEach(function(s,k){s.classList.toggle("active",k===i);});
+    pn.textContent=(i+1)+" / "+slides.length;
+    prog.style.width=((i+1)/slides.length*100)+"%";
+    var a=slides[i].querySelector(":scope > aside");notesText.textContent=a?a.textContent:"No notes for this slide.";
+    if(push!==false){try{history.replaceState(null,"","#"+slides[i].id);}catch(e){}}
+    if(phone()){slides[i].scrollIntoView({block:"start"});}else{window.scrollTo(0,0);}
+  }
+  document.getElementById("prev").addEventListener("click",function(){go(cur-1);});
+  document.getElementById("next").addEventListener("click",function(){go(cur+1);});
+  document.getElementById("brand-link").addEventListener("click",function(e){e.preventDefault();go(0);});
+  document.querySelectorAll("[data-goto]").forEach(function(b){b.addEventListener("click",function(){var k=slides.findIndex(function(s){return s.id===b.dataset.goto;});if(k>=0)go(k);});});
+  document.addEventListener("keydown",function(e){
+    if(e.target.matches("input,textarea,select"))return;
+    if(e.key==="ArrowRight"||e.key==="PageDown"||e.key===" "){e.preventDefault();go(cur+1);}
+    else if(e.key==="ArrowLeft"||e.key==="PageUp"){e.preventDefault();go(cur-1);}
+    else if(e.key==="Home"){go(0);}else if(e.key==="End"){go(slides.length-1);}
+    else if(e.key==="n"||e.key==="N"){toggleNotes();}
+  });
+  function toggleNotes(){var o=!notes.classList.contains("open");notes.classList.toggle("open",o);notesBtn.setAttribute("aria-pressed",String(o));}
+  notesBtn.addEventListener("click",toggleNotes);
+  function fromHash(){var h=(location.hash||"").replace("#","");var k=slides.findIndex(function(s){return s.id===h;});go(k>=0?k:0,false);}
+  window.addEventListener("hashchange",fromHash);
+
+  /* ── Title: invocation grid ── */
+  var inv=document.getElementById("inv");
+  for(var i=0;i<144;i++){var c=document.createElement("i");c.style.setProperty("--d",String(Math.round((i%16)*60+Math.floor(i/16)*90)));inv.appendChild(c);}
+
+  /* ── Layers ── */
+  var LAYERS=[
+    ["Your app · Three.js · Babylon.js","What most people write against. The libraries already have WebGPU renderers; for many apps, adopting WebGPU is a renderer swap, not a rewrite."],
+    ["WebGPU","The API you call. One portable surface over three native backends, with validation between your code and the driver."],
+    ["Metal · Direct3D 12 · Vulkan","What the browser translates to, depending on platform. You never touch these, but their differences are why the API is explicit about everything."],
+    ["GPU hardware","Integrated or discrete, it does not matter to the API. Limits and features are what vary, and you read those from the adapter."]
+  ];
+  var lex=document.getElementById("layer-explain");
+  document.querySelectorAll(".layers button").forEach(function(b){b.addEventListener("click",function(){
+    document.querySelectorAll(".layers button").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+    var L=LAYERS[+b.dataset.layer];lex.innerHTML="<b></b><p></p>";lex.querySelector("b").textContent=L[0];lex.querySelector("p").textContent=L[1];
+  });});
+
+  /* ── Object graph steppers ── */
+  document.querySelectorAll(".graph nav button").forEach(function(b){b.addEventListener("click",function(){
+    var nav=b.parentNode,host=nav.parentNode;
+    nav.querySelectorAll("button").forEach(function(x){if(x===b)x.setAttribute("aria-current","step");else x.removeAttribute("aria-current");});
+    host.querySelectorAll(".pane").forEach(function(p){p.classList.toggle("on",p.dataset.pane===b.dataset.g);});
+  });});
+
+  /* ── Uses: pick two ── */
+  document.querySelectorAll(".uses .card").forEach(function(b){b.addEventListener("click",function(){
+    var on=b.getAttribute("aria-pressed")==="true";
+    if(!on){var picked=document.querySelectorAll('.uses .card[aria-pressed="true"]');if(picked.length>=2)picked[0].setAttribute("aria-pressed","false");}
+    b.setAttribute("aria-pressed",String(!on));
+  });});
+
+  /* ── Mental model: one frame ── */
+  var tgl=document.getElementById("track-gl"),tgp=document.getElementById("track-gpu");
+  document.getElementById("frame-btn").addEventListener("click",function(){
+    tgl.querySelectorAll(".dot").forEach(function(d){d.remove();});tgp.querySelectorAll(".blk").forEach(function(d){d.remove();});
+    tgl.classList.remove("play");tgp.classList.remove("play");void tgl.offsetWidth;
+    var w=(tgl.clientWidth-100)/10;
+    var n=0,N=48;
+    for(var i=0;i<N;i++){var d=document.createElement("i");d.className="dot";d.style.setProperty("--d",String(i*45));d.style.setProperty("--w",String(w));tgl.appendChild(d);}
+    var b=document.createElement("i");b.className="blk";b.textContent="command buffer";b.style.setProperty("--w",String((tgp.clientWidth-100-120)/120));tgp.appendChild(b);
+    tgl.classList.add("play");tgp.classList.add("play");
+    document.getElementById("gpu-count").textContent="1";
+    var ce=document.getElementById("gl-count");ce.textContent="0";
+    var t=setInterval(function(){n++;ce.textContent=String(n);if(n>=N)clearInterval(t);},45);
+  });
+
+  /* ── Workgroup grid ── */
+  var wgGrid=document.getElementById("wg-grid"),wx=document.getElementById("wg-x"),wy=document.getElementById("wg-y"),ws=document.getElementById("wg-size"),wh=document.getElementById("wg-hover");
+  function wg(){
+    var x=+wx.value,y=+wy.value,s=+ws.value;
+    wgGrid.style.gridTemplateColumns="repeat("+x+",1fr)";wgGrid.innerHTML="";
+    for(var j=0;j<y;j++)for(var i=0;i<x;i++){var c=document.createElement("i");c.dataset.i=i;c.dataset.j=j;wgGrid.appendChild(c);}
+    document.getElementById("wg-call").textContent="dispatchWorkgroups("+x+", "+y+", 1)";
+    document.getElementById("wg-groups").textContent=String(x*y);document.getElementById("wg-per").textContent=String(s);
+    document.getElementById("wg-total").textContent=(x*y*s).toLocaleString();
+  }
+  [wx,wy,ws].forEach(function(el){el.addEventListener("input",wg);});
+  wgGrid.addEventListener("mouseover",function(e){var c=e.target.closest("i");if(!c)return;var s=+ws.value,i=+c.dataset.i,j=+c.dataset.j,base=(j*(+wx.value)+i)*s;wh.textContent="workgroup_id ("+i+", "+j+", 0) · global_invocation_id.x "+base+" … "+(base+s-1);});
+  wg();
+
+  /* ── WebGPU: shared adapter and device ── */
+  var pill=document.getElementById("gpu-pill"),pillText=document.getElementById("gpu-pill-text");
+  var gpu={adapter:null,device:null,error:null,ready:null};
+  function initGPU(){
+    if(gpu.ready)return gpu.ready;
+    gpu.ready=(async function(){
+      if(!navigator.gpu)throw new Error("navigator.gpu is undefined");
+      var a=await navigator.gpu.requestAdapter();
+      if(!a)throw new Error("requestAdapter() returned null");
+      gpu.adapter=a;
+      gpu.device=await a.requestDevice();
+      gpu.device.lost.then(function(info){gpu.device=null;gpu.ready=null;if(info.reason!=="destroyed"){pill.className="gpu-pill no";pillText.textContent="device lost";}});
+      return gpu;
+    })();
+    gpu.ready.catch(function(e){gpu.error=e;});
+    return gpu.ready;
+  }
+  function line(host,cls,text){var s=document.createElement("span");if(cls)s.className=cls;s.textContent=text;host.appendChild(s);}
+
+  /* Detection log, slide 8 */
+  var dlog=document.getElementById("detect-log");
+  (async function(){
+    dlog.innerHTML="";
+    line(dlog,navigator.gpu?"ok":"no","navigator.gpu  →  "+(navigator.gpu?"present":"undefined"));
+    try{
+      var g=await initGPU();
+      line(dlog,"ok","requestAdapter()  →  adapter");
+      line(dlog,"ok","requestDevice()  →  device");
+      line(dlog,"","preferred canvas format: "+navigator.gpu.getPreferredCanvasFormat());
+      pill.className="gpu-pill ok";pillText.textContent="WebGPU available";
+    }catch(e){
+      line(dlog,"no",(navigator.gpu?"requestAdapter()  →  null":"")+(navigator.gpu?"":"") );
+      line(dlog,"","fallback(): use WebGL2 or canvas2d here ("+e.message+")");
+      pill.className="gpu-pill no";pillText.textContent="no WebGPU here";
+    }
+  })();
+
+  /* Implementation guess, slide 7 */
+  (function(){
+    var ua=navigator.userAgent,who="";
+    if(/Firefox\//.test(ua))who="wgpu";else if(/Chrome\//.test(ua)||/Edg\//.test(ua))who="dawn";else if(/Safari\//.test(ua)&&/Apple/.test(navigator.vendor))who="webkit";
+    if(who){var c=document.getElementById("impl-"+who);if(c){c.style.borderColor="var(--mint)";document.getElementById("impl-you").textContent="Highlighted: the implementation this browser is most likely running, from its user agent string.";}}
+  })();
+
+  /* Hardware panel, slide 14 */
+  var hlog=document.getElementById("hw-log");
+  (async function(){
+    hlog.innerHTML="";
+    try{
+      var g=await initGPU(),a=g.adapter,info=a.info||{};
+      var desc=[info.vendor,info.architecture,info.device,info.description].filter(Boolean).join(" · ");
+      line(hlog,"ok","adapter: "+(desc||"(browser withholds adapter details)"));
+      line(hlog,"","isFallbackAdapter: "+String(!!a.isFallbackAdapter)+(a.isFallbackAdapter?"  (software, e.g. SwiftShader)":""));
+      var L=a.limits;
+      line(hlog,"","maxBufferSize: "+(L.maxBufferSize/1048576).toFixed(0)+" MiB");
+      line(hlog,"","maxStorageBufferBindingSize: "+(L.maxStorageBufferBindingSize/1048576).toFixed(0)+" MiB");
+      line(hlog,"","maxComputeWorkgroupSizeX: "+L.maxComputeWorkgroupSizeX+"  ·  maxComputeInvocationsPerWorkgroup: "+L.maxComputeInvocationsPerWorkgroup);
+      line(hlog,"","maxTextureDimension2D: "+L.maxTextureDimension2D+"  ·  features: "+a.features.size);
+    }catch(e){
+      line(hlog,"no","requestAdapter() → null on this machine ("+e.message+")");
+      line(hlog,"","This is the case the fallback path exists for.");
+    }
+  })();
+
+  /* ── WGSL doubling demo, slide 6 ── */
+  var wIn=document.getElementById("wgsl-in"),wOut=document.getElementById("wgsl-out"),wSt=document.getElementById("wgsl-st");
+  var sample=[1,2,3,5,8,13,21,34,55,89,144,233,377,610,987,1597];
+  sample.forEach(function(v){var s=document.createElement("span");s.textContent=String(v);wIn.appendChild(s);});
+  document.getElementById("wgsl-run").addEventListener("click",async function(){
+    wOut.innerHTML="";wSt.textContent="dispatching…";
+    try{
+      var g=await initGPU(),d=g.device;
+      var data=new Float32Array(sample);
+      var buf=d.createBuffer({size:data.byteLength,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_SRC,mappedAtCreation:true});
+      new Float32Array(buf.getMappedRange()).set(data);buf.unmap();
+      var mod=d.createShaderModule({code:"@group(0) @binding(0) var<storage, read_write> data: array<f32>;\n@compute @workgroup_size(64)\nfn main(@builtin(global_invocation_id) id: vec3<u32>) {\n  if (id.x < arrayLength(&data)) { data[id.x] = data[id.x] * 2.0; }\n}"});
+      var pipe=d.createComputePipeline({layout:"auto",compute:{module:mod,entryPoint:"main"}});
+      var bg=d.createBindGroup({layout:pipe.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:buf}}]});
+      var rb=d.createBuffer({size:data.byteLength,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+      var enc=d.createCommandEncoder();var pass=enc.beginComputePass();pass.setPipeline(pipe);pass.setBindGroup(0,bg);pass.dispatchWorkgroups(Math.ceil(data.length/64));pass.end();
+      enc.copyBufferToBuffer(buf,0,rb,0,data.byteLength);d.queue.submit([enc.finish()]);
+      await rb.mapAsync(GPUMapMode.READ);var out=Array.from(new Float32Array(rb.getMappedRange()));rb.unmap();
+      out.forEach(function(v){var s=document.createElement("span");s.className="o";s.textContent=String(v);wOut.appendChild(s);});
+      wSt.textContent="One dispatch of 1 workgroup × 64 invocations; 16 of them had data. Read back through a MAP_READ buffer.";
+    }catch(e){wSt.textContent="Could not run here: "+e.message+". On a machine with WebGPU this returns the doubled array.";}
+  });
+
+  /* ── Rendering demo, slide 17 ── */
+  var rc=document.getElementById("r-canvas"),rSt=document.getElementById("r-st"),rBtn=document.getElementById("r-btn"),raf=0,rStop=null;
+  function stopRender(){if(raf)cancelAnimationFrame(raf);raf=0;if(rStop){rStop();rStop=null;}rBtn.textContent="Start";rSt.textContent="stopped";}
+  async function startRender(){
+    stopRender();rSt.textContent="starting…";
+    try{
+      var g=await initGPU(),d=g.device,ctx=rc.getContext("webgpu"),fmt=navigator.gpu.getPreferredCanvasFormat();
+      ctx.configure({device:d,format:fmt,alphaMode:"opaque"});
+      var code="struct U { t: f32 };\n@group(0) @binding(0) var<uniform> u: U;\nstruct VOut { @builtin(position) p: vec4<f32>, @location(0) c: vec3<f32> };\n@vertex fn vs(@builtin(vertex_index) i: u32) -> VOut {\n  var pos = array<vec2<f32>,3>(vec2(0.0,0.62), vec2(-0.55,-0.4), vec2(0.55,-0.4));\n  var col = array<vec3<f32>,3>(vec3(0.008,0.765,0.604), vec3(0.976,0.439,0.294), vec3(0.925,0.929,0.949));\n  let a = u.t; let c = cos(a); let s = sin(a);\n  let p = pos[i]; let r = vec2(p.x*c - p.y*s, (p.x*s + p.y*c));\n  var o: VOut; o.p = vec4(r.x*0.5625, r.y, 0.0, 1.0); o.c = col[i]; return o;\n}\n@fragment fn fs(v: VOut) -> @location(0) vec4<f32> { return vec4(v.c, 1.0); }";
+      var mod=d.createShaderModule({code:code});
+      var pipe=d.createRenderPipeline({layout:"auto",vertex:{module:mod,entryPoint:"vs"},fragment:{module:mod,entryPoint:"fs",targets:[{format:fmt}]},primitive:{topology:"triangle-list"}});
+      var ub=d.createBuffer({size:16,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+      var bg=d.createBindGroup({layout:pipe.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:ub}}]});
+      var t0=performance.now(),frames=0;
+      rSt.textContent="WebGPU · pipeline created once";rBtn.textContent="Stop";
+      (function frame(){
+        d.queue.writeBuffer(ub,0,new Float32Array([(performance.now()-t0)/1000]));
+        var enc=d.createCommandEncoder();
+        var pass=enc.beginRenderPass({colorAttachments:[{view:ctx.getCurrentTexture().createView(),clearValue:{r:0.063,g:0.067,b:0.094,a:1},loadOp:"clear",storeOp:"store"}]});
+        pass.setPipeline(pipe);pass.setBindGroup(0,bg);pass.draw(3);pass.end();d.queue.submit([enc.finish()]);
+        frames++;if(frames%30===0)rSt.textContent="WebGPU · "+Math.round(frames/((performance.now()-t0)/1000))+" fps · 1 submit per frame";
+        raf=requestAnimationFrame(frame);
+      })();
+      rStop=function(){try{ctx.unconfigure();}catch(e){}};
+    }catch(e){
+      startWebGL(e.message);
+    }
+  }
+  function startWebGL(why){
+    var gl=rc.getContext("webgl2");
+    if(!gl){rSt.textContent="no WebGPU ("+why+") and no WebGL2 either";return;}
+    var vs="#version 300 es\nuniform float t;out vec3 c;void main(){vec2 p[3]=vec2[3](vec2(0.,.62),vec2(-.55,-.4),vec2(.55,-.4));vec3 k[3]=vec3[3](vec3(.008,.765,.604),vec3(.976,.439,.294),vec3(.925,.929,.949));float s=sin(t),co=cos(t);vec2 q=p[gl_VertexID];vec2 r=vec2(q.x*co-q.y*s,q.x*s+q.y*co);gl_Position=vec4(r.x*.5625,r.y,0.,1.);c=k[gl_VertexID];}";
+    var fs="#version 300 es\nprecision mediump float;in vec3 c;out vec4 o;void main(){o=vec4(c,1.);}";
+    function sh(t,s){var h=gl.createShader(t);gl.shaderSource(h,s);gl.compileShader(h);return h;}
+    var pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+    var loc=gl.getUniformLocation(pr,"t"),t0=performance.now();
+    rSt.textContent="WebGL2 fallback · adapter was null";rBtn.textContent="Stop";
+    (function frame(){gl.viewport(0,0,rc.width,rc.height);gl.clearColor(0.063,0.067,0.094,1);gl.clear(gl.COLOR_BUFFER_BIT);gl.uniform1f(loc,(performance.now()-t0)/1000);gl.drawArrays(gl.TRIANGLES,0,3);raf=requestAnimationFrame(frame);})();
+  }
+  rBtn.addEventListener("click",function(){if(raf)stopRender();else startRender();});
+  onLeave.s17=function(){if(raf)stopRender();};
+
+  /* ── Compute demo, slide 17: parallel sum ── */
+  var cBtn=document.getElementById("c-btn"),cSt=document.getElementById("c-st"),cOut=document.getElementById("c-out"),cTime=document.getElementById("c-time");
+  cBtn.addEventListener("click",async function(){
+    cSt.textContent="running…";cOut.textContent="—";cTime.textContent="";
+    var N=1<<20,WG=256;
+    var input=new Float32Array(N);for(var i=0;i<N;i++)input[i]=((i*7919)%1000)/1000;
+    var t0=performance.now();
+    try{
+      var g=await initGPU(),d=g.device;
+      var inBuf=d.createBuffer({size:input.byteLength,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST,mappedAtCreation:true});
+      new Float32Array(inBuf.getMappedRange()).set(input);inBuf.unmap();
+      var groups=N/WG;
+      var outBuf=d.createBuffer({size:groups*4,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_SRC});
+      var code="@group(0) @binding(0) var<storage, read> inp: array<f32>;\n@group(0) @binding(1) var<storage, read_write> outp: array<f32>;\nvar<workgroup> sh: array<f32, "+WG+">;\n@compute @workgroup_size("+WG+")\nfn main(@builtin(local_invocation_id) l: vec3<u32>, @builtin(workgroup_id) w: vec3<u32>, @builtin(global_invocation_id) gid: vec3<u32>) {\n  sh[l.x] = inp[gid.x];\n  workgroupBarrier();\n  var s: u32 = "+(WG/2)+"u;\n  loop { if (s == 0u) { break; } if (l.x < s) { sh[l.x] = sh[l.x] + sh[l.x + s]; } workgroupBarrier(); s = s / 2u; }\n  if (l.x == 0u) { outp[w.x] = sh[0]; }\n}";
+      var pipe=d.createComputePipeline({layout:"auto",compute:{module:d.createShaderModule({code:code}),entryPoint:"main"}});
+      var bg=d.createBindGroup({layout:pipe.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:inBuf}},{binding:1,resource:{buffer:outBuf}}]});
+      var rb=d.createBuffer({size:groups*4,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+      var enc=d.createCommandEncoder();var pass=enc.beginComputePass();pass.setPipeline(pipe);pass.setBindGroup(0,bg);pass.dispatchWorkgroups(groups);pass.end();
+      enc.copyBufferToBuffer(outBuf,0,rb,0,groups*4);d.queue.submit([enc.finish()]);
+      await rb.mapAsync(GPUMapMode.READ);var partial=new Float32Array(rb.getMappedRange());var sum=0;for(var k=0;k<partial.length;k++)sum+=partial[k];rb.unmap();
+      var t1=performance.now();
+      var cpu=0;var c0=performance.now();for(var m=0;m<N;m++)cpu+=input[m];var c1=performance.now();
+      cOut.textContent=sum.toLocaleString(undefined,{maximumFractionDigits:1});
+      cSt.textContent="WebGPU · "+groups.toLocaleString()+" workgroups × "+WG;
+      cTime.textContent="GPU round trip "+(t1-t0).toFixed(1)+" ms including upload and readback · plain JS loop "+(c1-c0).toFixed(1)+" ms · CPU check "+cpu.toLocaleString(undefined,{maximumFractionDigits:1});
+    }catch(e){
+      var cpu2=0;for(var q=0;q<N;q++)cpu2+=input[q];
+      cOut.textContent=cpu2.toLocaleString(undefined,{maximumFractionDigits:1});
+      cSt.textContent="CPU fallback";cTime.textContent="No WebGPU here ("+e.message+"). Summed on the CPU instead, which is exactly the fallback path from slide 13.";
+    }
+  });
+
+  fromHash();
+})();
+</script>
+
+</body>
+</html>
