@@ -1,0 +1,2758 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nebari OSS &amp; Delivery</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}:root{color-scheme:dark}</style>
+<style>
+  :root{
+    --bg: #0a0e1a;
+    --surface: #12182b;
+    --surface-2: #1a2238;
+    --border: #262f4a;
+    --text: #eef1fa;
+    --text-muted: #a7afc8;
+    --text-faint: #8690ac;
+    --violet: #8b6cf9;
+    --violet-dim: #8b6cf933;
+    --teal: #33d1c4;
+    --teal-dim: #33d1c42e;
+    --amber: #e8b34f;
+    --amber-dim: #e8b34f26;
+    --done: #49c98a;
+    --done-dim: #49c98a24;
+    --note: rgb(139, 108, 249);
+    --note-dim: rgba(139, 108, 249, 0.14);
+    --note-border: rgba(139, 108, 249, 0.35);
+    --blue: #4f8ff5;
+    --blue-dim: rgba(79, 143, 245, 0.16);
+    --blue-border: rgba(79, 143, 245, 0.35);
+    --red: #f2545b;
+    --red-dim: rgba(242, 84, 91, 0.16);
+    --red-border: rgba(242, 84, 91, 0.4);
+    --radius: 14px;
+    scroll-behavior: smooth;
+  }
+
+  *{ box-sizing: border-box; }
+  /* The background gradients live on a dedicated position:fixed layer rather
+     than as a background-attachment:fixed on body. `background-attachment:
+     fixed` is unreliable on mobile browsers (iOS Safari/Chrome in particular
+     often can't keep it pinned), and here the percentage-based gradient
+     positions (e.g. "at 10% 100%") are relative to body's own box — which
+     grows taller every time an accordion expands — so on mobile the
+     gradients visibly drifted as sections opened/closed. A fixed, full-
+     viewport pseudo-element is anchored purely to the viewport and never
+     resizes with the page, so it can't shift no matter how tall body gets.
+  */
+  body::before{
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(80vw 65vh at 8% -5%, var(--violet-dim), transparent 65%),
+      radial-gradient(85vw 70vh at 100% 5%, var(--teal-dim), transparent 62%),
+      radial-gradient(70vw 55vh at 10% 100%, var(--violet-dim), transparent 65%),
+      radial-gradient(60vw 50vh at 95% 100%, var(--note-dim), transparent 62%);
+  }
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Geist", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    padding-inline: 20px;
+    padding-block: 28px 56px;
+    display: flex;
+    justify-content: center;
+    /* Without this, introducing a position:sticky descendant into a
+       flex row with the default align-items:stretch makes some browsers
+       miscompute .page's auto height (it collapses to far less than its
+       actual content), which in turn breaks the sticky element's ability
+       to stick at all. flex-start sizes .page to its own content, same
+       as before, just without that collapse. */
+    align-items: flex-start;
+  }
+
+  h1, h2, h3{ font-family: "Geist", ui-sans-serif, system-ui, sans-serif; }
+
+  .page{
+    width: 100%;
+    max-width: 880px;
+  }
+
+  /* ---------- header ---------- */
+  .header{
+    background:
+      radial-gradient(120% 160% at 0% 0%, var(--violet-dim), transparent 55%),
+      radial-gradient(120% 160% at 100% 0%, var(--teal-dim), transparent 55%),
+      var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px clamp(20px, 4vw, 36px);
+    margin-bottom: 22px;
+  }
+  .title-row{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .title-row .mark{
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--violet), var(--teal));
+    display: grid; place-items: center;
+    flex: none;
+  }
+  .title-row .mark svg{ width: 29px; height: 29px; }
+  .header h1{
+    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    font-weight: 650;
+    line-height: 1.2;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .title-row .tag{
+    font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+  .header p.lede{
+    color: var(--text-muted);
+    font-size: 0.98rem;
+    line-height: 1.55;
+    margin: 0 0 12px;
+  }
+  .header p.lede:last-of-type{ margin-bottom: 14px; }
+  .updated-stamp{
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+    font-size: 0.75rem;
+    color: var(--text-faint);
+  }
+  .updated-stamp .dot{
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal);
+    flex: none;
+  }
+
+  .divider{
+    height: 2px;
+    border: none;
+    margin: 16px 0;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, var(--violet), transparent);
+  }
+
+  /* ---------- quick nav ---------- */
+  /* Below the 1270px breakpoint the pill row is the only way to jump
+     between deliverables (the fixed sidebar takes over above that), so it
+     sticks to the top of the viewport once scrolled past — otherwise
+     getting back to a different card means scrolling all the way up. */
+  .quicknav-wrap{
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin: 10px 0 12px;
+    padding: 0 0 8px;
+    transition: box-shadow 0.2s ease, padding-top 0.2s ease;
+  }
+  /* No background here on purpose — the pills sit directly on the page's
+     own gradient backdrop, stuck or not, each pill already carrying its
+     own solid fill. What actually keeps a card from ever showing through
+     the gaps once this row is pinned is #scrollGuard's mask below, not a
+     painted-over box. Just a soft lift, plus a little breathing room off
+     the very top of the viewport, once genuinely stuck — no top padding
+     the rest of the time, so "Contents" above stays close to the pills. */
+  .quicknav-wrap.is-stuck{
+    padding-top: 10px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+  }
+  .quicknav-sentinel{ height: 0; margin: 0; padding: 0; border: 0; }
+  /* JS fades this out from the top so its content can never scroll up
+     underneath the sticky pill row above it — see updateScrollGuardClip()
+     in the script. Below the 1270px breakpoint only; reset to none there. */
+  .scroll-guard{ position: relative; }
+  .quicknav{
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+    padding-inline: 1px;
+    cursor: grab;
+  }
+  .quicknav.is-dragging{ cursor: grabbing; scroll-snap-type: none; }
+  .quicknav.is-dragging a{ pointer-events: none; }
+  .quicknav::-webkit-scrollbar{ display: none; }
+  /* Fades whichever edge pill is cut off by the scroll container, rather
+     than laying a solid-colour rectangle on top of it — a mask fades the
+     pill's own background/border/text straight to transparent, so it
+     blends into whatever's actually behind it (the page's own gradient,
+     not a flat colour standing in for it) instead of showing a hard-edged
+     box where an painted-on fade used to end. Toggled by the same
+     can-scroll-left/right classes the horizontal-scroll JS already
+     maintains on .quicknav-wrap. */
+  .quicknav-wrap.can-scroll-left .quicknav{
+    mask-image: linear-gradient(90deg, transparent, black 28px);
+    -webkit-mask-image: linear-gradient(90deg, transparent, black 28px);
+  }
+  .quicknav-wrap.can-scroll-right .quicknav{
+    mask-image: linear-gradient(90deg, black calc(100% - 28px), transparent);
+    -webkit-mask-image: linear-gradient(90deg, black calc(100% - 28px), transparent);
+  }
+  .quicknav-wrap.can-scroll-left.can-scroll-right .quicknav{
+    mask-image: linear-gradient(90deg, transparent, black 28px, black calc(100% - 28px), transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, black 28px, black calc(100% - 28px), transparent);
+  }
+  .quicknav .quicknav-label{ display: none; }
+  .quicknav a{
+    font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 6px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex: none;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+  .quicknav a:hover, .quicknav a:focus-visible{
+    border-color: var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    outline: none;
+  }
+  /* "You are here" — set on whichever pill was last clicked, cleared once
+     its deliverable has scrolled fully out of view in either direction
+     (see the click handler + IntersectionObserver in the script). Same
+     mechanism the sidebar list below uses, just styled to fit a pill.
+
+     Background is the green wash layered over an OPAQUE var(--surface)
+     backing, not var(--done-dim) alone. var(--done-dim) has real alpha
+     transparency, so used by itself it lets whatever is behind the pill
+     show through — normally just the page backdrop, but while the pills
+     are sticky and the scroll-guard mask below is racing the compositor
+     during a fast scroll, "behind the pill" can very briefly still be a
+     sliver of deliverable text that hasn't been masked out yet for that
+     one frame. Every OTHER pill is fully opaque (var(--surface), no
+     alpha) so the same one-frame lag is invisible there; only the active
+     pill's translucency exposed it. Layering the wash over an opaque
+     backing keeps the exact same visible tint while making the pill
+     immune to that timing race entirely, rather than chasing the race. */
+  .quicknav a.is-active{
+    border-color: #49c98a4d;
+    background: linear-gradient(var(--done-dim), var(--done-dim)), var(--surface);
+    color: var(--done);
+  }
+  /* Explicit rather than left to win on source order against the plain
+     :hover rule above — hovering (or clicking) the pill that's already
+     active should never read as losing its "you are here" state. */
+  .quicknav a.is-active:hover, .quicknav a.is-active:focus-visible{
+    border-color: #49c98a80;
+    background: linear-gradient(var(--done-dim), var(--done-dim)), var(--surface);
+    color: var(--done);
+  }
+  .quicknav a:active{
+    background: var(--surface-2);
+    border-color: var(--text-faint);
+  }
+  .quicknav a.is-active:active{
+    border-color: #49c98a80;
+  }
+  @media (min-width: 1270px){
+    /* On its own the sidebar nav was just bare text + floating pills with
+       no container, which looked disconnected from the rest of the page's
+       card-based language. Wrapping it in the same surface/border/radius
+       as everything else, and swapping the pill-button links for a plain
+       list with a "you are here" active indicator, makes it read as an
+       intentional panel rather than something that drifted loose.
+
+       Sizing: 152px wide (down from 168px — still comfortably wider than
+       "Feature Requests", the longest label, with a few px to spare), held
+       28px off the page's own right edge (down from ~62px) instead of
+       floating out in the page's generous max-width gutter. That 28px gap
+       plus the 152px width is the "- 180px" below, which is what lets the
+       breakpoint itself drop 50px lower than its original 1320px without
+       the panel ever touching the page content. */
+    .quicknav{
+      position: fixed;
+      top: 28px;
+      right: max(24px, calc((100vw - 880px) / 2 - 180px));
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      width: 152px;
+      gap: 2px;
+      margin: 0;
+      z-index: 5;
+      overflow-x: visible;
+      cursor: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 8px;
+    }
+    .quicknav .quicknav-label{
+      display: block;
+      font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+      font-size: 0.66rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 0 0 8px;
+      padding-left: 10px;
+    }
+    .quicknav a{
+      text-align: left;
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 7px 8px;
+      border-left: 2px solid transparent;
+    }
+    .quicknav a:hover, .quicknav a:focus-visible{
+      background: var(--surface-2);
+      border-color: transparent;
+      border-left-color: transparent;
+    }
+    .quicknav a.is-active{
+      background: var(--surface-2);
+      color: var(--text);
+      border-left-color: var(--done);
+    }
+    /* Same reasoning as the pill version above — make hovering (or
+       clicking) the already-active section explicit, rather than relying
+       on it beating the plain :hover rule purely on source order. */
+    .quicknav a.is-active:hover, .quicknav a.is-active:focus-visible{
+      background: var(--surface-2);
+      color: var(--text);
+      border-left-color: var(--done);
+    }
+    .quicknav a:active{
+      background: var(--surface-2);
+    }
+    .quicknav a.is-active:active{
+      border-left-color: var(--done);
+    }
+    .quicknav-wrap{
+      position: static;
+      z-index: auto;
+      margin: 0;
+      padding: 0;
+      background: none;
+      border-bottom: none;
+      box-shadow: none;
+    }
+    .quicknav{ mask-image: none; -webkit-mask-image: none; }
+  }
+
+  /* ---------- back to top ---------- */
+  /* Appears once the quick-nav pills are actually stuck to the top of the
+     viewport (same signal .quicknav-wrap.is-stuck uses) — that's the point
+     scrolling back up manually stops being a one-flick gesture, so a
+     shortcut earns its place on screen. */
+  .back-to-top{
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    z-index: 15;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .back-to-top.is-visible{
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .back-to-top:hover, .back-to-top:focus-visible{
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--text-faint);
+    outline: none;
+  }
+  .back-to-top:active{ transform: translateY(0) scale(0.94); }
+  .back-to-top svg{ width: 18px; height: 18px; }
+  /* Placed after the base rule (not inside the sidebar-nav media query
+     above) so it wins on source order at equal specificity — the sidebar
+     nav is fixed and always on screen at this width, so a floating "back
+     to top" button would just be a second, redundant way to get around. */
+  @media (min-width: 1270px){
+    .back-to-top{ display: none; }
+  }
+
+  /* ---------- toolbar ---------- */
+  .toolbar-btn{
+    font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+    /* Sized to fit "Collapse all" — its widest state — so toggling the
+       label doesn't change the button's (and everything next to it's)
+       width. */
+    min-width: 118px;
+    text-align: center;
+  }
+  .toolbar-btn:hover, .toolbar-btn:focus-visible{
+    border-color: var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    outline: none;
+  }
+
+  /* ---------- cards (workstreams + nested steps) ---------- */
+  .steps{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .step, .backlog, .contact-card{ scroll-margin-top: 18px; }
+  .step{
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px clamp(16px, 3.5vw, 26px) 22px;
+  }
+  @keyframes justOpenedFlash{
+    0%{ border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-dim); }
+    100%{ border-color: var(--border); box-shadow: 0 0 0 3px transparent; }
+  }
+  .step > summary{
+    list-style: none;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+  }
+  .step > summary:hover{ background: var(--surface-2); }
+  .step > summary::-webkit-details-marker{ display: none; }
+  .step > summary::marker{ content: ""; }
+  .step > summary:focus-visible{ outline: 2px solid var(--teal); outline-offset: 6px; }
+  .step-top{
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    column-gap: 14px;
+    row-gap: 6px;
+    flex-wrap: wrap;
+    padding-right: 30px;
+  }
+  .step-right{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: none;
+  }
+  .chevron{
+    position: absolute;
+    top: 20px;
+    right: clamp(16px, 3.5vw, 26px);
+    width: 20px; height: 20px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    color: var(--text-faint);
+    transition: transform 0.18s ease;
+  }
+  .step.substep .chevron{ top: 16px; right: clamp(14px, 3vw, 20px); }
+  .chevron svg{ width: 12px; height: 12px; }
+  .step.is-expanded > summary .chevron{ transform: rotate(180deg); }
+  .step-body-inner{ padding-top: 10px; }
+  .step-body-inner > *:first-child{ margin-top: 0; }
+  .step-id{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .step-id h2{ min-width: 0; }
+  .step-top > .sub{ flex: 1 1 100%; margin-top: 0; }
+  @media (max-width: 700px){
+    .step-id{ flex: 1 1 100%; }
+  }
+  .num{
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    flex: none;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .num svg{ width: 21px; height: 21px; }
+  .step[data-status="progress"] > summary .num{
+    background: var(--amber-dim);
+    color: var(--amber);
+    border-color: #e8b34f4d;
+  }
+  .step[data-status="done"] > summary .num{
+    background: var(--done-dim);
+    color: var(--done);
+    border-color: #49c98a4d;
+  }
+  .step[data-status="review"] > summary .num{
+    background: var(--blue-dim);
+    color: var(--blue);
+    border-color: var(--blue-border);
+  }
+  .step[data-status="completed"] > summary .num{
+    background: var(--done-dim);
+    color: var(--done);
+    border-color: #49c98a4d;
+  }
+  .step[data-status="next"] > summary .num{
+    background: var(--teal-dim);
+    color: var(--teal);
+    border-color: #33d1c44d;
+  }
+  .step[data-status="tbd"] > summary .num{
+    background: var(--surface-2);
+    color: var(--text-faint);
+    border-color: var(--border);
+  }
+  .step[data-status="blocked"] > summary .num{
+    background: var(--red-dim);
+    color: var(--red);
+    border-color: var(--red-border);
+  }
+  .step h2{
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text);
+  }
+  .step .sub{
+    font-size: 0.85rem;
+    color: var(--text-faint);
+    margin-top: 3px;
+  }
+  .pill{
+    font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 5px 11px;
+    border-radius: 999px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .pill[data-s="progress"]{ background: var(--amber-dim); color: var(--amber); border-color: #e8b34f4d; }
+  .pill[data-s="next"]{ background: var(--teal-dim); color: var(--teal); border-color: #33d1c44d; }
+  .pill[data-s="tbd"]{ background: var(--surface-2); color: var(--text-faint); border-color: var(--border); }
+  .pill[data-s="done"]{ background: var(--done-dim); color: var(--done); border-color: #49c98a4d; }
+  .pill[data-s="review"]{ background: var(--blue-dim); color: var(--blue); border-color: var(--blue-border); }
+  .pill[data-s="completed"]{ background: var(--done-dim); color: var(--done); border-color: #49c98a4d; }
+  .pill[data-s="blocked"]{ background: var(--red-dim); color: var(--red); border-color: var(--red-border); }
+
+  .bullets{
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .bullets li{
+    display: flex;
+    gap: 10px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+  .bullets li::before{
+    content:"";
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--text-faint);
+    flex: none;
+    margin-top: 8px;
+  }
+  .step[data-status="progress"] > .step-body > .step-body-inner > .bullets li::before{ background: var(--amber); }
+  .step[data-status="next"] > .step-body > .step-body-inner > .bullets li::before{ background: var(--teal); }
+  .step[data-status="review"] > .step-body > .step-body-inner > .bullets li::before{ background: var(--blue); }
+  .step[data-status="done"] > .step-body > .step-body-inner > .bullets li::before{ background: var(--done); }
+  .step[data-status="completed"] > .step-body > .step-body-inner > .bullets li::before{ background: var(--done); }
+  .step[data-status="tbd"] > .step-body > .step-body-inner > .bullets li::before{ background: var(--text-faint); }
+  .step[data-status="blocked"] > .step-body > .step-body-inner > .bullets li::before{ background: var(--red); }
+
+  .lede-block{
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    line-height: 1.55;
+    margin: 0 0 14px;
+  }
+  .lede-block:last-of-type{ margin-bottom: 0; }
+
+  /* ---------- size table ---------- */
+  .size-table-wrap{ margin-top: 14px; }
+  .size-table{
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  .size-table th{
+    font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    text-align: left;
+    padding: 0 10px 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .size-table td{
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    padding: 10px 10px 10px 0;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .size-table tr:last-child td{ border-bottom: none; }
+  .size-table th:nth-child(1), .size-table td:nth-child(1){ width: 15%; }
+  .size-table th:nth-child(2), .size-table td:nth-child(2){ width: 20%; }
+  .size-table td:first-child{
+    font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+    font-weight: 600;
+    color: var(--teal);
+  }
+  .size-table td:nth-child(2){ color: var(--text-faint); }
+
+  .callout{
+    margin-top: 14px;
+    background: var(--amber-dim);
+    border: 1px solid #e8b34f4d;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+  }
+  .callout b{ color: var(--amber); font-weight: 600; }
+  .callout.purple{ background: var(--note-dim); border-color: var(--note-border); }
+  .callout.purple b{ color: var(--note); }
+  .callout.red{ background: var(--red-dim); border-color: var(--red-border); }
+  .callout.red b{ color: var(--red); }
+  .callout.green{ background: var(--done-dim); border-color: #49c98a4d; }
+  .callout.green b{ color: var(--done); }
+
+  /* ---------- backlog note ---------- */
+  .header .backlog{ margin-bottom: 16px; }
+  .backlog{
+    margin-top: 18px;
+    background: var(--note-dim);
+    border: 1px solid var(--note-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .backlog h3{
+    font-size: 0.8rem;
+    margin: 0 0 4px;
+    color: var(--note);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .backlog h3::before{
+    content:"";
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--note);
+    display: inline-block;
+  }
+  .backlog p{
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  /* ---------- mini progress (nested) ---------- */
+  .mini-progress{ margin: 4px 0 16px; }
+  .mini-progress-head{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin-bottom: 8px;
+  }
+  .mini-progress-title{
+    font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .section-label{
+    font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 16px 0 8px;
+  }
+  .quicknav-heading{
+    margin: 0 0 8px;
+    font-weight: 600;
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+  /* Contents label + Expand-all sit on one row so they don't stack as two
+     separate blocks of space above the nav — was reading as dead air
+     between the intro text and the first card. */
+  .quicknav-toolbar{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    row-gap: 10px;
+    gap: 12px;
+    margin: 0 0 6px;
+    position: relative;
+    z-index: 20;
+  }
+  .quicknav-toolbar .quicknav-heading{ margin: 0; align-self: flex-end; }
+  .toolbar-actions{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-left: auto;
+  }
+  .status-filter{
+    position: relative;
+  }
+  .status-filter-btn{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 12px 7px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    /* Sized to fit "All statuses" — its widest label — so switching
+       between statuses (or to "N selected") doesn't resize the button and
+       shove "Expand all" and the pills around next to it. */
+    min-width: 136px;
+  }
+  .status-filter-btn:hover, .status-filter-btn:focus-visible{
+    background: var(--surface-2);
+    color: var(--text);
+    outline: none;
+  }
+  /* Grows to fill the button's fixed-width space so the label centers
+     within the pill rather than hugging its left edge, while the chevron
+     stays pinned at the right regardless of label length. */
+  #statusFilterLabel{
+    flex: 1;
+    text-align: center;
+  }
+  .status-filter-btn svg{
+    width: 12px; height: 12px;
+    flex: none;
+    color: var(--text-faint);
+    transition: transform 0.15s ease;
+  }
+  .status-filter.is-open .status-filter-btn svg{ transform: rotate(180deg); }
+  .status-filter.has-active .status-filter-btn{
+    background: var(--violet-dim);
+    color: var(--violet);
+    border-color: #8b6cf94d;
+  }
+  .status-filter.has-active .status-filter-btn svg{ color: var(--violet); }
+  .status-filter-menu{
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 6;
+    min-width: 180px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+  }
+  .status-filter-menu[hidden]{ display: none; }
+  .status-filter-menu-actions{
+    display: flex;
+    gap: 6px;
+    padding-bottom: 8px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .status-filter-action{
+    flex: 1 1 0;
+    font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+    font-size: 0.64rem;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 0;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .status-filter-action:hover, .status-filter-action:focus-visible{
+    color: var(--text);
+    border-color: var(--text-faint);
+    outline: none;
+  }
+  .status-filter-option{
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding: 7px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.12s ease;
+  }
+  .status-filter-option:hover{ background: var(--surface-2); }
+  .status-filter-option input{
+    width: 15px; height: 15px;
+    accent-color: var(--violet);
+    cursor: pointer;
+    flex: none;
+  }
+  #workstreams > .step.is-filtered-out{ display: none; }
+  .filter-empty{
+    display: none;
+    font-size: 0.85rem;
+    color: var(--text-faint);
+    text-align: center;
+    padding: 24px 0;
+  }
+  .filter-empty.is-visible{ display: block; }
+  @media (min-width: 1270px){
+    .quicknav-heading{ display: none; }
+    .quicknav-toolbar{ justify-content: flex-end; margin: 0 0 12px; }
+  }
+  .mini-legend{ display: flex; flex-wrap: wrap; gap: 12px; }
+  .legend-item{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+  }
+  .legend-dot{ width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .legend-dot[data-tone="progress"]{ background: var(--amber); }
+  .legend-dot[data-tone="next"]{ background: var(--teal); }
+  .legend-dot[data-tone="completed"]{ background: var(--done); }
+  .legend-dot[data-tone="blocked"]{ background: var(--red); }
+  .legend-dot[data-tone="tbd"]{ background: var(--surface-2); border: 1px solid var(--border); }
+  .mini-rail{
+    display: flex;
+    gap: 5px;
+  }
+  .mini-rail .seg{ flex: 1 1 0; }
+  .mini-rail .seg{ height: 5px; border-radius: 3px; background: var(--surface-2); }
+  .mini-rail .seg[data-status="progress"]{ background: var(--amber); }
+  .mini-rail .seg[data-status="next"]{ background: var(--teal); }
+  .mini-rail .seg[data-status="completed"]{ background: var(--done); }
+  .mini-rail .seg[data-status="blocked"]{ background: var(--red); }
+
+  /* ---------- nested substeps ---------- */
+  .substeps{ margin-top: 4px; }
+  .step.substep{ padding: 16px clamp(14px, 3vw, 20px) 18px; }
+  .step.substep .step-top{ padding-right: 26px; }
+  .step.substep .num{ width: 28px; height: 28px; font-size: 0.75rem; border-radius: 8px; }
+  .step.substep h2{ font-size: 0.95rem; }
+
+  /* ---------- section icon ---------- */
+  .section-icon{
+    width: 30px; height: 30px;
+    border-radius: 9px;
+    flex: none;
+    background: linear-gradient(135deg, var(--violet), var(--teal));
+    display: grid;
+    place-items: center;
+  }
+  .section-icon svg{ width: 16px; height: 16px; }
+
+  /* ---------- contact ---------- */
+  .contact-card{
+    margin-top: 18px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background:
+      radial-gradient(120% 160% at 0% 0%, var(--violet-dim), transparent 55%),
+      radial-gradient(120% 160% at 100% 0%, var(--teal-dim), transparent 55%),
+      var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px clamp(16px, 3.5vw, 26px);
+  }
+  .contact-icon{
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    flex: none;
+    background: linear-gradient(135deg, var(--violet), var(--teal));
+    display: grid;
+    place-items: center;
+  }
+  .contact-icon svg{ width: 22px; height: 22px; }
+  .contact-card h3{ font-size: 0.95rem; margin: 0 0 4px; color: var(--text); }
+  .contact-card p{ font-size: 0.85rem; color: var(--text-muted); line-height: 1.55; margin: 0 0 10px; }
+  .contact-link{
+    /* Was display:inline-flex, which none of its uses actually need (no
+       icon child, just text) — but as an atomic flex box it can't break
+       across lines the way normal inline text does, so when one landed
+       mid-sentence in a longer line that needed to wrap, the box and the
+       words around it fell out of order instead of wrapping together.
+       Plain inline text wraps normally like everything else around it. */
+    display: inline;
+    font-family: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+    font-size: 0.8rem;
+    color: var(--violet);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+  .contact-link:hover, .contact-link:focus-visible{ border-color: var(--violet); outline: none; }
+
+  /* ---------- entrance ---------- */
+  @keyframes fadeInUp{
+    from{ opacity: 0; transform: translateY(8px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+  .header, .quicknav-toolbar, .steps > .step, .contact-card{
+    animation: fadeInUp 0.5s ease both;
+  }
+  .quicknav-toolbar{ animation-delay: 0.06s; }
+  .steps > .step:nth-child(1){ animation-delay: 0.1s; }
+  .steps > .step:nth-child(2){ animation-delay: 0.14s; }
+  .steps > .step:nth-child(3){ animation-delay: 0.18s; }
+  .steps > .step:nth-child(4){ animation-delay: 0.22s; }
+  .steps > .step:nth-child(5){ animation-delay: 0.26s; }
+  .steps > .step:nth-child(6){ animation-delay: 0.3s; }
+  .steps > .step:nth-child(7){ animation-delay: 0.34s; }
+  .steps > .step:nth-child(8){ animation-delay: 0.38s; }
+  .steps > .step:nth-child(9){ animation-delay: 0.42s; }
+  .contact-card{ animation-delay: 0.46s; }
+  @media (prefers-reduced-motion: reduce){
+    .header, .quicknav-toolbar, .steps > .step, .contact-card{ animation: none; }
+  }
+
+  /* Brief highlight applied to a card just opened via a same-page link
+     (quicknav or an in-page cross-reference), so a card with only a
+     little content doesn't land silently and go unnoticed. The
+     `justOpenedFlash` animation itself is assigned inline via JS (not
+     through the `.just-opened` class here) so it always wins over the
+     entrance animation below, rather than the two fighting over the
+     `animation` property through the cascade. */
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="title-row">
+      <span class="mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 21v-6c0-2 1-3 3-5" stroke="#0a0e1a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 15c-2-1-3-3-2-6" stroke="#0a0e1a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 21c1-1.4 2-1.6 4-1.6s3 0.2 4 1.6" stroke="#0a0e1a" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="15" cy="9" r="3.2" fill="#0a0e1a"/>
+          <circle cx="10" cy="8" r="2.5" fill="#0a0e1a"/>
+          <circle cx="13" cy="5.4" r="2.1" fill="#0a0e1a"/>
+        </svg>
+      </span>
+      <h1>Nebari OSS &amp; Delivery</h1>
+    </div>
+    <p class="lede">A current view of everything underway across Nebari OSS (Open Source Solutions) and Delivery. Each card below is referred to as its own <b>'Deliverable'</b> — spanning our feature roadmap, delivery processes, tooling and environments, and how we manage change.</p>
+    <p class="lede">These aren't sequential steps — they're parallel efforts, each at its own stage, all working toward the same goal: improving our end-to-end product development and project delivery journey.</p>
+
+    <div class="backlog" id="timelines-note">
+      <h3>A note on timelines</h3>
+      <p><span>No dates or target timescales here — deliberately. These are meaningful changes, and rolling out too many at once risks doing more harm than good. Delivery also relies on people needed for higher-priority work, e.g. Client Projects, so pace is set by that balance rather than a fixed schedule.</span></p>
+    </div>
+
+    <div class="updated-stamp"><span class="dot"></span>Last updated 28 Sep 2026</div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="quicknav-toolbar">
+    <div class="quicknav-heading section-label">Contents</div>
+    <div class="toolbar-actions">
+      <div class="status-filter" id="statusFilter">
+        <button type="button" class="status-filter-btn" id="statusFilterBtn" aria-haspopup="true" aria-expanded="false">
+          <span id="statusFilterLabel">All statuses</span>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="status-filter-menu" id="statusFilterMenu" hidden>
+          <div class="status-filter-menu-actions">
+            <button type="button" class="status-filter-action" data-action="clear">Clear</button>
+          </div>
+          <label class="status-filter-option"><input type="checkbox" value="progress">In progress</label>
+          <label class="status-filter-option"><input type="checkbox" value="blocked">Blocked</label>
+          <label class="status-filter-option"><input type="checkbox" value="review">Discovery</label>
+          <label class="status-filter-option"><input type="checkbox" value="tbd">Not started</label>
+          <label class="status-filter-option"><input type="checkbox" value="done">Completed</label>
+        </div>
+      </div>
+      <button type="button" id="toggleAllBtn" class="toolbar-btn">Expand all</button>
+    </div>
+  </div>
+  <p class="filter-empty" id="filterEmpty">No deliverables match this filter.</p>
+
+  <div class="quicknav-sentinel" id="quicknavSentinel" aria-hidden="true"></div>
+  <div class="quicknav-wrap">
+    <nav class="quicknav" aria-label="Jump to section" id="quicknav">
+      <span class="quicknav-label">Contents</span>
+      <a href="#ws-roadmap">OSS Roadmap</a>
+      <a href="#ws-github">GitHub Fields</a>
+      <a href="#ws-tool">Work Mgmt Tool</a>
+      <a href="#ws-work-delivery">Work Delivery</a>
+      <a href="#ws-feature-req">Feature Requests</a>
+      <a href="#ws-dev-lifecycle">Dev Lifecycle</a>
+      <a href="#ws-release-process">Release Process</a>
+      <a href="#ws-testing">QA &amp; Envs</a>
+      <a href="#ws-data-improvement">Data-Driven CI</a>
+    </nav>
+  </div>
+
+  <div class="scroll-guard" id="scrollGuard">
+  <div class="steps" id="workstreams">
+
+    <!-- ================= WORKSTREAM: Nebari OSS Roadmap ================= -->
+    <details class="step" id="ws-roadmap" data-status="progress">
+      <summary>
+        <div class="step-top">
+          <div class="step-id">
+            <div class="num">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 6h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                <path d="M8 12h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                <path d="M8 18h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                <circle cx="5" cy="6" r="1.7" fill="currentColor"/>
+                <circle cx="5" cy="12" r="1.7" fill="currentColor"/>
+                <circle cx="5" cy="18" r="1.7" fill="currentColor"/>
+              </svg>
+            </div>
+            <h2>Nebari OSS Roadmap</h2>
+                </div>
+          <div class="step-right">
+            <span class="pill" data-s="progress">In progress</span>
+            <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+              <div class="sub">Building the feature roadmap for FY26 and onwards</div>
+        </div>
+      </summary>
+      <div class="step-body"><div class="step-body-inner">
+
+        <p class="lede-block">An open, up to date view of the Nebari feature roadmap for the rest of this financial year and onwards — what's being decided now, what's queued up next, and what's still open. This tracks the process of building the roadmap, not the roadmap's feature content itself, which will be shared separately once available.</p>
+
+        <div class="mini-progress">
+          <div class="mini-progress-head">
+            <span class="mini-progress-title">Roadmap steps</span>
+            <div class="mini-legend">
+              <span class="legend-item"><span class="legend-dot" data-tone="completed"></span>Completed</span>
+              <span class="legend-item"><span class="legend-dot" data-tone="progress"></span>In progress</span>
+              <span class="legend-item"><span class="legend-dot" data-tone="next"></span>Next up</span>
+              <span class="legend-item"><span class="legend-dot" data-tone="tbd"></span>Not started</span>
+            </div>
+          </div>
+          <div class="mini-rail" aria-hidden="true">
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="progress"></div>
+            <div class="seg" data-status="next"></div>
+            <div class="seg" data-status="tbd"></div>
+            <div class="seg" data-status="tbd"></div>
+          </div>
+        </div>
+
+        <div class="substeps steps">
+
+          <details class="step substep" id="step-01" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">01</div>
+                  <h2>Identify backlog candidates</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Capture top-level product requirements from stakeholders</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <ul class="bullets">
+                <li>Meet with tech leads, product owners and other key stakeholders to capture their top-level requirements for the product</li>
+                <li>Consolidate everything raised into a single list of backlog candidate items</li>
+              </ul>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="step-02" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">02</div>
+                  <h2>Categorise importance of the backlog</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Steering group votes and agrees relative importance</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <ul class="bullets">
+                <li>The steering group (product owner and tech leads) votes on and discusses each candidate — including whether it's worth doing at all</li>
+                <li>Combine async voting with backlog discussion calls to verbally agree where each item lands:</li>
+                <li><span><b>Now</b> — critical, should be done straight away</span></li>
+                <li><span><b>Next</b> — important, should follow shortly after</span></li>
+                <li><span><b>Parked</b> — worth doing, but lower priority for now</span></li>
+                <li><span><b>Dropped</b> — not needed on the roadmap at all</span></li>
+                <li><span><b>Single-project need</b> — belongs to that project, not the core product; raised there directly, and revisited if the same need comes up elsewhere</span></li>
+              </ul>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="step-03" data-status="progress" open>
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">03</div>
+                  <h2>Size &amp; sequence by team</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="progress">In progress</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Bring in the delivery teams to size and sequence their share</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <ul class="bullets">
+                <li>Identify which team is responsible for delivering each candidate item</li>
+                <li>Hold discussions with each team to prioritise the items relevant to them</li>
+                <li>Assign a rough effort estimate to each item, based on 1 FTE working on it 100% of the time</li>
+                <li>Review the resulting priority order with the wider leads and product owner to agree the final approach</li>
+              </ul>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="step-04" data-status="next">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">04</div>
+                  <h2>Draft the roadmap</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="next">Next up</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Lay out the roadmap by priority, size and team split</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <ul class="bullets">
+                <li>Draft the roadmap using the agreed priority order, effort estimate and team split</li>
+                <li>Identify what's already been delivered so far, alongside what remains</li>
+                <li>Decide the roadmap governance approach — review cadence, meeting structure, and how change requests will feed in (immediate review for very high priority items, folded into regular reviews otherwise)</li>
+              </ul>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="step-05" data-status="tbd">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">05</div>
+                  <h2>Review &amp; align</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="tbd">Not started</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Get approval from delivery leads, then circulate for wider awareness</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <ul class="bullets">
+                <li>Circulate the draft roadmap to product owners and tech leads for review and approval</li>
+                <li>Identify any conflicting priorities and capacity gaps/resource concerns</li>
+                <li>Circulate to stakeholders and senior management for awareness and any initial concerns</li>
+              </ul>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="step-06" data-status="tbd">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">06</div>
+                  <h2>Publish, communicate &amp; maintain</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="tbd">Not started</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Make the roadmap visible to the org and community, then keep it current</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <ul class="bullets">
+                <li>Finalize the roadmap document / visual for sharing</li>
+                <li>Share with the wider org — and the Nebari open-source community where relevant</li>
+                <li>Schedule the agreed review cadence — backlog review sessions and roadmap item progress check-ins — and communicate how the escalation route works for anything that can't wait for its next scheduled review</li>
+              </ul>
+              <div class="callout"><b>Note —</b> <span>the feature candidate backlog constantly evolves as new or higher-priority candidates come in. Changes to this roadmap will eventually be handled through the new <a class="contact-link" href="#ws-feature-req">Feature Request Process</a> once rolled out, feeding into the same review cadence.</span></div>
+            </div></div>
+          </details>
+
+        </div>
+
+        <div class="backlog" id="delivery-note">
+          <h3>A note on delivery</h3>
+          <p><span>Publishing and communicating the roadmap isn't the end of it — actually delivering the work is an equal, if not more important, action. Some roadmap candidates are already in progress today, under our current ways of working — though how that's approached may evolve as we improve our <a class="contact-link" href="#ws-dev-lifecycle">development lifecycle</a>, tighten our <a class="contact-link" href="#ws-release-process">release approach</a>, and refine how we handle <a class="contact-link" href="#ws-work-delivery">delivery of work</a>.</span></p>
+        </div>
+
+      </div></div>
+    </details>
+
+    <!-- ================= WORKSTREAM: GitHub data ================= -->
+    <details class="step" id="ws-github" data-status="done">
+      <summary>
+        <div class="step-top">
+          <div class="step-id">
+            <div class="num">
+              <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            </div>
+            <h2>GitHub Fields &amp; Sizing</h2>
+                </div>
+          <div class="step-right">
+            <span class="pill" data-s="done">Completed</span>
+            <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+              <div class="sub">Improved issue data capture, consistently updated for improved cross team collaboration</div>
+        </div>
+      </summary>
+      <div class="step-body"><div class="step-body-inner">
+        <p class="lede-block">Improved data collection in GitHub, making better use of priority, start/target date and type fields, plus a new field for t-shirt sizing.</p>
+
+        <div class="mini-progress">
+          <div class="mini-progress-head">
+            <span class="mini-progress-title">Rollout steps</span>
+            <div class="mini-legend">
+              <span class="legend-item"><span class="legend-dot" data-tone="completed"></span>Completed</span>
+            </div>
+          </div>
+          <div class="mini-rail" aria-hidden="true">
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="completed"></div>
+          </div>
+        </div>
+
+        <div class="substeps steps">
+
+          <details class="step substep" id="gh-step-01" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">01</div>
+                  <h2>Review current usage</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Assessed how the GitHub org was used day to day, to spot opportunities for more efficient use of field data</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Reviewed how the Nebari-Dev GitHub org was used day to day, to identify more efficient use of the field data already available to us to support planning and reporting.</p>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="gh-step-02" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">02</div>
+                  <h2>Identify field improvements</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Researched GitHub's newer issue fields via their docs and blog</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block"><span>Identified potential improvements by reviewing GitHub's own documentation and blog posts covering newer issue field capabilities, including <a class="contact-link" href="https://github.blog/changelog/2026-07-02-issue-fields-are-now-generally-available/" target="_blank" rel="noopener">Issue fields are now generally available</a>.</span></p>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="gh-step-03" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">03</div>
+                  <h2>Introduce sizing</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Added a basic t-shirt sizing method for issues</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Also introduced a basic sizing method using t-shirt sizes, giving a lightweight and consistent way to estimate effort.</p>
+              <div class="size-table-wrap">
+                <table class="size-table">
+                  <thead>
+                    <tr><th>Size</th><th>Effort</th><th>Description</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>XS</td><td>&lt;1 day</td><td>A clearly defined, self-contained change — a config tweak, docs fix, or contained bug. Can be picked up and developed (and tested) the same day before sending for CR.</td></tr>
+                    <tr><td>S</td><td>1–3 days</td><td>Well-understood scope with minimal unknowns — a small feature, isolated refactor, or straightforward bug fix. May require a few days of effort to develop and test before sending for CR.</td></tr>
+                    <tr><td>M</td><td>3–5 days</td><td>Moderate complexity with some moving parts. May touch multiple areas and require input from others — ideally broken down into subtasks. Will require up to a week of effort for development and testing before sending for CR.</td></tr>
+                    <tr><td>L</td><td>5–10 days</td><td>Significant scope spanning multiple components or teams. High risk of unknowns mid-build, and likely a more complex solution. Will require up to 2 weeks of effort for development and testing before sending for CR.</td></tr>
+                    <tr><td>XL</td><td>&gt;10 days</td><td>A more complex implementation for a typical single task — too large to track as a single ticket, with high estimation uncertainty and delivery risk. Must be broken down before it can be scheduled, and will likely be planned as multiple issues rather than one to complete the feature.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="gh-step-04" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">04</div>
+                  <h2>Add fields to the org</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Worked with GitHub org admins to add the new fields</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Worked with GitHub org admins to add the relevant fields to the Nebari-dev GitHub organization.</p>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="gh-step-05" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">05</div>
+                  <h2>Document &amp; get approval</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Produced guidance and secured sign-off from engineering leads</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Produced supporting documentation and worked with engineering leads to get approval. This included:</p>
+              <ul class="bullets">
+                <li>Documented guidance for prioritizing, from Critical to Icebox</li>
+                <li>T-shirt sizing considerations</li>
+                <li>Start and target dates</li>
+                <li>Relationships (blocked by/blocking, parent issues, etc.)</li>
+                <li>Setting issue types</li>
+              </ul>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="gh-step-06" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">06</div>
+                  <h2>Roll out</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Communicated the changes and documentation across the team</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Communicated the changes by sharing the documentation and walking through it in the team's 'Tech Share' meeting, and worked with individuals to implement these changes — including reviewing historical data held in labels and migrating it across to the new fields.</p>
+            </div></div>
+          </details>
+
+        </div>
+
+        <div class="callout green"><b>Completed —</b> <span>GitHub data continues to be reviewed on an ongoing basis, with feedback given to individuals where necessary to keep it accurate and up to date. In time, this should become a standard expectation individuals proactively manage themselves, needing less monitoring and feedback — and early signs from regular discussions already suggest that's the direction things are heading.</span></div>
+      </div></div>
+    </details>
+
+    <!-- ================= WORKSTREAM: Work management tool ================= -->
+    <details class="step" id="ws-tool" data-status="blocked">
+      <summary>
+        <div class="step-top">
+          <div class="step-id">
+            <div class="num">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5" width="4.5" height="14" rx="1.2" stroke="currentColor" stroke-width="1.6"/><rect x="9.8" y="5" width="4.5" height="9.5" rx="1.2" stroke="currentColor" stroke-width="1.6"/><rect x="15.6" y="5" width="4.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.6"/><circle cx="6.25" cy="8.4" r="1.3" fill="currentColor"/><circle cx="12.05" cy="8.4" r="1.3" fill="currentColor"/></svg>
+            </div>
+            <h2>Work Management Tool</h2>
+                </div>
+          <div class="step-right">
+            <span class="pill" data-s="blocked">Blocked</span>
+            <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+              <div class="sub">The right tools for better visibility and management of all work</div>
+        </div>
+      </summary>
+      <div class="step-body"><div class="step-body-inner">
+        <p class="lede-block">Implement a work management tool (e.g. Plane, Linear, Jira, or similar), rolling out across Engineering and wider teams where beneficial.</p>
+
+        <div class="mini-progress">
+          <div class="mini-progress-head">
+            <span class="mini-progress-title">Rollout steps</span>
+            <div class="mini-legend">
+              <span class="legend-item"><span class="legend-dot" data-tone="completed"></span>Completed</span>
+              <span class="legend-item"><span class="legend-dot" data-tone="blocked"></span>Blocked</span>
+              <span class="legend-item"><span class="legend-dot" data-tone="tbd"></span>Not started</span>
+            </div>
+          </div>
+          <div class="mini-rail" aria-hidden="true">
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="blocked"></div>
+            <div class="seg" data-status="tbd"></div>
+            <div class="seg" data-status="tbd"></div>
+            <div class="seg" data-status="tbd"></div>
+          </div>
+        </div>
+
+        <div class="substeps steps">
+
+          <details class="step substep" id="wt-step-01" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">01</div>
+                  <h2>Identify tools &amp; approach</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Scoped whether to extend GitHub/Notion or adopt a dedicated tool</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Identified the tools and approach worth considering — whether to extend what's already in use (GitHub for engineering work, Notion for everything else) or adopt a dedicated work management tool such as Jira, Plane, Linear or Asana.</p>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="wt-step-02" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">02</div>
+                  <h2>Research &amp; compare</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Compared features across candidate tools</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Researched and compared the leading candidate tools against our needs, weighing up factors such as configurability, integrations with our existing stack, and ease of adoption across teams.</p>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="wt-step-03" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">03</div>
+                  <h2>Decide on a tool</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Selected Plane as the best fit after trialing</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Landed on Plane as the best fit for our needs, following a two-week trial and hands-on exploration by a range of other users across the team.</p>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="wt-step-04" data-status="blocked" open>
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">04</div>
+                  <h2>Configure &amp; integrate</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="blocked">Blocked</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Implementing Plane and integrating it with existing tools and processes</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Now implementing Plane — configuring it to fit how we work, migrating data across, and working out how it best supports our processes and needs. This includes integrating it with the other tools we rely on day to day, with a longer-term view to retiring Notion for this purpose.</p>
+              <div class="section-label">Actions completed</div>
+              <ul class="bullets">
+                <li>Imported all Engineering project templates from Notion into Plane</li>
+                <li>Defined dedicated work types — epics, bugs, tech debt, user stories, dev tasks, design tasks, QA tasks, spikes and documentation</li>
+                <li>Created work item templates and properties for each type, capturing the data relevant to that issue type</li>
+                <li>Configured the GitHub and Slack integrations</li>
+              </ul>
+              <div class="section-label">Actions outstanding</div>
+              <ul class="bullets">
+                <li>GitLab integration is still to be done</li>
+                <li>Build a custom app to work around the current GitHub integration limitation</li>
+              </ul>
+              <div class="callout red"><b>Blocked —</b> <span>migrating data from GitHub into Plane is currently blocked, as Plane only supports linking one repo per project — a limitation against how we'd planned to use GitHub alongside Plane. Having explored this with Plane directly, multi-repo support may only become available through Plane's own GitHub integration solution, expected in the future. See <a class="contact-link" href="https://openteams-ai.github.io/artifacts/github-plane-sync/" target="_blank" rel="noopener">this write-up</a> for information on considerations and next steps to build our own app to workaround this current limitation.</span></div>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="wt-step-05" data-status="tbd">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">05</div>
+                  <h2>Identify use cases &amp; pilot</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="tbd">Not started</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Identify use cases and pilot teams/projects to trial Plane</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Next, identify concrete use cases and select pilot teams or projects to trial Plane as our primary work management tool ahead of any wider adoption.</p>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="wt-step-06" data-status="tbd">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">06</div>
+                  <h2>Feedback</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="tbd">Not started</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Collect feedback from pilot usage</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Gather structured feedback from the pilot teams to understand what's working, what isn't, and what needs to change before rolling out more broadly.</p>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="wt-step-07" data-status="tbd">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">07</div>
+                  <h2>Wider rollout</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="tbd">Not started</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Roll out across Engineering and other teams</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block"><span>Roll Plane out more widely across Engineering and other teams, building on what's learned from the pilot. This isn't a one-off switch-over — it means providing continuous support for using Plane itself day to day, as well as supporting teams through process changes as the <a class="contact-link" href="#ws-work-delivery">Work Delivery Lifecycle</a> deliverable progresses.</span></p>
+            </div></div>
+          </details>
+
+        </div>
+
+      </div></div>
+    </details>
+
+    <!-- ================= WORKSTREAM: Work delivery lifecycle ================= -->
+    <details class="step" id="ws-work-delivery" data-status="progress">
+      <summary>
+        <div class="step-top">
+          <div class="step-id">
+            <div class="num">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 0113.5-5.5L20 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 5v4h-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 01-13.5 5.5L4 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 19v-4h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h2>Work Delivery Lifecycle</h2>
+                </div>
+          <div class="step-right">
+            <span class="pill" data-s="progress">In progress</span>
+            <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+              <div class="sub">A proposed delivery approach matched to the size and complexity of the work</div>
+        </div>
+      </summary>
+      <div class="step-body"><div class="step-body-inner">
+        <p class="lede-block">As mentioned in the <a class="contact-link" href="#delivery-note">note on delivery</a>, identifying roadmap candidates is only the start of the journey. A consistent, efficient delivery approach is essential to delivering that work successfully.</p>
+        <p class="lede-block"><b>The proposal —</b> categorise all new product/feature work into three delivery workstreams based on size and complexity — <b>Projects</b>, <b>Small Works</b> and <b>Support</b> — each moving through the lifecycle that fits its scale, rather than forcing everything through the same process — while still allowing the flexibility and pragmatism needed to handle work efficiently.</p>
+
+        <div class="mini-progress">
+          <div class="mini-progress-head">
+            <span class="mini-progress-title">Delivery lifecycle steps</span>
+            <div class="mini-legend">
+              <span class="legend-item"><span class="legend-dot" data-tone="completed"></span>Completed</span>
+              <span class="legend-item"><span class="legend-dot" data-tone="progress"></span>In progress</span>
+              <span class="legend-item"><span class="legend-dot" data-tone="tbd"></span>Not started</span>
+            </div>
+          </div>
+          <div class="mini-rail" aria-hidden="true">
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="progress"></div>
+            <div class="seg" data-status="tbd"></div>
+            <div class="seg" data-status="tbd"></div>
+            <div class="seg" data-status="tbd"></div>
+            <div class="seg" data-status="tbd"></div>
+            <div class="seg" data-status="tbd"></div>
+          </div>
+        </div>
+
+        <div class="substeps steps">
+
+          <details class="step substep" id="wd-step-01" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">01</div>
+                  <h2>Define the proposed workstreams &amp; lifecycles</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Categorise work by size and complexity, each with its own proposed lifecycle</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Proposed the following three delivery workstreams, not yet confirmed, each moving through the lifecycle that fits its scale:</p>
+              <ul class="bullets">
+                <li><span><b>Projects</b> — large, highly complex deliverables spanning multiple teams and months, requiring a dedicated Project/Delivery Manager; follows the five-phase <a class="contact-link" href="https://www.projectengineer.net/the-pmboks-five-project-phases/" target="_blank" rel="noopener">PMBOK model</a> proposed for adoption as project delivery best practice. The actual delivery approach may still differ project to project, reflecting the pragmatic approach needed for successful delivery</span></li>
+                <li><span><b>Small Works</b> — smaller changes that may still span multiple products; splits into two paths by size and complexity, from lightweight single-product changes up to larger, more involved multi-product efforts run closer to a Project</span></li>
+                <li><span><b>Support</b> — continuous maintenance, bug fixes and tech debt, with resource(s) allocated to the workstream itself; reactive to priority items and requests, aiming for a fluid, self-managed workstream driven by a prioritised backlog</span></li>
+              </ul>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="wd-step-02" data-status="progress" open>
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">02</div>
+                  <h2>Document the delivery process</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="progress">In progress</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Turn the defined lifecycles into a clear, shareable reference</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <ul class="bullets">
+                <li>Write up the three workstreams and their lifecycles as a single, clear reference document</li>
+                <li>Cover the criteria for routing work into each workstream, and the steps within each</li>
+                <li>Identify the supporting collateral each phase will need — templates and checklists — along with how and when each will be used, to be built out once initial approval is secured</li>
+              </ul>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="wd-step-03" data-status="tbd">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">03</div>
+                  <h2>Secure initial approval</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="tbd">Not started</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Sign-off from the CTO / Nebari OSS Product Owner before building out collateral</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <ul class="bullets">
+                <li>Share the documented process with the CTO, who is also the Nebari OSS Product Owner, gathering feedback and iterating where necessary and possible</li>
+                <li>Secure their approval before moving on to build out the wider supporting collateral</li>
+              </ul>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="wd-step-04" data-status="tbd">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">04</div>
+                  <h2>Build out supporting collateral</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="tbd">Not started</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Produce the templates and checklists identified in step 2</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <ul class="bullets">
+                <li>Produce the collateral identified for each phase — business cases and objectives for Initiation, then BRDs, PRDs, risk registers, architecture docs and test plans for Planning — plus lighter-weight equivalents for Small Works and Support</li>
+                <li><span>Configure whichever tool this collateral ends up living in to support it — work breakdown, estimation, roadmapping and progress tracking, synced with GitHub for the engineering side. This overlaps closely with the <a class="contact-link" href="#ws-tool">Work Management Tool</a> deliverable, so is at risk of being delayed until that decision is resolved</span></li>
+              </ul>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="wd-step-05" data-status="tbd">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">05</div>
+                  <h2>Secure wider approval</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="tbd">Not started</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Review the proposal and collateral with the wider stakeholder group</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <ul class="bullets">
+                <li>Share more widely with engineering tech leads, project success leads and other relevant stakeholders</li>
+                <li>Gather feedback and iterate before securing their approval</li>
+              </ul>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="wd-step-06" data-status="tbd">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">06</div>
+                  <h2>Pilot on live work</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="tbd">Not started</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Trial the new lifecycles against real work before wider rollout</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <ul class="bullets">
+                <li>Run a small number of real Projects, Small Works and Support items through the new lifecycle end-to-end</li>
+                <li>Capture feedback on where the process, templates or tooling need adjusting</li>
+              </ul>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="wd-step-07" data-status="tbd">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">07</div>
+                  <h2>Roll out &amp; support adoption</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="tbd">Not started</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Communicate the model and keep it supported as it's used</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <ul class="bullets">
+                <li>Share the finalised lifecycle model and supporting templates with the wider team</li>
+                <li>Put ongoing support in place to keep the process, tooling and templates maintained as they're used</li>
+              </ul>
+            </div></div>
+          </details>
+
+        </div>
+
+      </div></div>
+    </details>
+
+    <!-- ================= WORKSTREAM: Feature request process ================= -->
+    <details class="step" id="ws-feature-req" data-status="blocked">
+      <summary>
+        <div class="step-top">
+          <div class="step-id">
+            <div class="num">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6a1 1 0 011-1h14a1 1 0 011 1v9a1 1 0 01-1 1h-6l-3 3v-3H5a1 1 0 01-1-1V6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="12" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/></svg>
+            </div>
+            <h2>Feature Request Process</h2>
+                </div>
+          <div class="step-right">
+            <span class="pill" data-s="blocked">Blocked</span>
+            <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+              <div class="sub">A clear path for change requests to come in and be assessed</div>
+        </div>
+      </summary>
+      <div class="step-body"><div class="step-body-inner">
+        <p class="lede-block">Implement a feature request process to better handle requests for change — covering changes to the internal product development roadmap, changes to projects already in flight, and changes requested by the open-source community.</p>
+
+        <div class="mini-progress">
+          <div class="mini-progress-head">
+            <span class="mini-progress-title">Rollout steps</span>
+            <div class="mini-legend">
+              <span class="legend-item"><span class="legend-dot" data-tone="completed"></span>Completed</span>
+              <span class="legend-item"><span class="legend-dot" data-tone="blocked"></span>Blocked</span>
+            </div>
+          </div>
+          <div class="mini-rail" aria-hidden="true">
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="completed"></div>
+            <div class="seg" data-status="blocked"></div>
+            <div class="seg" data-status="blocked"></div>
+          </div>
+        </div>
+
+        <div class="substeps steps">
+
+          <details class="step substep" id="fr-step-01" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">01</div>
+                  <h2>Identify requirements</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Scoped the different types of change a process needs to handle</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Identified that a feature request process needs to accommodate change coming from three different sources, each with its own needs — so each needed its own route in, and its own way to be assessed:</p>
+              <ul class="bullets">
+                <li><span><b>Internal product change</b> — a new or changed product roadmap candidate</span></li>
+                <li><span><b>In-flight project change</b> — a change that needs absorbing into current project deliverables</span></li>
+                <li><span><b>Community request</b> — a request raised by an external open-source community member</span></li>
+              </ul>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="fr-step-02" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">02</div>
+                  <h2>Explore options</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Considered how to route internal, project and community requests</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block"><span>Considered options for handling this — including using Slack workflows for internal and in-flight project change requests, while continuing to have community members raise requests as GitHub issues, as we do today. Also kept an eye on the ongoing <a class="contact-link" href="#ws-tool">work management tool</a> exploration, since whatever's chosen there could end up offering a built-in feature.</span></p>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="fr-step-03" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">03</div>
+                  <h2>Build initial solution</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Built a Slack workflow automation for internal and project requests</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Built a Slack workflow automation to handle internal and in-flight project change requests. Before it was rolled out, Plane was introduced as a candidate work management tool, which changed the approach — see the next step.</p>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="fr-step-04" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">04</div>
+                  <h2>Adopt Plane intake</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Set up Plane's intake feature to handle all three request types</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Plane includes a built-in intake feature, which has now been set up and is ready for rollout. Since the intake form is accessible via a public link, we can accommodate all three request methods through it — while still giving the community the choice to raise requests directly as GitHub issues instead, whichever they're most comfortable with.</p>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="fr-step-05" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">05</div>
+                  <h2>Triage process</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Defined the steps and action owners for triaging a feature request</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Wrote a triage process setting out the steps and action owners for how a feature request will be triaged.</p>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="fr-step-06" data-status="completed">
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">06</div>
+                  <h2>Process documentation</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="completed">Completed</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Documented the end-to-end process ahead of rollout</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Documented how the process works from start to end, in preparation for rollout.</p>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="fr-step-07" data-status="blocked" open>
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">07</div>
+                  <h2>Review &amp; approval</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="blocked">Blocked</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Final sign-off before rolling it out</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <p class="lede-block">Share the documented process with the Nebari OSS Product Owner for review, and secure their approval before rolling it out.</p>
+              <div class="callout red"><b>Blocked —</b> pending investigations into the <a class="contact-link" href="#ws-tool">Work Management Tool</a> deliverable, since the documented process depends on the outcome.</div>
+            </div></div>
+          </details>
+
+          <details class="step substep" id="fr-step-08" data-status="blocked" open>
+            <summary>
+              <div class="step-top">
+                <div class="step-id">
+                  <div class="num">08</div>
+                  <h2>Roll out</h2>
+                </div>
+                <div class="step-right">
+                  <span class="pill" data-s="blocked">Blocked</span>
+                  <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              <div class="sub">Communicate the process and its documentation across all sources</div>
+              </div>
+            </summary>
+            <div class="step-body"><div class="step-body-inner">
+              <ul class="bullets">
+                <li>Publish the finalised process documentation</li>
+                <li>Communicate the change internally across the team</li>
+                <li>Communicate externally to the open-source community — potentially via a blog post</li>
+                <li>Update the relevant GitHub repo documentation to reflect the new process</li>
+              </ul>
+            </div></div>
+          </details>
+
+        </div>
+
+      </div></div>
+    </details>
+
+    <!-- ================= WORKSTREAM: Development lifecycle ================= -->
+    <details class="step" id="ws-dev-lifecycle" data-status="review">
+      <summary>
+        <div class="step-top">
+          <div class="step-id">
+            <div class="num">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 8v8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8 7.2c4.5 0 4.5 4.8 8.2 4.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="6" cy="6" r="2.1" fill="currentColor"/><circle cx="6" cy="18" r="2.1" fill="currentColor"/><circle cx="18" cy="12" r="2.1" fill="currentColor"/></svg>
+            </div>
+            <h2>Development Lifecycle Enhancements</h2>
+                </div>
+          <div class="step-right">
+            <span class="pill" data-s="review">Discovery</span>
+            <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+              <div class="sub">Enhancing how we plan, build and review work throughout the development lifecycle</div>
+        </div>
+      </summary>
+      <div class="step-body"><div class="step-body-inner">
+        <p class="lede-block">Review the current development lifecycle — from planning through to code review — looking at ways to enhance and evolve how different teams and repos work.</p>
+        <div class="section-label">Actions being explored</div>
+        <ul class="bullets">
+          <li>Quick wins — small but vital steps currently missing from how we work, adding immediate value</li>
+          <li>Improving code review visibility — making engineers' lives easier with clear, efficient notifications when their action is needed, without making too much noise!</li>
+          <li>Defining and implementing a clear Definition of Done, so it's unambiguous when an item is genuinely complete</li>
+          <li><span>Introducing meaningful development stages that strengthen the overall lifecycle before an item is release-ready — ties into the <a class="contact-link" href="#ws-testing">Testing, QA &amp; Environment Strategy</a> deliverable</span></li>
+        </ul>
+        <div class="callout"><b>Note —</b> this Deliverable is a work in progress — more detail to follow as it gets more attention.</div>
+      </div></div>
+    </details>
+
+    <!-- ================= WORKSTREAM: Release process ================= -->
+    <details class="step" id="ws-release-process" data-status="review">
+      <summary>
+        <div class="step-top">
+          <div class="step-id">
+            <div class="num">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 3.5L20.5 11 11 20.5 3.5 13a2 2 0 010-2.83L11.17 2.5A2 2 0 0113 3.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="15.2" cy="8.8" r="1.5" fill="currentColor"/></svg>
+            </div>
+            <h2>Release Consistency</h2>
+                </div>
+          <div class="step-right">
+            <span class="pill" data-s="review">Discovery</span>
+            <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+              <div class="sub">Consistent, predictable release practices across repos</div>
+        </div>
+      </summary>
+      <div class="step-body"><div class="step-body-inner">
+        <p class="lede-block">Review current release practices across repos, looking at ways to bring more consistency and predictability to how we version, package and ship releases.</p>
+        <div class="section-label">Actions being explored</div>
+        <ul class="bullets">
+          <li>Reviewing existing release processes used across our main repos</li>
+          <li>Grouping these — working out whether one release/deployment flow can apply everywhere, or whether we need a handful of processes suited to certain repos</li>
+          <li>Deciding what should be improved, and when</li>
+          <li>Documenting the agreed approach(es)</li>
+          <li>Communicating changes in advance to the people they affect</li>
+          <li>Rolling changes out, and following up as they bed in</li>
+        </ul>
+        <div class="callout"><b>Note —</b> this Deliverable is a work in progress — more detail to follow as it gets more attention.</div>
+      </div></div>
+    </details>
+
+    <!-- ================= WORKSTREAM: Testing, QA & environment strategy ================= -->
+    <details class="step" id="ws-testing" data-status="review">
+      <summary>
+        <div class="step-top">
+          <div class="step-id">
+            <div class="num">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 3h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M10 3v6.2l-5 8.8a1.8 1.8 0 001.6 2.7h10.8a1.8 1.8 0 001.6-2.7l-5-8.8V3" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="9.6" cy="17.5" r="1.1" fill="currentColor"/><circle cx="13.2" cy="19" r="0.9" fill="currentColor"/></svg>
+            </div>
+            <h2>Testing, QA &amp; Environment Strategy</h2>
+                </div>
+          <div class="step-right">
+            <span class="pill" data-s="review">Discovery</span>
+            <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+              <div class="sub">Maturing testing &amp; QA practices, with purpose-built environments and clear ownership</div>
+        </div>
+      </summary>
+      <div class="step-body"><div class="step-body-inner">
+        <p class="lede-block">Mature our testing and QA practices, moving closer to software development best practice, and define purpose-built environments (e.g. staging, pre-production) — each with a clear maintenance process and an assigned environment owner.</p>
+        <div class="section-label">Actions being explored</div>
+        <ul class="bullets">
+          <li>Mapping what environments/servers we currently have available, and identifying the gaps and possible improvements</li>
+          <li>Exploring what's involved in a fully integrated staging environment across all products and packs</li>
+          <li>Identifying efficient environment practices — using automation where possible to cut down on manual environment management</li>
+          <li>Estimating the effort and cost involved to develop or source whatever's needed</li>
+          <li>Assigning responsible environment owners for maintenance, and as the go-to if issues come up</li>
+          <li>Producing a process for how and when environments are used and shared across teams and projects, so no one's stepping on anyone else's toes</li>
+          <li>Implementation and rollout</li>
+        </ul>
+        <div class="callout"><b>Note —</b> this Deliverable is a work in progress — more detail to follow as it gets more attention.</div>
+      </div></div>
+    </details>
+
+    <!-- ================= WORKSTREAM: Data-driven continuous improvement ================= -->
+    <details class="step" id="ws-data-improvement" data-status="tbd">
+      <summary>
+        <div class="step-top">
+          <div class="step-id">
+            <div class="num">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 20V10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M10 20V4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M16 20v-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M20 20V13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </div>
+            <h2>Data-Driven Continuous Improvement</h2>
+                </div>
+          <div class="step-right">
+            <span class="pill" data-s="tbd">Not started</span>
+            <span class="chevron"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 8l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+              <div class="sub">Using data to continuously improve how we work, and how we grow</div>
+        </div>
+      </summary>
+      <div class="step-body"><div class="step-body-inner">
+        <p class="lede-block">Explore how data from our tools and processes can be used to drive continuous improvement — both to how we work as teams, and to individual development.</p>
+        <div class="callout"><b>Note —</b> this Deliverable is a work in progress — more detail to follow as it gets more attention.</div>
+      </div></div>
+    </details>
+
+  </div>
+
+  <div class="backlog" id="scope-note">
+    <h3>A note on scope</h3>
+    <p>This isn't a fixed list to work through and be finished with. These are the deliverables we've identified so far — as we deliver, mature and progress with them, more will be added to reflect what's next. Expect this page to keep growing alongside the work itself.</p>
+  </div>
+
+  </div>
+
+</div>
+
+<button type="button" class="back-to-top" id="backToTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 16l7-7 7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
+
+<script>
+  (function(){
+    try {
+      // The page-load entrance fade (fadeInUp, each card given its own
+      // staggered delay via nth-child in the CSS) is only meant to play
+      // once, on first load. It's a plain CSS `animation` sitting directly
+      // on `.step` itself though, and toggling an element's `display` —
+      // exactly what the status filter does to hide/reveal cards, whether
+      // that's Clear, narrowing to one status, or widening back out to
+      // more than one — restarts any CSS animation on it from scratch.
+      // So any of those replayed the ENTIRE staggered reveal, delays and
+      // all, making cards reappear one after another instead of together
+      // (worse the more of them come back at once). Turning the animation
+      // off for good the moment it first finishes (or gets interrupted)
+      // means it only ever plays that first time, for every element it
+      // touches, regardless of how or why display gets toggled later —
+      // the filter's own show/hide logic doesn't need to know about any
+      // of this.
+      document.addEventListener('animationend', function(e){
+        if (e.animationName === 'fadeInUp') e.target.style.animation = 'none';
+      });
+      document.addEventListener('animationcancel', function(e){
+        if (e.animationName === 'fadeInUp') e.target.style.animation = 'none';
+      });
+
+      var topItems = Array.prototype.slice.call(document.querySelectorAll('#workstreams > .step'));
+
+      // Status filter dropdown next to "Expand all" — a checkbox menu that
+      // supports selecting one or several statuses at once, plus a one-click
+      // Clear. No boxes checked (or all of them checked) both mean "show
+      // everything" — only a partial selection actually filters. Purely a
+      // visibility toggle, so it doesn't touch each card's own open/closed
+      // state. Ticking boxes while the menu is open doesn't filter
+      // anything by itself — see closeMenu() below, which is where the
+      // selection actually gets applied, all at once, once you dismiss
+      // the dropdown.
+      var statusFilter = document.getElementById('statusFilter');
+      var statusFilterBtn = document.getElementById('statusFilterBtn');
+      var statusFilterLabel = document.getElementById('statusFilterLabel');
+      var statusFilterMenu = document.getElementById('statusFilterMenu');
+      var filterEmpty = document.getElementById('filterEmpty');
+
+      if (statusFilter && statusFilterBtn && statusFilterMenu) {
+        var statusCheckboxes = Array.prototype.slice.call(statusFilterMenu.querySelectorAll('input[type="checkbox"]'));
+        var statusLabels = {
+          progress: 'In progress',
+          blocked: 'Blocked',
+          review: 'Discovery',
+          tbd: 'Not started',
+          done: 'Completed'
+        };
+
+        function selectedStatuses(){
+          return statusCheckboxes.filter(function(cb){ return cb.checked; }).map(function(cb){ return cb.value; });
+        }
+
+        function applyStatusFilter(){
+          var selected = selectedStatuses();
+          var filtering = selected.length > 0 && selected.length < statusCheckboxes.length;
+          var anyVisible = false;
+          topItems.forEach(function(card){
+            var matches = !filtering || selected.indexOf(card.dataset.status) !== -1;
+            card.classList.toggle('is-filtered-out', !matches);
+            if (matches) anyVisible = true;
+          });
+          if (filterEmpty) filterEmpty.classList.toggle('is-visible', !anyVisible);
+
+          statusFilter.classList.toggle('has-active', filtering);
+          if (!filtering) {
+            statusFilterLabel.textContent = 'All statuses';
+          } else if (selected.length === 1) {
+            statusFilterLabel.textContent = statusLabels[selected[0]] || selected[0];
+          } else {
+            statusFilterLabel.textContent = selected.length + ' selected';
+          }
+        }
+
+        function openMenu(){
+          statusFilterMenu.hidden = false;
+          statusFilter.classList.add('is-open');
+          statusFilterBtn.setAttribute('aria-expanded', 'true');
+        }
+        // Checking/unchecking boxes (and Clear) inside the menu only ever
+        // update the checkboxes themselves — the actual filtering is
+        // applied here, once, whenever the menu actually closes, however
+        // that happens (the toggle button, clicking away, or Escape).
+        // Guarded on the menu already being open so an unrelated click
+        // anywhere else on the page isn't re-running this on every click.
+        function closeMenu(){
+          if (statusFilterMenu.hidden) return;
+          applyStatusFilter();
+          statusFilterMenu.hidden = true;
+          statusFilter.classList.remove('is-open');
+          statusFilterBtn.setAttribute('aria-expanded', 'false');
+        }
+
+        statusFilterBtn.addEventListener('click', function(e){
+          e.stopPropagation();
+          if (statusFilterMenu.hidden) openMenu(); else closeMenu();
+        });
+        document.addEventListener('click', function(e){
+          if (!statusFilter.contains(e.target)) closeMenu();
+        });
+        document.addEventListener('keydown', function(e){
+          if (e.key === 'Escape') closeMenu();
+        });
+
+        statusFilterMenu.querySelector('[data-action="clear"]').addEventListener('click', function(){
+          statusCheckboxes.forEach(function(cb){ cb.checked = false; });
+        });
+      }
+
+      // Chrome/Safari on iOS (both WebKit under the hood) don't reliably transition
+      // styles keyed off a <details> element's own [open] attribute, and the
+      // grid-template-rows 0fr/1fr trick is inconsistent across repeated
+      // open/close cycles and for the closing direction. Instead we drive the
+      // whole expand/collapse with the Web Animations API directly on each
+      // <details> element's height, controlling exactly when `open` flips —
+      // the same technique used in web.dev's accordion guide.
+      //
+      // Every card used the same flat duration here regardless of size,
+      // which is exactly why a small substep (a bullet list, maybe 150-200px
+      // of height change) reads as gliding smoothly while a big deliverable
+      // card (a mini-progress bar plus several substeps, sometimes 900px+)
+      // visibly snaps through the same distance in the same time — same
+      // duration, very different apparent speed. Scaling the duration up a
+      // little for a bigger height change (with diminishing returns, and a
+      // cap) keeps the motion reading at roughly the substeps' own pace
+      // regardless of how much taller the card is, without the biggest
+      // cards crawling open over several seconds.
+      var STEP_ANIM_BASE_MS = 280; // already right for a substep-sized change
+      var STEP_ANIM_REFERENCE_DELTA = 170; // ~a substep's own open/close height difference
+      var STEP_ANIM_MAX_MS = 480;
+      function stepAnimDuration(delta){
+        var extra = Math.max(0, delta - STEP_ANIM_REFERENCE_DELTA);
+        return Math.min(STEP_ANIM_MAX_MS, STEP_ANIM_BASE_MS + Math.sqrt(extra) * 8);
+      }
+      var allSteps = Array.prototype.slice.call(document.querySelectorAll('.step'));
+      allSteps.forEach(function(step){
+        if (step.open) step.classList.add('is-expanded');
+        // Catches programmatic opens (Expand all / quicknav jump-to-card),
+        // which set `.open` directly and skip the click handler below.
+        step.addEventListener('toggle', function(){
+          step.classList.toggle('is-expanded', step.open);
+        });
+
+        var summary = step.querySelector(':scope > summary');
+        var body = step.querySelector(':scope > .step-body');
+        if (!summary || !body) return;
+
+        var animation = null;
+        var isClosing = false;
+        var isExpanding = false;
+
+        // `.step` (the <details> itself) carries the card's own padding/border
+        // rather than a separate inner wrapper, so the natural closed/open
+        // heights are summary/body height PLUS that chrome — not summary or
+        // body height alone. Skipping the chrome made the animation land
+        // short of the real final size, so the box snapped to correct itself
+        // right after the animation finished (the "jump" after collapsing).
+        function chrome(){
+          var cs = getComputedStyle(step);
+          return parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) +
+            parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+        }
+
+        function onFinish(open){
+          step.open = open;
+          animation = null;
+          isClosing = false;
+          isExpanding = false;
+          step.style.height = '';
+          step.style.overflow = '';
+        }
+
+        function shrink(){
+          isClosing = true;
+          step.classList.remove('is-expanded');
+          var startHeightPx = step.offsetHeight;
+          var endHeightPx = summary.offsetHeight + chrome();
+          if (animation) animation.cancel();
+          animation = step.animate(
+            { height: [startHeightPx + 'px', endHeightPx + 'px'] },
+            { duration: stepAnimDuration(startHeightPx - endHeightPx), easing: 'cubic-bezier(0.4, 0, 0.2, 1)' }
+          );
+          animation.onfinish = function(){ onFinish(false); };
+          animation.oncancel = function(){ isClosing = false; };
+        }
+
+        function expand(){
+          isExpanding = true;
+          var startHeightPx = step.offsetHeight;
+          var endHeightPx = summary.offsetHeight + body.offsetHeight + chrome();
+          if (animation) animation.cancel();
+          animation = step.animate(
+            { height: [startHeightPx + 'px', endHeightPx + 'px'] },
+            { duration: stepAnimDuration(endHeightPx - startHeightPx), easing: 'cubic-bezier(0.4, 0, 0.2, 1)' }
+          );
+          animation.onfinish = function(){ onFinish(true); };
+          animation.oncancel = function(){ isExpanding = false; };
+        }
+
+        function open(){
+          step.classList.add('is-expanded');
+          step.style.height = step.offsetHeight + 'px';
+          step.open = true;
+          window.requestAnimationFrame(expand);
+        }
+
+        summary.addEventListener('click', function(e){
+          e.preventDefault();
+          step.style.overflow = 'hidden';
+          if (isClosing || !step.open) {
+            open();
+          } else if (isExpanding || step.open) {
+            shrink();
+          }
+        });
+      });
+
+      var btn = document.getElementById('toggleAllBtn');
+      if (!btn || !topItems.length) return;
+
+      function allOpen(){ return topItems.every(function(d){ return d.open; }); }
+      function refreshLabel(){ btn.textContent = allOpen() ? 'Collapse all' : 'Expand all'; }
+      topItems.forEach(function(d){ d.addEventListener('toggle', refreshLabel); });
+      btn.addEventListener('click', function(){
+        var shouldOpen = !allOpen();
+        topItems.forEach(function(d){ d.open = shouldOpen; });
+        refreshLabel();
+      });
+      refreshLabel();
+
+      // Same-page links (quicknav + inline cross-references) open whatever
+      // <details> the target sits in, then scroll to it ourselves rather
+      // than leaving it to the browser's native fragment jump. Two things
+      // that native jump can't do on its own: a section near the bottom
+      // of the page, especially a short one, often can't be scrolled
+      // flush to the top of the viewport — there simply isn't enough
+      // page left below it, so the browser stops short and the section
+      // lands lower on screen than intended.
+      //
+      // We used to "fix" that by temporarily growing an empty spacer at
+      // the very end of the page so the scroll had somewhere to go. That
+      // backfired: the shortfall (not enough real content below the
+      // target to fill the rest of the viewport) is exactly what makes a
+      // spacer seem necessary in the first place, so growing one always
+      // meant landing with that same amount of visible blank space
+      // sitting at the bottom of the screen — trading one bug for a more
+      // visible one. There's no amount of spacer that closes this gap
+      // without becoming exactly the empty space it's trying to avoid.
+      // So we just scroll as far as the real page actually allows, and
+      // lean on the flash below to make it obvious something changed
+      // even when the target doesn't quite reach the very top.
+      var SCROLL_MARGIN = 18; // matches .step/.backlog/.contact-card scroll-margin-top
+
+      // Reassigned once #scrollGuard's own setup runs, further down. Kept
+      // as a shared no-op reference so the click handler above it in the
+      // file can still call the real thing by the time anyone actually
+      // clicks — see the call inside the nav click handler below, and the
+      // reasoning comment where this gets its real implementation.
+      var updateScrollGuardClip = function(){};
+
+      // Below the 1270px breakpoint the pill row is sticky and sits on top
+      // of the page rather than pushing content down, so the plain
+      // SCROLL_MARGIN above isn't enough on its own — landing a target
+      // exactly there would tuck its heading under the pills. Add the
+      // pills' own current height on top of the usual margin whenever
+      // they're actually in that sticky mode (a no-op at the wider
+      // breakpoint, where the sidebar takes over and this returns to just
+      // the plain margin).
+      function currentScrollMargin(){
+        var wrap = document.querySelector('.quicknav-wrap');
+        if (wrap && getComputedStyle(wrap).position === 'sticky') {
+          return wrap.getBoundingClientRect().height + SCROLL_MARGIN;
+        }
+        return SCROLL_MARGIN;
+      }
+
+      var navLinks = document.querySelectorAll('a[href^="#"]');
+      navLinks.forEach(function(a){
+        a.addEventListener('click', function(e){
+          var id = a.getAttribute('href').slice(1);
+          var target = document.getElementById(id);
+          if (!target) return;
+          e.preventDefault();
+
+          var el = target;
+          while (el) {
+            if (el.tagName === 'DETAILS') el.open = true;
+            el = el.parentElement;
+          }
+
+          if (history.pushState) history.pushState(null, '', '#' + id);
+
+          window.requestAnimationFrame(function(){
+            var desiredTop = target.getBoundingClientRect().top + window.scrollY - currentScrollMargin();
+            var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            window.scrollTo({ top: Math.max(0, Math.min(desiredTop, maxScroll)), behavior: 'smooth' });
+
+            // Opening the target's ancestor <details> just above, and the
+            // flash animation just below, both force a synchronous layout
+            // reflow — cheap on their own, but combined they can eat
+            // enough of this frame's budget that the guard mask's usual
+            // once-a-frame update gets pushed to the next one, and for
+            // that single frame a sliver of the target's own heading can
+            // flash out from under the pills before it catches up. Calling
+            // it here directly closes that gap instead of waiting for it.
+            updateScrollGuardClip();
+
+            if (target.classList.contains('step') || target.classList.contains('backlog') || target.classList.contains('contact-card')) {
+              // Driven via the inline `animation` property (not just the
+              // `.just-opened` class) so it always wins the cascade. Cards
+              // also carry a one-time entrance fade-in keyed off the same
+              // `animation` property; removing only the class once the
+              // flash finished let that entrance rule become the winning
+              // declaration again, and changing `animation`'s computed
+              // value — even back to one it had already run — makes the
+              // browser restart it from its 0% keyframe (opacity: 0).
+              // That's what looked like the whole card briefly vanishing
+              // and fading back in right after the highlight. Explicitly
+              // setting `animation: none` inline (rather than just letting
+              // the class fall away) avoids ever handing control back to
+              // that entrance rule.
+              target.classList.remove('just-opened');
+              target.style.animation = 'none';
+              void target.offsetWidth; // force reflow so this reliably (re)starts fresh
+              target.classList.add('just-opened');
+              target.style.animation = 'justOpenedFlash 1.8s ease-out';
+              target.addEventListener('animationend', function handler(e){
+                // The card's own entrance fade-in can still be mid-flight
+                // (or dispatch its animationend later) on a card near the
+                // top of the page right after load — ignore anything
+                // that isn't this specific flash animation ending, or a
+                // still-pending entrance animation can get mistaken for
+                // it and cut the highlight short.
+                if (e.animationName !== 'justOpenedFlash') return;
+                target.classList.remove('just-opened');
+                target.style.animation = 'none';
+                target.removeEventListener('animationend', handler);
+              });
+            }
+          });
+        });
+      });
+
+      var qn = document.getElementById('quicknav');
+      var qnWrap = qn ? qn.closest('.quicknav-wrap') : null;
+      if (qn && qnWrap) {
+        function updateQuicknavScrollState(){
+          var maxScroll = qn.scrollWidth - qn.clientWidth;
+          qnWrap.classList.toggle('can-scroll-left', qn.scrollLeft > 4);
+          qnWrap.classList.toggle('can-scroll-right', qn.scrollLeft < maxScroll - 4);
+        }
+        qn.addEventListener('scroll', updateQuicknavScrollState);
+        window.addEventListener('resize', updateQuicknavScrollState);
+        updateQuicknavScrollState();
+
+        // Adds a lifted shadow only once the sticky pill row is actually
+        // pinned to the top of the viewport (harmless no-op at the wider
+        // breakpoint, where CSS turns the sticky styling off entirely). A
+        // zero-height sentinel placed immediately above the sticky element
+        // tells us this reliably: once its top edge has scrolled above 0,
+        // the row below it must be pinned rather than just off-screen and
+        // not yet reached.
+        var quicknavSentinel = document.getElementById('quicknavSentinel');
+        var backToTop = document.getElementById('backToTop');
+        if (quicknavSentinel && 'IntersectionObserver' in window) {
+          var quicknavStickyObserver = new IntersectionObserver(function(entries){
+            entries.forEach(function(entry){
+              var stuck = entry.boundingClientRect.top < 0;
+              qnWrap.classList.toggle('is-stuck', stuck);
+              // Same trigger as the pills' own lifted-shadow state: once
+              // they're pinned, manually scrolling back up stops being a
+              // quick flick, so the shortcut appears then and only then
+              // (CSS hides it outright at the wider breakpoint, where the
+              // sidebar nav is already fixed on screen the whole time).
+              if (backToTop) backToTop.classList.toggle('is-visible', stuck);
+            });
+          });
+          quicknavStickyObserver.observe(quicknavSentinel);
+        }
+
+        if (backToTop) {
+          backToTop.addEventListener('click', function(){
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
+        }
+
+        // Keeps the deliverable cards from ever visually passing behind
+        // the sticky pill row, without painting a background over the
+        // pills to hide the overlap. Instead, #scrollGuard (wrapping every
+        // card plus the contact card) gets masked from its own top edge
+        // by exactly however much of it has scrolled above the pills'
+        // current bottom edge — so nothing ever renders in that band in
+        // the first place. Before the pills are stuck this difference is
+        // just the small natural gap between the two (an invisible sliver
+        // of masked margin); once stuck it grows with scroll and keeps
+        // pace exactly, so the boundary always lines up. A short fade
+        // (rather than a hard clip-path cut) is used for the mask itself,
+        // so a card's rounded top corner fades away smoothly instead of
+        // being sliced off in a flat line where it meets the boundary.
+        var scrollGuard = document.getElementById('scrollGuard');
+        if (scrollGuard) {
+          var GUARD_FADE = 16;
+          var GUARD_SAFETY = 5; // small buffer against a stale one-frame read; see comment above the call site in the pill click handler
+          var lastGuardMask = '';
+          // Driven by a self-scheduling requestAnimationFrame loop rather
+          // than the 'scroll' event: the browser doesn't guarantee scroll
+          // events fire on every frame during a fast fling or momentum
+          // scroll, so tying this to 'scroll' let the mask lag a frame or
+          // two behind the actual (compositor-driven) scroll position —
+          // just long enough during a fast scroll to flash a sliver of a
+          // card's text where it met the pills before catching up. Running
+          // every frame regardless keeps it exactly in sync; the work
+          // itself (two rect reads, one style write only when the value
+          // actually changed) is cheap enough that doing it constantly is
+          // still negligible.
+          updateScrollGuardClip = function(){
+            var mask = 'none';
+            if (window.innerWidth < 1270) {
+              var pillsBottom = qnWrap.getBoundingClientRect().bottom;
+              var guardTop = scrollGuard.getBoundingClientRect().top;
+              var clip = pillsBottom - guardTop + GUARD_SAFETY;
+              if (clip > 0.5) {
+                var fadeStart = Math.max(0, clip - GUARD_FADE).toFixed(1);
+                var fadeEnd = clip.toFixed(1);
+                mask = 'linear-gradient(to bottom, transparent, transparent ' + fadeStart + 'px, black ' + fadeEnd + 'px, black 100%)';
+              }
+            }
+            if (mask !== lastGuardMask) {
+              lastGuardMask = mask;
+              scrollGuard.style.maskImage = mask;
+              scrollGuard.style.webkitMaskImage = mask;
+            }
+            window.requestAnimationFrame(updateScrollGuardClip);
+          }
+          updateScrollGuardClip();
+        }
+
+        // Click-and-drag panning for mice with no horizontal scroll at all.
+        // Whether a mousedown-to-mouseup counts as a "drag" (and should
+        // therefore swallow the click so it doesn't also follow the link) is
+        // decided by whether the nav actually ended up scrolled to a
+        // different position — not by whether any single mousemove ever
+        // crossed a pixel threshold. A plain click/tap on a link routinely
+        // produces a stray mousemove or two (real pointer jitter, or a
+        // browser/automation-simulated move on the way to the target), which
+        // used to permanently flag the interaction as a drag even though the
+        // pointer ended up right back where it started — silently eating the
+        // click. Comparing scrollLeft before vs. after fixes that: a real
+        // drag always changes it, a click that merely jittered doesn't.
+        //
+        // `.is-dragging` sets `pointer-events: none` on the links so an
+        // active drag doesn't also register as a hover/click on whatever
+        // link the pointer glides over. That class used to get added on
+        // mousedown itself — before any movement was known to be a drag —
+        // which disabled the link's pointer-events for the *entire* click,
+        // since the browser resolves a click's target from a hit-test done
+        // right as the mouse button lifts. That's why every click, not just
+        // drags, silently landed on the nav background instead of the link.
+        // Only adding the class once real movement is seen fixes that.
+        // Links are natively draggable in real desktop browsers — pressing
+        // down on a pill and moving the mouse used to hand the interaction
+        // over to the browser's own "drag this link" gesture instead of our
+        // pan logic, so the window 'mousemove' listener below never saw the
+        // movement and swiping only worked when starting from the gaps
+        // between pills. preventDefault() on mousedown suppresses that
+        // native link-drag without affecting the click event that follows a
+        // press-and-release with no movement, so a quick click still
+        // navigates.
+        var dragState = null;
+        var qnJustDragged = false;
+        qn.addEventListener('mousedown', function(e){
+          e.preventDefault();
+          dragState = { startX: e.pageX, startScroll: qn.scrollLeft };
+        });
+        window.addEventListener('mousemove', function(e){
+          if (!dragState) return;
+          var dx = e.pageX - dragState.startX;
+          if (Math.abs(dx) > 4) qn.classList.add('is-dragging');
+          qn.scrollLeft = dragState.startScroll - dx;
+        });
+        window.addEventListener('mouseup', function(){
+          qnJustDragged = !!(dragState && Math.abs(qn.scrollLeft - dragState.startScroll) > 3);
+          dragState = null;
+          qn.classList.remove('is-dragging');
+        });
+        qn.addEventListener('click', function(e){
+          if (qnJustDragged) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          qnJustDragged = false;
+        }, true);
+
+        // Highlight whichever quicknav link was last clicked, so the
+        // sidebar reads as a "you are here" panel rather than a static
+        // list floating next to the page. This used to also track scroll
+        // position continuously and re-highlight whichever section was
+        // passing the top of the viewport — but most cards are short once
+        // collapsed, so several can occupy the screen at once, and which
+        // one "counts" as current kept changing arbitrarily as you
+        // scrolled past them. Highlighting only on an actual click (a
+        // real, deliberate "take me there") is unambiguous and doesn't
+        // shift underneath you while you're just reading up and down.
+        var spyLinks = Array.prototype.slice.call(qn.querySelectorAll('a[href^="#"]'));
+        if (spyLinks.length) {
+          var activeLink = null;
+          var setActive = function(link){
+            if (link === activeLink) return;
+            if (activeLink) activeLink.classList.remove('is-active');
+            if (link) link.classList.add('is-active');
+            activeLink = link;
+          };
+          // Leaving the highlight on forever, however far you scroll away
+          // from where you clicked, made it a stale claim rather than a
+          // "you are here" — so once the clicked section has scrolled
+          // completely out of view (either direction), the highlight
+          // clears. This only ever watches the one active section, not
+          // every section at once, so it can't fall into the same
+          // "several sections visible together, which one counts" problem
+          // that made the earlier full scroll-tracking version jumpy.
+          // The very first callback after (re)starting observation just
+          // reports where things stood before the click-triggered scroll
+          // has actually happened yet — almost always "not in view", since
+          // scrolling there is the whole point of the click — so it's
+          // ignored; only later, genuine transitions clear the highlight.
+          var spySkipNext = false;
+          var spyClearObserver = ('IntersectionObserver' in window)
+            ? new IntersectionObserver(function(entries){
+                if (spySkipNext) { spySkipNext = false; return; }
+                entries.forEach(function(entry){
+                  if (!entry.isIntersecting) setActive(null);
+                });
+              })
+            : null;
+          spyLinks.forEach(function(a){
+            a.addEventListener('click', function(){
+              setActive(a);
+              if (!spyClearObserver) return;
+              spyClearObserver.disconnect();
+              spySkipNext = true;
+              var id = a.getAttribute('href').slice(1);
+              var section = document.getElementById(id);
+              if (section) spyClearObserver.observe(section);
+            });
+          });
+        }
+      }
+    } catch (e) {}
+  })();
+</script>
+</body>
+</html>
