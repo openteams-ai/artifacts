@@ -245,8 +245,8 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
     <button data-goto="s9"><b>How it works</b><span>Three steps, the mental model underneath them, and async setup</span><em>8 min</em></button>
     <button data-goto="s12"><b>What it means for your hardware</b><span>Integrated, discrete, and no GPU at all</span><em>3 min</em></button>
     <button data-goto="s13"><b>Where it fits, and where it does not</b><span>Real uses, the honest counterweight, and uses outside the browser</span><em>4 min</em></button>
-    <button data-goto="s16"><b>Where to start</b><span>The links worth photographing</span><em>1 min</em></button>
-    <button data-goto="s17"><b>Demos</b><span>Particles at scale, a GPU vs. JavaScript race, a local chat model, then questions</span><em>6 min</em></button>
+    <button data-goto="s16"><b>Demos</b><span>Particles at scale, a GPU vs. JavaScript race, and a local chat model</span><em>6 min</em></button>
+    <button data-goto="s18"><b>Where to start</b><span>Plus questions</span><em>1 min</em></button>
   </div>
   <aside>Timings are tight. If you overrun, cut depth from "How it works" rather than the demos. The demos are what people remember.</aside>
 </section>
@@ -498,19 +498,7 @@ device.lost.then(info =&gt; {
 
 <!-- 16 -->
 <section class="slide" id="s16">
-  <div class="head"><h2>Where to start</h2></div>
-  <div class="res">
-    <a href="https://webgpufundamentals.org/"><b>webgpufundamentals.org</b><span>The best beginner path. Builds up from a single triangle.</span></a>
-    <a href="https://webgpu.github.io/webgpu-samples/"><b>webgpu.github.io/webgpu-samples</b><span>Official runnable samples, rendering and compute.</span></a>
-    <a href="https://github.com/gpuweb/gpuweb/wiki/Implementation-Status"><b>gpuweb wiki · Implementation Status</b><span>The authoritative page for what ships where.</span></a>
-    <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API"><b>MDN · WebGPU API</b><span>Reference for every object in the graph we just walked.</span></a>
-  </div>
-  <aside>Pause here so people can photograph the links, then go into the demos. The demos come last so the talk ends on something running live.</aside>
-</section>
-
-<!-- 17 -->
-<section class="slide" id="s17">
-  <div class="head"><p class="eyebrow">Part six</p><h2>Demos</h2><p class="lede">Each runs the same work on this machine's GPU and on its CPU, so the difference is measured here, not claimed. Without WebGPU only the CPU side runs, which is the slide-12 fallback in practice.</p></div>
+  <div class="head"><p class="eyebrow">Part five</p><h2>Demos</h2><p class="lede">Each runs the same work on this machine's GPU and on its CPU, so the difference is measured here, not claimed. Without WebGPU only the CPU side runs, which is the slide-12 fallback in practice.</p></div>
   <div class="two">
     <div class="demo">
       <div class="row"><h3>01 · Data at scale</h3><span class="st" id="p-st">idle</span></div>
@@ -539,9 +527,9 @@ device.lost.then(info =&gt; {
   <aside>Open the deck before you start so the adapter is already requested. Demo one: start on WebGPU at 250,000, then flip to CPU and let the room watch the frame rate collapse. Flip back and go to a million; WebGPU holds. That is the data visualization card from slide 13, live. Demo two: race at 5,000 iterations, then at 20,000. The gap widens as the work per pixel grows. That is why the GPU wins at ML, and it is the honest version of the claim: for light work per element, the CPU is fine. The GPU time includes reading the image back; the first race also compiles the shader, which is reported separately.</aside>
 </section>
 
-<!-- 18 -->
-<section class="slide" id="s18">
-  <div class="head"><p class="eyebrow">Part six</p><h2>A chat model, running on this GPU</h2><p class="lede">WebLLM compiles small language models to WebGPU. The weights download once and the browser caches them. After that, every token is generated on this machine, and nothing you type leaves it.</p></div>
+<!-- 17 -->
+<section class="slide" id="s17">
+  <div class="head"><p class="eyebrow">Part five</p><h2>A chat model, running on this GPU</h2><p class="lede">WebLLM compiles small language models to WebGPU. The weights download once and the browser caches them. After that, every token is generated on this machine, and nothing you type leaves it.</p></div>
   <div class="two">
     <div class="demo">
       <div class="row"><h3>03 · Local chat</h3><span class="st" id="ch-st">not loaded</span></div>
@@ -559,8 +547,20 @@ device.lost.then(info =&gt; {
       <div class="card"><h3>What it costs</h3><p>Hundreds of megabytes of download and GPU memory, for a model far smaller than a hosted one. Fine for classification, extraction and short drafts. Not a replacement for a frontier model.</p></div>
     </div>
   </div>
-  <h2 style="margin-top:12px">Questions?</h2>
   <aside>Load the model before the talk so it comes from the cache; on conference wifi a 280 MB download will not finish in time. Ask the room for a prompt. Point at the tokens-per-second figure: that is this laptop's GPU doing the work. Then say the privacy line out loud: nothing typed here leaves the machine.</aside>
+</section>
+
+<!-- 18 -->
+<section class="slide" id="s18">
+  <div class="head"><h2>Where to start</h2></div>
+  <div class="res">
+    <a href="https://webgpufundamentals.org/"><b>webgpufundamentals.org</b><span>The best beginner path. Builds up from a single triangle.</span></a>
+    <a href="https://webgpu.github.io/webgpu-samples/"><b>webgpu.github.io/webgpu-samples</b><span>Official runnable samples, rendering and compute.</span></a>
+    <a href="https://github.com/gpuweb/gpuweb/wiki/Implementation-Status"><b>gpuweb wiki · Implementation Status</b><span>The authoritative page for what ships where.</span></a>
+    <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API"><b>MDN · WebGPU API</b><span>Reference for every object in the graph we just walked.</span></a>
+  </div>
+  <h2 style="margin-top:12px">Questions?</h2>
+  <aside>Leave the resource slide up during questions so people can photograph it.</aside>
 </section>
 
 </main>
@@ -711,7 +711,7 @@ device.lost.then(info =&gt; {
     }
   })();
 
-  /* ── Demo 1, slide 17: particles on the GPU vs the CPU ── */
+  /* ── Demo 1, slide 16: particles on the GPU vs the CPU ── */
   var MAXN=1000000,W=960,H=540,SX=0.5625;
   var pGpuC=document.getElementById("p-gpu"),pCpuC=document.getElementById("p-cpu"),pSt=document.getElementById("p-st"),pBtn=document.getElementById("p-btn"),pNSel=document.getElementById("p-n");
   var pMode="gpu",pRaf=0,pT=0,pN=0,pPtr=null,pFrames=0,pFpsT=0,pCpu=null,pImg=null,pG=null,pGpuOk=true;
@@ -800,14 +800,14 @@ device.lost.then(info =&gt; {
   document.querySelectorAll("[data-pmode]").forEach(function(b){b.addEventListener("click",function(){if(!b.disabled)pSetMode(b.dataset.pmode);});});
   pNSel.addEventListener("change",function(){if(pRaf)pStart();});
   pBtn.addEventListener("click",function(){if(pRaf)pStop();else pStart();});
-  onLeave.s17=function(){if(pRaf)pStop();};
+  onLeave.s16=function(){if(pRaf)pStop();};
   [pGpuC,pCpuC].forEach(function(c){
     c.addEventListener("pointermove",function(e){var r=c.getBoundingClientRect();pPtr=[((e.clientX-r.left)/r.width*2-1)/SX,1-(e.clientY-r.top)/r.height*2];});
     c.addEventListener("pointerleave",function(){pPtr=null;});
   });
   initGPU().catch(function(e){if(pGpuOk)pNoGPU(e);});
 
-  /* ── Demo 2, slide 17: Mandelbrot race, WGSL vs JavaScript ── */
+  /* ── Demo 2, slide 16: Mandelbrot race, WGSL vs JavaScript ── */
   var MW=640,MH=360,MCX=-0.7453,MCY=0.1127,MSC=0.000015625;
   var mGpuC=document.getElementById("m-gpu"),mJsC=document.getElementById("m-js"),mSt=document.getElementById("m-st"),mOut=document.getElementById("m-out"),mBtn=document.getElementById("m-btn"),mItSel=document.getElementById("m-it");
   var mGpuT=document.getElementById("m-gpu-t"),mJsT=document.getElementById("m-js-t"),mRun=0,mG=null;
@@ -880,7 +880,7 @@ device.lost.then(info =&gt; {
   });
   mBlank(mGpuC);mBlank(mJsC);
 
-  /* ── Demo 3, slide 18: local chat with WebLLM ── */
+  /* ── Demo 3, slide 17: local chat with WebLLM ── */
   var WEBLLM="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/lib/index.js";
   var chLog=document.getElementById("ch-log"),chSt=document.getElementById("ch-st"),chForm=document.getElementById("ch-form"),chIn=document.getElementById("ch-input"),chSend=document.getElementById("ch-send");
   var chModel=document.getElementById("ch-model"),chLoad=document.getElementById("ch-load"),chProg=document.getElementById("ch-prog"),chProgI=document.getElementById("ch-prog-i");
