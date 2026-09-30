@@ -271,7 +271,7 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
       <div class="explain" id="layer-explain"><b>WebGPU</b><p>The API you call. One portable surface over three native backends, with validation between your code and the driver.</p></div>
     </div>
   </div>
-  <aside>Emphasise the second bullet. People assume WebGPU competes with Three.js. It sits underneath it.</aside>
+  <aside>Emphasize the second bullet. People assume WebGPU competes with Three.js. It sits underneath it.</aside>
 </section>
 
 <!-- 4 -->
@@ -284,7 +284,7 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
     </div>
     <div class="stack">
       <div class="card"><h3>Who built it</h3><p>The W3C "GPU for the Web" Working Group. Apple, Google, Mozilla, Intel and Microsoft all at the same table.</p></div>
-      <div class="card"><h3>Why it took so long</h3><p>Any random website can run code on your GPU. So everything is validated, bounds-checked, and free of undefined behaviour.</p></div>
+      <div class="card"><h3>Why it took so long</h3><p>Any random website can run code on your GPU. So everything is validated, bounds-checked, and free of undefined behavior.</p></div>
       <div class="card"><h3>What that constraint bought</h3><p>One API that behaves the same across Metal, Direct3D 12 and Vulkan. Safety shaped the entire design. It is why the API is explicit.</p></div>
     </div>
   </div>
@@ -337,7 +337,7 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
       </div>
     </div>
     <div class="stack">
-      <div class="card"><h3>WGSL</h3><p>Rust-flavoured syntax, designed alongside the API rather than borrowed from an older one.</p></div>
+      <div class="card"><h3>WGSL</h3><p>Rust-flavored syntax, designed alongside the API rather than borrowed from an older one.</p></div>
       <div class="card"><h3>Compiled at runtime</h3><p>The browser translates it to SPIR-V, Metal Shading Language or HLSL depending on the platform.</p></div>
       <div class="card"><h3>It is not GLSL</h3><p>If anyone here has written shaders before, this is new syntax for them too.</p></div>
     </div>
@@ -353,7 +353,7 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
     <div class="card" id="impl-wgpu"><span class="lang">Rust</span><h3>wgpu</h3><p>Firefox. Also used widely outside the browser, in native Rust graphics projects.</p></div>
     <div class="card" id="impl-webkit"><span class="lang">C++</span><h3>WebKit</h3><p>Safari on macOS, iOS, iPadOS and visionOS, mapping straight onto Metal.</p></div>
   </div>
-  <p class="callout warn"><strong>Why you care:</strong> validation messages and edge-case behaviour differ between them. "Works in Chrome" is not "works".</p>
+  <p class="callout warn"><strong>Why you care:</strong> validation messages and edge-case behavior differ between them. "Works in Chrome" is not "works".</p>
   <p class="foot" id="impl-you"></p>
   <aside>Keep this brief. Thirty seconds. It matters mostly as a warning that cross-browser testing is not optional here.</aside>
 </section>
@@ -392,7 +392,7 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
     <div>
       <div class="pane on" data-pane="a1"><h3>Adapter</h3><p class="api">navigator.gpu.requestAdapter()</p><p>Hands you a handle to a physical GPU and a backend. You can hint high-performance or low-power. It returns null when there is nothing usable. That null is your real detection point.</p></div>
       <div class="pane" data-pane="a2"><h3>Device</h3><p class="api">adapter.requestDevice()</p><p>Opens your logical connection. You declare required features and limits here, and limits genuinely vary by hardware. This is where portability bites.</p></div>
-      <div class="pane" data-pane="a3"><h3>Buffers and textures</h3><p class="api">device.createBuffer() · device.createTexture()</p><p>You allocate GPU memory yourself and explicitly write data into it. Moving data across the CPU/GPU boundary is the expensive operation in all GPU work, so most optimisation is about uploading once and reusing.</p></div>
+      <div class="pane" data-pane="a3"><h3>Buffers and textures</h3><p class="api">device.createBuffer() · device.createTexture()</p><p>You allocate GPU memory yourself and explicitly write data into it. Moving data across the CPU/GPU boundary is the expensive operation in all GPU work, so most optimization is about uploading once and reusing.</p></div>
       <div class="pane" data-pane="a4"><h3>Shader modules</h3><p class="api">device.createShaderModule({ code })</p><p>WGSL source, compiled once into a reusable object you hand to a pipeline.</p></div>
     </div>
   </div>
@@ -480,7 +480,7 @@ device.lost.then(info =&gt; {
     <div class="stack">
       <div class="card"><h3>Two gates, not one</h3><p><code>navigator.gpu</code> only means the API exists. The non-null adapter means you can actually render.</p></div>
       <div class="card"><h3>Errors arrive later</h3><p>Through <code>device.lost</code> and <code>pushErrorScope</code>, not thrown exceptions.</p></div>
-      <div class="card"><h3>It looks different</h3><p>Initialisation is structurally unlike WebGL. This is what people trip over first.</p></div>
+      <div class="card"><h3>It looks different</h3><p>Initialization is structurally unlike WebGL. This is what people trip over first.</p></div>
     </div>
   </div>
   <aside>This slide sets up the hardware slide that follows. The null adapter is the hinge between the two.</aside>
@@ -508,8 +508,8 @@ device.lost.then(info =&gt; {
 <section class="slide" id="s15">
   <div class="head"><p class="eyebrow">Part four</p><h2>Where it earns its place</h2><p class="lede">Click the two closest to what this room builds.</p></div>
   <div class="uses">
-    <button class="card" type="button" aria-pressed="false"><h3>Data visualisation at scale</h3><p>Hundreds of thousands of interactive points, past what SVG or canvas2d can hold up under.</p></button>
-    <button class="card" type="button" aria-pressed="false"><h3>Real-time image and video</h3><p>Filters, colour grading and effects applied per frame without leaving the GPU.</p></button>
+    <button class="card" type="button" aria-pressed="false"><h3>Data visualization at scale</h3><p>Hundreds of thousands of interactive points, past what SVG or canvas2d can hold up under.</p></button>
+    <button class="card" type="button" aria-pressed="false"><h3>Real-time image and video</h3><p>Filters, color grading and effects applied per frame without leaving the GPU.</p></button>
     <button class="card" type="button" aria-pressed="false"><h3>3D product configurators</h3><p>Commerce and marketing experiences that used to need a native app.</p></button>
     <button class="card" type="button" aria-pressed="false"><h3>Design-tool canvases</h3><p>Infinite zoom, live effects, thousands of objects staying responsive.</p></button>
     <button class="card" type="button" aria-pressed="false"><h3>Local ML inference</h3><p>transformers.js and WebLLM run models entirely client-side. No server round trip.</p></button>
