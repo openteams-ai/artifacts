@@ -174,6 +174,8 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
 .chat-in input:disabled{opacity:.6}
 .bar-prog{height:6px;border-radius:3px;background:var(--panel2);overflow:hidden}
 .bar-prog i{display:block;height:100%;width:0;background:var(--mint);transition:width .2s ease}
+.code{max-height:46vh;overflow:auto}
+.code pre{font-size:clamp(.68rem,.9vw,.85rem);white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 14px}
 
 /* Uses */
 .uses{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:14px}
@@ -502,22 +504,24 @@ device.lost.then(info =&gt; {
   <div class="two">
     <div class="demo">
       <div class="row"><h3>01 · Data at scale</h3><span class="st" id="p-st">idle</span></div>
-      <div><canvas id="p-gpu" width="960" height="540" aria-label="Particles simulated and drawn on the GPU"></canvas><canvas id="p-cpu" width="960" height="540" hidden aria-label="Particles simulated and drawn on the CPU"></canvas></div>
+      <div id="p-vis"><canvas id="p-gpu" width="960" height="540" aria-label="Particles simulated and drawn on the GPU"></canvas><canvas id="p-cpu" width="960" height="540" hidden aria-label="Particles simulated and drawn on the CPU"></canvas></div>
       <div class="row">
         <div class="seg" role="group" aria-label="Where it runs"><button type="button" data-pmode="gpu" aria-pressed="true">WebGPU</button><button type="button" data-pmode="cpu" aria-pressed="false">CPU</button></div>
         <label class="st">Particles <select id="p-n"><option value="250000">250,000</option><option value="1000000" selected>1,000,000</option><option value="4000000">4,000,000</option></select></label>
+        <button class="btn" type="button" data-code="p" aria-pressed="false">Show code</button>
         <button class="btn mint" type="button" id="p-btn">Start</button>
       </div>
       <p class="st">A compute shader moves every particle each frame, and a render pipeline draws them from the same buffer, so the data never leaves the GPU. The CPU version does the same math, coloring and blending in JavaScript and paints the result into a 2D canvas. Move the pointer over the canvas to pull the swarm.</p>
     </div>
     <div class="demo">
       <div class="row"><h3>02 · Heavy work per element</h3><span class="st" id="m-st">idle</span></div>
-      <div class="race">
+      <div class="race" id="m-vis">
         <figure><canvas id="m-gpu" width="640" height="360" aria-label="Mandelbrot set computed on the GPU"></canvas><figcaption class="st">WebGPU <b id="m-gpu-t">—</b></figcaption></figure>
         <figure><canvas id="m-js" width="640" height="360" aria-label="Mandelbrot set computed in JavaScript"></canvas><figcaption class="st">JavaScript <b id="m-js-t">—</b></figcaption></figure>
       </div>
       <div class="row">
         <label class="st">Iterations per pixel <select id="m-it"><option value="1000">1,000</option><option value="5000" selected>5,000</option><option value="20000">20,000</option></select></label>
+        <button class="btn" type="button" data-code="m" aria-pressed="false">Show code</button>
         <button class="btn mint" type="button" id="m-btn">Race</button>
       </div>
       <p class="st" id="m-out">The same Mandelbrot image, 230,400 pixels, each looping up to the iteration limit. Every pixel is independent and expensive, which is the shape of work GPUs are built for, and the shape of ML inference.</p>
@@ -538,6 +542,8 @@ device.lost.then(info =&gt; {
       <form class="chat-in" id="ch-form"><input id="ch-input" type="text" placeholder="Load a model first" disabled autocomplete="off" aria-label="Message"><button class="btn mint" type="submit" id="ch-send" disabled>Send</button></form>
       <div class="row">
         <label class="st">Model <select id="ch-model"><option value="SmolLM2-360M-Instruct">SmolLM2 360M · ~200 MB</option><option value="Qwen2.5-0.5B-Instruct" selected>Qwen2.5 0.5B · ~280 MB</option><option value="Llama-3.2-1B-Instruct">Llama 3.2 1B · ~700 MB</option></select></label>
+        <button class="btn" type="button" id="ch-clear" disabled>Clear</button>
+        <button class="btn" type="button" data-code="ch" aria-pressed="false">Show code</button>
         <button class="btn" type="button" id="ch-load">Load model</button>
       </div>
     </div>
@@ -899,7 +905,8 @@ device.lost.then(info =&gt; {
   var chModel=document.getElementById("ch-model"),chLoad=document.getElementById("ch-load"),chProg=document.getElementById("ch-prog"),chProgI=document.getElementById("ch-prog-i");
   var chEngine=null,chMsgs=[],chBusy=false;
   function chAdd(cls,text){var p=document.createElement("div");p.className=cls;p.textContent=text;chLog.appendChild(p);chLog.scrollTop=chLog.scrollHeight;return p;}
-  function chReady(on){chIn.disabled=!on;chSend.disabled=!on;chIn.placeholder=on?"Ask something":"Load a model first";}
+  var chClear=document.getElementById("ch-clear");
+  function chReady(on){chIn.disabled=!on;chSend.disabled=!on;chClear.disabled=!on;chIn.placeholder=on?"Ask something":"Load a model first";}
   function chProgress(r){var p=Math.round((r.progress||0)*100);chProgI.style.width=p+"%";chSt.textContent="loading · "+p+"%";}
   chLoad.addEventListener("click",async function(){
     if(chBusy)return;
@@ -942,6 +949,31 @@ device.lost.then(info =&gt; {
       chMsgs.push({role:"assistant",content:reply});
     }catch(err){out.textContent="Error: "+err.message;chSt.textContent="error";}
     chBusy=false;chReady(true);chIn.focus();
+  });
+  chClear.addEventListener("click",function(){
+    if(chBusy||!chEngine)return;
+    chMsgs=[{role:"system",content:"You are a helpful assistant. Keep answers short."}];
+    chLog.innerHTML="";chAdd("st","Chat cleared. The model is still loaded.");
+    chSt.textContent="ready";chIn.focus();
+  });
+
+  /* ── Show code: each demo swaps its visual for the code that runs it ── */
+  var CH_CODE='import * as webllm from "'+WEBLLM+'";\n\n// Downloads and caches the weights, then compiles the model to WebGPU.\nconst engine = await webllm.CreateMLCEngine(\n  "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",\n  { initProgressCallback: (p) => showProgress(p.progress) }\n);\n\n// OpenAI-style API; every token is generated on this GPU.\nconst stream = await engine.chat.completions.create({ messages, stream: true });\nfor await (const chunk of stream) {\n  output.textContent += chunk.choices[0]?.delta?.content ?? "";\n}';
+  var CODE={
+    p:{vis:"p-vis",blocks:[["Compute shader (WGSL): runs once per particle, every frame",P_CS],["Render shader (WGSL): draws each particle from the same buffer",P_RS],["CPU version (JavaScript): the same math, coloring and blending",pFrameCPU.toString()]]},
+    m:{vis:"m-vis",blocks:[["WGSL: one invocation per pixel, in 16×16 workgroups",M_CS],["JavaScript: the same loop, one pixel at a time",mJS.toString()]]},
+    ch:{vis:"ch-log",blocks:[["The WebLLM calls behind this demo, trimmed of UI code",CH_CODE]]}
+  };
+  document.querySelectorAll("[data-code]").forEach(function(b){
+    var c=CODE[b.dataset.code],vis=document.getElementById(c.vis),panel=document.createElement("div");
+    panel.className="code";panel.hidden=true;
+    c.blocks.forEach(function(k){var l=document.createElement("p");l.className="st";l.textContent=k[0];var pre=document.createElement("pre"),code=document.createElement("code");code.textContent=k[1];pre.appendChild(code);panel.append(l,pre);});
+    vis.after(panel);
+    b.addEventListener("click",function(){
+      var on=b.getAttribute("aria-pressed")!=="true";
+      b.setAttribute("aria-pressed",String(on));b.textContent=on?"Hide code":"Show code";
+      panel.hidden=!on;vis.hidden=on;
+    });
   });
 
   fromHash();
