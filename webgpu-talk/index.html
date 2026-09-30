@@ -152,19 +152,6 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
 .lane .n{font-family:var(--mono);font-size:.8em;color:var(--muted)}
 .lane .n b{color:var(--fg)}
 
-/* Workgroup grid */
-.wg{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,300px);gap:20px;align-items:start}
-@media (max-width:760px){.wg{grid-template-columns:1fr}}
-.wg-grid{display:grid;gap:4px;aspect-ratio:4/3;max-width:100%}
-.wg-grid i{display:block;background:var(--panel2);border-radius:3px;border:1px solid transparent;cursor:crosshair;min-height:0}
-.wg-grid i:hover{border-color:var(--mint);background:var(--mint)}
-.ctl{display:grid;gap:12px;font-size:.9em}
-.ctl label{display:grid;gap:4px;color:var(--muted)}
-.ctl input[type=range]{width:100%;accent-color:var(--mint)}
-.ctl select{font:inherit;background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
-.ctl .out{font-family:var(--mono);color:var(--fg);font-size:.95em}
-.ctl .out b{color:var(--mint);font-weight:500}
-
 /* Demos */
 .demo{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px}
 .demo canvas{width:100%;aspect-ratio:16/9;display:block;border-radius:8px;background:#101118}
@@ -221,7 +208,7 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
   <a class="brand" href="#s1" id="brand-link"><i></i>WebGPU <span>· UI/UX CoP</span></a>
   <div class="bar-mid">
     <span class="nav"><button class="iconbtn" id="prev" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button></span>
-    <span class="pn" id="pn">1 / 20</span>
+    <span class="pn" id="pn">1 / 18</span>
     <span class="nav"><button class="iconbtn" id="next" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button></span>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
@@ -254,12 +241,12 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
 <section class="slide" id="s2">
   <div class="head"><h2>Running order</h2><p class="lede">Click a part to jump to it.</p></div>
   <div class="order">
-    <button data-goto="s3"><b>What it is</b><span>Definition, history, how it differs from WebGL</span><em>7 min</em></button>
-    <button data-goto="s9"><b>How it works</b><span>The seven objects, and the mental model underneath them</span><em>9 min</em></button>
-    <button data-goto="s14"><b>What it means for your hardware</b><span>Integrated, discrete, and no GPU at all</span><em>3 min</em></button>
-    <button data-goto="s15"><b>Where it fits, and where it does not</b><span>Real uses, the honest counterweight, and uses outside the browser</span><em>4 min</em></button>
-    <button data-goto="s18"><b>Demos</b><span>Particles at scale, a GPU vs. JavaScript race, and a local chat model</span><em>6 min</em></button>
-    <button data-goto="s20"><b>Where to start</b><span>Plus questions</span><em>1 min</em></button>
+    <button data-goto="s3"><b>What it is</b><span>Definition, history, how it differs from WebGL</span><em>8 min</em></button>
+    <button data-goto="s9"><b>How it works</b><span>Three steps, the mental model underneath them, and async setup</span><em>8 min</em></button>
+    <button data-goto="s12"><b>What it means for your hardware</b><span>Integrated, discrete, and no GPU at all</span><em>3 min</em></button>
+    <button data-goto="s13"><b>Where it fits, and where it does not</b><span>Real uses, the honest counterweight, and uses outside the browser</span><em>4 min</em></button>
+    <button data-goto="s16"><b>Demos</b><span>Particles at scale, a GPU vs. JavaScript race, and a local chat model</span><em>6 min</em></button>
+    <button data-goto="s18"><b>Where to start</b><span>Plus questions</span><em>1 min</em></button>
   </div>
   <aside>Timings are tight. If you overrun, cut depth from "How it works" rather than the demos. The demos are what people remember.</aside>
 </section>
@@ -388,44 +375,25 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
 
 <!-- 9 -->
 <section class="slide" id="s9">
-  <div class="head"><p class="eyebrow">Part two · How it works</p><h2>The object graph, part one</h2></div>
+  <div class="head"><p class="eyebrow">Part two · How it works</p><h2>Three steps, seven objects</h2><p class="lede">Every WebGPU program, rendering or compute, follows the same three steps. Click one.</p></div>
   <div class="graph">
-    <nav aria-label="Objects">
-      <button type="button" data-g="a1" aria-current="step"><i>1</i>Adapter</button>
-      <button type="button" data-g="a2"><i>2</i>Device</button>
-      <button type="button" data-g="a3"><i>3</i>Buffers and textures</button>
-      <button type="button" data-g="a4"><i>4</i>Shader modules</button>
+    <nav aria-label="Steps">
+      <button type="button" data-g="c1" aria-current="step"><i>1</i>Connect</button>
+      <button type="button" data-g="c2"><i>2</i>Describe the work</button>
+      <button type="button" data-g="c3"><i>3</i>Record and submit</button>
     </nav>
     <div>
-      <div class="pane on" data-pane="a1"><h3>Adapter</h3><p class="api">navigator.gpu.requestAdapter()</p><p>Hands you a handle to a physical GPU and a backend. You can hint high-performance or low-power. It returns null when there is nothing usable. That null is your real detection point.</p></div>
-      <div class="pane" data-pane="a2"><h3>Device</h3><p class="api">adapter.requestDevice()</p><p>Opens your logical connection. You declare required features and limits here, and limits genuinely vary by hardware. This is where portability bites.</p></div>
-      <div class="pane" data-pane="a3"><h3>Buffers and textures</h3><p class="api">device.createBuffer() · device.createTexture()</p><p>You allocate GPU memory yourself and explicitly write data into it. Moving data across the CPU/GPU boundary is the expensive operation in all GPU work, so most optimization is about uploading once and reusing.</p></div>
-      <div class="pane" data-pane="a4"><h3>Shader modules</h3><p class="api">device.createShaderModule({ code })</p><p>WGSL source, compiled once into a reusable object you hand to a pipeline.</p></div>
+      <div class="pane on" data-pane="c1"><h3>Connect to a GPU</h3><p class="api">Adapter → Device</p><p>Ask the browser for a physical GPU, then open a connection to it. This is where you learn what the hardware can do, and where you find out there is no usable GPU at all.</p></div>
+      <div class="pane" data-pane="c2"><h3>Describe the work, once</h3><p class="api">Buffers and textures · Shader modules · Pipelines · Bind groups</p><p>Allocate GPU memory, compile your WGSL, and bundle shaders and settings into a pipeline that is validated when it is created. Bind groups say which data each shader reads. This is the expensive part, and you do it up front.</p></div>
+      <div class="pane" data-pane="c3"><h3>Record, then submit</h3><p class="api">Command encoder → Queue</p><p>Each frame, record a list of commands on the CPU and hand the whole batch to the GPU in one call. A draw fills pixels; a dispatch runs your shader as thousands of parallel copies. Nothing blocks while the GPU works.</p></div>
     </div>
   </div>
-  <aside>Walk these in order. Each one depends on the one before it. Do not read the slide; say the idea and move on.</aside>
+  <p class="callout"><strong>Rendering and compute share all of this.</strong> Only the last step differs: a render pass draws to a canvas, and a compute pass dispatches work and writes the results to a buffer.</p>
+  <aside>Stay at this altitude. Say the three steps, click through them, and move on; nobody needs the API names memorized. The point to land: step two is the heavy one, and you do it once. That sets up the next slide.</aside>
 </section>
 
 <!-- 10 -->
 <section class="slide" id="s10">
-  <div class="head"><p class="eyebrow">Part two · How it works</p><h2>The object graph, part two</h2></div>
-  <div class="graph">
-    <nav aria-label="Objects">
-      <button type="button" data-g="b5" aria-current="step"><i>5</i>Pipelines</button>
-      <button type="button" data-g="b6"><i>6</i>Bind groups</button>
-      <button type="button" data-g="b7"><i>7</i>Command encoder → queue</button>
-    </nav>
-    <div>
-      <div class="pane on" data-pane="b5"><h3>Pipelines</h3><p class="api">device.createRenderPipeline() · device.createComputePipeline()</p><p>The load-bearing concept. A render pipeline bundles shaders, vertex layout, blend state and depth config into one immutable object, validated at creation time. WebGL re-validated its state on every draw. WebGPU does it once, then the draw is nearly free.</p></div>
-      <div class="pane" data-pane="b6"><h3>Bind groups</h3><p class="api">device.createBindGroup()</p><p>Pre-assembled sets of resources, buffers, textures, samplers, that a shader reads from. Instead of rebinding twelve things individually per draw, you swap one object.</p></div>
-      <div class="pane" data-pane="b7"><h3>Command encoder → queue</h3><p class="api">device.createCommandEncoder() · device.queue.submit()</p><p>You record a list of operations on the CPU, seal it into a command buffer, and submit the batch. Nothing blocks. The GPU works through it while your JavaScript carries on.</p></div>
-    </div>
-  </div>
-  <aside>If you only get one of these across, make it pipelines. Validate-once-then-draw-cheaply is the whole performance story in one sentence.</aside>
-</section>
-
-<!-- 11 -->
-<section class="slide" id="s11">
   <div class="head"><p class="eyebrow">Part two · How it works</p><h2>The mental model underneath all of it</h2></div>
   <div class="lanes">
     <div class="lane">
@@ -448,29 +416,8 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
   <aside>This is the takeaway you actually want people to leave with. Play the frame, then say it slowly and let it sit for a beat.</aside>
 </section>
 
-<!-- 12 -->
-<section class="slide" id="s12">
-  <div class="head"><p class="eyebrow">Part two · How it works</p><h2>Compute: the same shape, minus the rendering</h2></div>
-  <div class="wg">
-    <div class="stack">
-      <div class="wg-grid" id="wg-grid" aria-label="Workgroup grid"></div>
-      <p class="st foot" id="wg-hover" style="font-family:var(--mono);min-height:1.5em">Hover a square.</p>
-    </div>
-    <div class="ctl">
-      <p class="out"><b id="wg-call">dispatchWorkgroups(8, 6, 1)</b></p>
-      <label>x <input type="range" id="wg-x" min="1" max="16" value="8"></label>
-      <label>y <input type="range" id="wg-y" min="1" max="12" value="6"></label>
-      <label>@workgroup_size <select id="wg-size"><option>1</option><option>4</option><option>16</option><option selected>64</option><option>256</option></select></label>
-      <p class="out"><span id="wg-groups">48</span> workgroups × <span id="wg-per">64</span> = <b id="wg-total">3072</b> invocations</p>
-      <div class="card" style="padding:12px"><h3 style="font-size:1em">What a workgroup is</h3><p>A grid of parallel invocations that can share fast local memory. You choose the grid size; the GPU runs them all at once.</p></div>
-      <div class="card" style="padding:12px"><h3 style="font-size:1em">Why it matters</h3><p>This is the entire mechanism behind browser-local machine learning. No server round trip, no upload of user data.</p></div>
-    </div>
-  </div>
-  <aside>Point at the grid. Every square is a workgroup of the same tiny shader on different data. Drag x and y, change the workgroup size, and watch the invocation count. That is the whole idea of GPU compute.</aside>
-</section>
-
-<!-- 13 -->
-<section class="slide" id="s13">
+<!-- 11 -->
+<section class="slide" id="s11">
   <div class="head"><p class="eyebrow">Part two · How it works</p><h2>Everything is asynchronous</h2></div>
   <div class="two">
 <pre><code><span class="k">if</span> (!navigator.gpu) <span class="k">return</span> fallback();
@@ -493,8 +440,8 @@ device.lost.then(info =&gt; {
   <aside>This slide sets up the hardware slide that follows. The null adapter is the hinge between the two.</aside>
 </section>
 
-<!-- 14 -->
-<section class="slide" id="s14">
+<!-- 12 -->
+<section class="slide" id="s12">
   <div class="head"><p class="eyebrow">Part three</p><h2>What this means for different hardware</h2></div>
   <div class="two">
     <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))">
@@ -511,8 +458,8 @@ device.lost.then(info =&gt; {
   <aside>The practical rule for the room: always await requestAdapter(), check for null, and keep a WebGL2 or canvas2d path behind it. The "This machine" panel is why you demo on your own laptop rather than a borrowed one. Adapter limits differ per machine, and you can show that live.</aside>
 </section>
 
-<!-- 15 -->
-<section class="slide" id="s15">
+<!-- 13 -->
+<section class="slide" id="s13">
   <div class="head"><p class="eyebrow">Part four</p><h2>Where it earns its place</h2><p class="lede">Click the two closest to what this room builds.</p></div>
   <div class="uses">
     <button class="card" type="button" aria-pressed="false"><h3>Data visualization at scale</h3><p>Hundreds of thousands of interactive points, past what SVG or canvas2d can hold up under.</p></button>
@@ -525,8 +472,8 @@ device.lost.then(info =&gt; {
   <aside>Pick the two closest to what this room builds and dwell there. Skip the rest. Clicking a card highlights it so the room can see which two you chose.</aside>
 </section>
 
-<!-- 16 -->
-<section class="slide" id="s16">
+<!-- 14 -->
+<section class="slide" id="s14">
   <div class="head"><p class="eyebrow">Part four</p><h2>And where it does not belong</h2></div>
   <p class="statement">Most UI does not need this.</p>
   <div class="cards">
@@ -537,8 +484,8 @@ device.lost.then(info =&gt; {
   <aside>Being honest here buys you credibility for everything else you said. WebGPU earns its complexity at scale, or when you need compute. Not before.</aside>
 </section>
 
-<!-- 17 -->
-<section class="slide" id="s17">
+<!-- 15 -->
+<section class="slide" id="s15">
   <div class="head"><p class="eyebrow">Part four</p><h2>WebGPU outside the browser</h2><p class="lede">WebGPU is a spec, and the spec has native implementations. That makes it a portable GPU layer for projects that never touch a web page.</p></div>
   <div class="cards">
     <div class="card"><span class="lang">Rust · graphics</span><h3><a href="https://github.com/gfx-rs/wgpu">wgpu</a></h3><p>The WebGPU implementation inside Firefox, also shipped as a standalone library. One API over Vulkan, Metal, Direct3D 12 and OpenGL natively, or WebGPU and WebGL2 when compiled to WebAssembly.</p></div>
@@ -549,9 +496,9 @@ device.lost.then(info =&gt; {
   <aside>Keep this to a minute. The point for this room: the concepts from part two transfer beyond the browser. wgpu is the same code Firefox ships, so the adapter, device, pipeline and queue you just learned are the same objects in a native Rust app or an ML framework.</aside>
 </section>
 
-<!-- 18 -->
-<section class="slide" id="s18">
-  <div class="head"><p class="eyebrow">Part five</p><h2>Demos</h2><p class="lede">Each runs the same work on this machine's GPU and on its CPU, so the difference is measured here, not claimed. Without WebGPU only the CPU side runs, which is the slide-14 fallback in practice.</p></div>
+<!-- 16 -->
+<section class="slide" id="s16">
+  <div class="head"><p class="eyebrow">Part five</p><h2>Demos</h2><p class="lede">Each runs the same work on this machine's GPU and on its CPU, so the difference is measured here, not claimed. Without WebGPU only the CPU side runs, which is the slide-12 fallback in practice.</p></div>
   <div class="two">
     <div class="demo">
       <div class="row"><h3>01 · Data at scale</h3><span class="st" id="p-st">idle</span></div>
@@ -577,11 +524,11 @@ device.lost.then(info =&gt; {
     </div>
   </div>
   <p class="callout warn"><strong>Run local copies, and have a recording ready.</strong> Drivers and conference wifi both fail at the worst possible moment. Present from your own laptop, not a borrowed one. Adapter limits differ per machine.</p>
-  <aside>Open the deck before you start so the adapter is already requested. Demo one: start on WebGPU at 250,000, then flip to CPU and let the room watch the frame rate collapse. Flip back and go to a million; WebGPU holds. That is the data visualization card from slide 15, live. Demo two: race at 5,000 iterations, then at 20,000. The gap widens as the work per pixel grows. That is why the GPU wins at ML, and it is the honest version of the claim: for light work per element, the CPU is fine. The GPU time includes reading the image back; the first race also compiles the shader, which is reported separately.</aside>
+  <aside>Open the deck before you start so the adapter is already requested. Demo one: start on WebGPU at 250,000, then flip to CPU and let the room watch the frame rate collapse. Flip back and go to a million; WebGPU holds. That is the data visualization card from slide 13, live. Demo two: race at 5,000 iterations, then at 20,000. The gap widens as the work per pixel grows. That is why the GPU wins at ML, and it is the honest version of the claim: for light work per element, the CPU is fine. The GPU time includes reading the image back; the first race also compiles the shader, which is reported separately.</aside>
 </section>
 
-<!-- 19 -->
-<section class="slide" id="s19">
+<!-- 17 -->
+<section class="slide" id="s17">
   <div class="head"><p class="eyebrow">Part five</p><h2>A chat model, running on this GPU</h2><p class="lede">WebLLM compiles small language models to WebGPU. The weights download once and the browser caches them. After that, every token is generated on this machine, and nothing you type leaves it.</p></div>
   <div class="two">
     <div class="demo">
@@ -596,15 +543,15 @@ device.lost.then(info =&gt; {
     </div>
     <div class="stack">
       <div class="card"><h3>What is happening</h3><p>The same pieces as part two: an adapter, a device, compute pipelines for the transformer layers, and buffers holding the weights. Each generated token is a batch of dispatches.</p></div>
-      <div class="card"><h3>Why it matters</h3><p>No server, no per-token bill, no user data in transit. This is the local ML inference card from slide 15, working.</p></div>
+      <div class="card"><h3>Why it matters</h3><p>No server, no per-token bill, no user data in transit. This is the local ML inference card from slide 13, working.</p></div>
       <div class="card"><h3>What it costs</h3><p>Hundreds of megabytes of download and GPU memory, for a model far smaller than a hosted one. Fine for classification, extraction and short drafts. Not a replacement for a frontier model.</p></div>
     </div>
   </div>
   <aside>Load the model before the talk so it comes from the cache; on conference wifi a 280 MB download will not finish in time. Ask the room for a prompt. Point at the tokens-per-second figure: that is this laptop's GPU doing the work. Then say the privacy line out loud: nothing typed here leaves the machine.</aside>
 </section>
 
-<!-- 20 -->
-<section class="slide" id="s20">
+<!-- 18 -->
+<section class="slide" id="s18">
   <div class="head"><h2>Where to start</h2></div>
   <div class="res">
     <a href="https://webgpufundamentals.org/"><b>webgpufundamentals.org</b><span>The best beginner path. Builds up from a single triangle.</span></a>
@@ -700,20 +647,6 @@ device.lost.then(info =&gt; {
     var t=setInterval(function(){n++;ce.textContent=String(n);if(n>=N)clearInterval(t);},45);
   });
 
-  /* ── Workgroup grid ── */
-  var wgGrid=document.getElementById("wg-grid"),wx=document.getElementById("wg-x"),wy=document.getElementById("wg-y"),ws=document.getElementById("wg-size"),wh=document.getElementById("wg-hover");
-  function wg(){
-    var x=+wx.value,y=+wy.value,s=+ws.value;
-    wgGrid.style.gridTemplateColumns="repeat("+x+",1fr)";wgGrid.innerHTML="";
-    for(var j=0;j<y;j++)for(var i=0;i<x;i++){var c=document.createElement("i");c.dataset.i=i;c.dataset.j=j;wgGrid.appendChild(c);}
-    document.getElementById("wg-call").textContent="dispatchWorkgroups("+x+", "+y+", 1)";
-    document.getElementById("wg-groups").textContent=String(x*y);document.getElementById("wg-per").textContent=String(s);
-    document.getElementById("wg-total").textContent=(x*y*s).toLocaleString();
-  }
-  [wx,wy,ws].forEach(function(el){el.addEventListener("input",wg);});
-  wgGrid.addEventListener("mouseover",function(e){var c=e.target.closest("i");if(!c)return;var s=+ws.value,i=+c.dataset.i,j=+c.dataset.j,base=(j*(+wx.value)+i)*s;wh.textContent="workgroup_id ("+i+", "+j+", 0) · global_invocation_id.x "+base+" … "+(base+s-1);});
-  wg();
-
   /* ── WebGPU: shared adapter and device ── */
   var pill=document.getElementById("gpu-pill"),pillText=document.getElementById("gpu-pill-text");
   var gpu={adapter:null,device:null,error:null,ready:null};
@@ -758,7 +691,7 @@ device.lost.then(info =&gt; {
     if(who){var c=document.getElementById("impl-"+who);if(c){c.style.borderColor="var(--mint)";document.getElementById("impl-you").textContent="Highlighted: the implementation this browser is most likely running, from its user agent string.";}}
   })();
 
-  /* Hardware panel, slide 14 */
+  /* Hardware panel, slide 12 */
   var hlog=document.getElementById("hw-log");
   (async function(){
     hlog.innerHTML="";
@@ -778,7 +711,7 @@ device.lost.then(info =&gt; {
     }
   })();
 
-  /* ── Demo 1, slide 18: particles on the GPU vs the CPU ── */
+  /* ── Demo 1, slide 16: particles on the GPU vs the CPU ── */
   var MAXN=1000000,W=960,H=540,SX=0.5625;
   var pGpuC=document.getElementById("p-gpu"),pCpuC=document.getElementById("p-cpu"),pSt=document.getElementById("p-st"),pBtn=document.getElementById("p-btn"),pNSel=document.getElementById("p-n");
   var pMode="gpu",pRaf=0,pT=0,pN=0,pPtr=null,pFrames=0,pFpsT=0,pCpu=null,pImg=null,pG=null,pGpuOk=true;
@@ -867,14 +800,14 @@ device.lost.then(info =&gt; {
   document.querySelectorAll("[data-pmode]").forEach(function(b){b.addEventListener("click",function(){if(!b.disabled)pSetMode(b.dataset.pmode);});});
   pNSel.addEventListener("change",function(){if(pRaf)pStart();});
   pBtn.addEventListener("click",function(){if(pRaf)pStop();else pStart();});
-  onLeave.s18=function(){if(pRaf)pStop();};
+  onLeave.s16=function(){if(pRaf)pStop();};
   [pGpuC,pCpuC].forEach(function(c){
     c.addEventListener("pointermove",function(e){var r=c.getBoundingClientRect();pPtr=[((e.clientX-r.left)/r.width*2-1)/SX,1-(e.clientY-r.top)/r.height*2];});
     c.addEventListener("pointerleave",function(){pPtr=null;});
   });
   initGPU().catch(function(e){if(pGpuOk)pNoGPU(e);});
 
-  /* ── Demo 2, slide 18: Mandelbrot race, WGSL vs JavaScript ── */
+  /* ── Demo 2, slide 16: Mandelbrot race, WGSL vs JavaScript ── */
   var MW=640,MH=360,MCX=-0.7453,MCY=0.1127,MSC=0.000015625;
   var mGpuC=document.getElementById("m-gpu"),mJsC=document.getElementById("m-js"),mSt=document.getElementById("m-st"),mOut=document.getElementById("m-out"),mBtn=document.getElementById("m-btn"),mItSel=document.getElementById("m-it");
   var mGpuT=document.getElementById("m-gpu-t"),mJsT=document.getElementById("m-js-t"),mRun=0,mG=null;
@@ -942,12 +875,12 @@ device.lost.then(info =&gt; {
     if(gpu){
       mOut.textContent="WebGPU finished "+Math.round(js/gpu.ms)+"× faster. Its time includes the dispatch and reading 0.9 MB back to JavaScript"+(gpu.compile?"; this first race also compiled the shader, in "+Math.round(gpu.compile)+" ms, which is not counted.":".");
     }else{
-      mOut.textContent="No WebGPU here, so only the JavaScript side ran. This is the fallback path from slide 13.";
+      mOut.textContent="No WebGPU here, so only the JavaScript side ran. This is the fallback path from slide 11.";
     }
   });
   mBlank(mGpuC);mBlank(mJsC);
 
-  /* ── Demo 3, slide 19: local chat with WebLLM ── */
+  /* ── Demo 3, slide 17: local chat with WebLLM ── */
   var WEBLLM="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/lib/index.js";
   var chLog=document.getElementById("ch-log"),chSt=document.getElementById("ch-st"),chForm=document.getElementById("ch-form"),chIn=document.getElementById("ch-input"),chSend=document.getElementById("ch-send");
   var chModel=document.getElementById("ch-model"),chLoad=document.getElementById("ch-load"),chProg=document.getElementById("ch-prog"),chProgI=document.getElementById("ch-prog-i");
