@@ -360,7 +360,7 @@ h3{font-size:clamp(1.05rem,1.7vw,1.5rem);font-weight:600;line-height:1.25}
       <div class="layer"><b>shadcn CLI</b><small>resolves and copies</small></div>
     </div>
   </div>
-  <aside>Emphasise "source, not a package". People assume there is a version to bump in package.json. There isn't. The CLI copies files into your repo, and that is what the rest of the talk hangs on.</aside>
+  <aside>Emphasize "source, not a package". People assume there is a version to bump in package.json. There isn't. The CLI copies files into your repo, and that is what the rest of the talk hangs on.</aside>
 </section>
 
 <!-- 4 Why a registry -->
@@ -457,7 +457,7 @@ npx shadcn add @nebari/use-theme-preference</code></pre>
       </div>
     </div>
   </div>
-  <aside>Step through all four but only dwell on step two. The theme-install-overwrites behaviour is the thing that bites people later, so plant it here and return to it on the overrides slide.</aside>
+  <aside>Step through all four but only dwell on step two. The theme-install-overwrites behavior is the thing that bites people later, so plant it here and return to it on the overrides slide.</aside>
 </section>
 
 <!-- 7 Catalog -->
@@ -556,7 +556,7 @@ npx shadcn add @nebari/use-theme-preference</code></pre>
   </div>
   <div class="dd no" id="dd-no">
     <div class="card"><h3>Edit <code>components/ui/button.tsx</code></h3><p>The next install regenerates the file. It also forks your app away from every other consumer of the same component, which is what a design system exists to prevent.</p></div>
-    <div class="card"><h3>Restyle with raw hex or <code>dark:</code> variants</h3><p>Tokens flip with the <code>.dark</code> class on their own. A hard-coded colour is a second theme system that drifts from the first.</p>
+    <div class="card"><h3>Restyle with raw hex or <code>dark:</code> variants</h3><p>Tokens flip with the <code>.dark</code> class on their own. A hard-coded color is a second theme system that drifts from the first.</p>
 <pre><code><span class="c">// no</span>  &lt;Card className=<span class="s">"bg-[#f6e9ff] dark:bg-[#442655]"</span> /&gt;
 <span class="c">// yes</span> &lt;Card className=<span class="s">"bg-muted"</span> /&gt;</code></pre></div>
     <div class="card"><h3>Install an avatar</h3><p>There is none in the registry. Each app owns a small one on Base UI's primitive, kept outside <code>components/ui/</code> so an install cannot overwrite it.</p></div>
@@ -612,7 +612,7 @@ npx shadcn add @nebari/use-theme-preference</code></pre>
   </div>
   <div class="two">
     <p class="callout"><strong>Hard rules.</strong> Gate everything on <code>motion-safe:</code>. Reference tokens with parentheses in Tailwind v4, <code>duration-(--duration-base)</code>; the v3 bracket form silently resets to zero. Animate opacity and transform only.</p>
-    <p class="callout"><strong>The <code>cn()</code> gotcha.</strong> A bare <code>transition</code> class overwrites the component's own transition-property, and its colour transition disappears. Re-enumerate every property you need.</p>
+    <p class="callout"><strong>The <code>cn()</code> gotcha.</strong> A bare <code>transition</code> class overwrites the component's own transition-property, and its color transition disappears. Re-enumerate every property you need.</p>
   </div>
   <aside>Click replay on the first two so the room sees how short 200 milliseconds is. Then the parentheses rule: it is the single most common motion bug in a Tailwind v4 migration.</aside>
 </section>
@@ -625,10 +625,10 @@ npx shadcn add @nebari/use-theme-preference</code></pre>
     <div class="card"><h3>Discipline over tooling</h3><p>Nothing stops you editing a file in <code>ui/</code>. The rule is a convention, enforced by review and by the next install undoing your work.</p></div>
     <div class="card"><h3>Base UI, not Radix</h3><p><code>render</code> instead of <code>asChild</code>, <code>data-starting-style</code> instead of keyframes. Small differences that trip people who know shadcn's defaults.</p></div>
     <div class="card"><h3>Some assembly required</h3><p>Fonts are not shipped. There is no avatar. Three header tokens are app-defined. Each is a five-minute job, and each is a way to drift if skipped.</p></div>
-    <div class="card"><h3>A licence to read</h3><p>The design repo is CC BY-NC-ND 4.0. Check that against how your project ships before you adopt it commercially.</p></div>
-    <div class="card"><h3>Cross-browser is still on you</h3><p>The registry tests components, not your app. oklch colours and <code>@theme inline</code> want current browsers.</p></div>
+    <div class="card"><h3>A license to read</h3><p>The design repo is CC BY-NC-ND 4.0. Check that against how your project ships before you adopt it commercially.</p></div>
+    <div class="card"><h3>Cross-browser is still on you</h3><p>The registry tests components, not your app. oklch colors and <code>@theme inline</code> want current browsers.</p></div>
   </div>
-  <aside>Pick the two closest to what this room builds and dwell there. The licence point is the one people will not have thought about, so do not skip it.</aside>
+  <aside>Pick the two closest to what this room builds and dwell there. The license point is the one people will not have thought about, so do not skip it.</aside>
 </section>
 
 <!-- 15 Demo -->
@@ -719,7 +719,7 @@ npx shadcn add @nebari/use-theme-preference</code></pre>
 
   /* ── Pipeline hops ── */
   var HOPS={
-    figma:["Figma library","The colour system is mirrored one to one from the Figma variables library. Primitive ramps and semantic tokens keep the source hex in comments, and a test fails if the theme item drifts from globals.css."],
+    figma:["Figma library","The color system is mirrored one to one from the Figma variables library. Primitive ramps and semantic tokens keep the source hex in comments, and a test fails if the theme item drifts from globals.css."],
     repo:["nebari-design repo","Components live under registry/nebari as .tsx source with stories and tests. registry.json is the manifest. CI runs biome, vitest and a Storybook build on every change."],
     pages:["GitHub Pages","The pages.yml workflow deploys Storybook to the site root and the registry as static JSON under /r/. There is no server; the CLI just fetches files."],
     app:["Your app","shadcn add resolves the item's registryDependencies, copies every file into your aliases, and appends any missing theme tokens. Re-running it overwrites those files, which is why they are upstream-managed and your code stays at the call site."]
