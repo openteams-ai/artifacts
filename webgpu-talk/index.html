@@ -505,10 +505,10 @@ device.lost.then(info =&gt; {
       <div><canvas id="p-gpu" width="960" height="540" aria-label="Particles simulated and drawn on the GPU"></canvas><canvas id="p-cpu" width="960" height="540" hidden aria-label="Particles simulated and drawn on the CPU"></canvas></div>
       <div class="row">
         <div class="seg" role="group" aria-label="Where it runs"><button type="button" data-pmode="gpu" aria-pressed="true">WebGPU</button><button type="button" data-pmode="cpu" aria-pressed="false">CPU</button></div>
-        <label class="st">Particles <select id="p-n"><option value="50000">50,000</option><option value="250000" selected>250,000</option><option value="1000000">1,000,000</option></select></label>
+        <label class="st">Particles <select id="p-n"><option value="250000">250,000</option><option value="1000000" selected>1,000,000</option><option value="4000000">4,000,000</option></select></label>
         <button class="btn mint" type="button" id="p-btn">Start</button>
       </div>
-      <p class="st">A compute shader moves every particle each frame, and a render pipeline draws them from the same buffer, so the data never leaves the GPU. The CPU version does the same math in JavaScript and paints pixels into a 2D canvas. Move the pointer over the canvas to pull the swarm.</p>
+      <p class="st">A compute shader moves every particle each frame, and a render pipeline draws them from the same buffer, so the data never leaves the GPU. The CPU version does the same math, coloring and blending in JavaScript and paints the result into a 2D canvas. Move the pointer over the canvas to pull the swarm.</p>
     </div>
     <div class="demo">
       <div class="row"><h3>02 · Heavy work per element</h3><span class="st" id="m-st">idle</span></div>
@@ -524,7 +524,7 @@ device.lost.then(info =&gt; {
     </div>
   </div>
   <p class="callout warn"><strong>Run local copies, and have a recording ready.</strong> Drivers and conference wifi both fail at the worst possible moment. Present from your own laptop, not a borrowed one. Adapter limits differ per machine.</p>
-  <aside>Open the deck before you start so the adapter is already requested. Demo one: start on WebGPU at 250,000, then flip to CPU and let the room watch the frame rate collapse. Flip back and go to a million; WebGPU holds. That is the data visualization card from slide 13, live. Demo two: race at 5,000 iterations, then at 20,000. The gap widens as the work per pixel grows. That is why the GPU wins at ML, and it is the honest version of the claim: for light work per element, the CPU is fine. The GPU time includes reading the image back; the first race also compiles the shader, which is reported separately.</aside>
+  <aside>Open the deck before you start so the adapter is already requested. Demo one: start on WebGPU at a million, then flip to CPU. On a fast laptop the CPU keeps up at this size, which is worth saying out loud. Now go to four million: the CPU drops to a fraction of the frame rate (about 40 fps against 120 on an M-series Mac) while WebGPU holds. Both sides draw the identical image, so the frame rate is the only difference. That is the data visualization card from slide 13, live. Demo two: race at 5,000 iterations, then at 20,000. The gap widens as the work per pixel grows. That is why the GPU wins at ML, and it is the honest version of the claim: for light work per element, the CPU is fine. The GPU time includes reading the image back; the first race also compiles the shader, which is reported separately.</aside>
 </section>
 
 <!-- 17 -->
@@ -722,7 +722,7 @@ device.lost.then(info =&gt; {
   })();
 
   /* ── Demo 1, slide 16: particles on the GPU vs the CPU ── */
-  var MAXN=1000000,W=960,H=540,SX=0.5625;
+  var MAXN=4000000,W=960,H=540,SX=0.5625;
   var pGpuC=document.getElementById("p-gpu"),pCpuC=document.getElementById("p-cpu"),pSt=document.getElementById("p-st"),pBtn=document.getElementById("p-btn"),pNSel=document.getElementById("p-n");
   var pMode="gpu",pRaf=0,pT=0,pN=0,pPtr=null,pFrames=0,pFpsT=0,pCpu=null,pImg=null,pG=null,pGpuOk=true;
   var P_CS="struct P { pos: vec2f, vel: vec2f };\nstruct U { t: f32, n: u32, ax: f32, ay: f32 };\n@group(0) @binding(0) var<storage, read_write> ps: array<P>;\n@group(0) @binding(1) var<uniform> u: U;\n@compute @workgroup_size(256)\nfn step(@builtin(global_invocation_id) id: vec3u) {\n  let i = id.x;\n  if (i >= u.n) { return; }\n  var p = ps[i];\n  let d = vec2f(u.ax, u.ay) - p.pos;\n  let f = 0.00012 / (dot(d, d) + 0.01);\n  p.vel = (p.vel + vec2f(d.x - 0.5 * d.y, d.y + 0.5 * d.x) * f) * 0.992;\n  p.pos = p.pos + p.vel;\n  ps[i] = p;\n}";
@@ -771,10 +771,13 @@ device.lost.then(info =&gt; {
     }
     var ctx=pCpuC.getContext("2d");
     if(!pImg)pImg=ctx.createImageData(W,H);
-    var px=new Uint32Array(pImg.data.buffer);px.fill(0xFF181110);
+    // Same look as the GPU path: color by speed, mint to coral, added at 35% so dense areas glow.
+    var px=pImg.data;new Uint32Array(px.buffer).fill(0xFF181110);
     for(var j=0,m=0;j<n;j++,m+=4){
       var X=((s[m]*SX+1)*0.5*W)|0,Y=((1-s[m+1])*0.5*H)|0;
-      if(X>=0&&X<W&&Y>=0&&Y<H)px[Y*W+X]=0xFF9AC302;
+      if(X<0||X>=W||Y<0||Y>=H)continue;
+      var sp=Math.min(1,Math.sqrt(s[m+2]*s[m+2]+s[m+3]*s[m+3])*60),o=(Y*W+X)*4;
+      px[o]+=0.7+86.45*sp;px[o+1]+=68.25-29.05*sp;px[o+2]+=53.9-27.65*sp;
     }
     ctx.putImageData(pImg,0,0);
   }
