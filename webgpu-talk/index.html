@@ -175,6 +175,7 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
 .bar-prog{height:6px;border-radius:3px;background:var(--panel2);overflow:hidden}
 .bar-prog i{display:block;height:100%;width:0;background:var(--mint);transition:width .2s ease}
 .code{max-height:46vh;overflow:auto}
+.demo .hd{display:flex;align-items:center;gap:6px}
 .code pre{font-size:clamp(.68rem,.9vw,.85rem);white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 14px}
 
 /* Uses */
@@ -503,25 +504,23 @@ device.lost.then(info =&gt; {
   <div class="head"><p class="eyebrow">Part five</p><h2>Demos</h2><p class="lede">Each runs the same work on this machine's GPU and on its CPU, so the difference is measured here, not claimed. Without WebGPU only the CPU side runs, which is the slide-12 fallback in practice.</p></div>
   <div class="two">
     <div class="demo">
-      <div class="row"><h3>01 · Data at scale</h3><span class="st" id="p-st">idle</span></div>
+      <div class="row"><h3>01 · Data at scale</h3><span class="hd"><span class="st" id="p-st">idle</span><button class="iconbtn" type="button" data-code="p" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
       <div id="p-vis"><canvas id="p-gpu" width="960" height="540" aria-label="Particles simulated and drawn on the GPU"></canvas><canvas id="p-cpu" width="960" height="540" hidden aria-label="Particles simulated and drawn on the CPU"></canvas></div>
       <div class="row">
         <div class="seg" role="group" aria-label="Where it runs"><button type="button" data-pmode="gpu" aria-pressed="true">WebGPU</button><button type="button" data-pmode="cpu" aria-pressed="false">CPU</button></div>
         <label class="st">Particles <select id="p-n"><option value="250000">250,000</option><option value="1000000" selected>1,000,000</option><option value="4000000">4,000,000</option></select></label>
-        <button class="btn" type="button" data-code="p" aria-pressed="false">Show code</button>
         <button class="btn mint" type="button" id="p-btn">Start</button>
       </div>
       <p class="st">A compute shader moves every particle each frame, and a render pipeline draws them from the same buffer, so the data never leaves the GPU. The CPU version does the same math, coloring and blending in JavaScript and paints the result into a 2D canvas. Move the pointer over the canvas to pull the swarm.</p>
     </div>
     <div class="demo">
-      <div class="row"><h3>02 · Heavy work per element</h3><span class="st" id="m-st">idle</span></div>
+      <div class="row"><h3>02 · Heavy work per element</h3><span class="hd"><span class="st" id="m-st">idle</span><button class="iconbtn" type="button" data-code="m" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
       <div class="race" id="m-vis">
         <figure><canvas id="m-gpu" width="640" height="360" aria-label="Mandelbrot set computed on the GPU"></canvas><figcaption class="st">WebGPU <b id="m-gpu-t">—</b></figcaption></figure>
         <figure><canvas id="m-js" width="640" height="360" aria-label="Mandelbrot set computed in JavaScript"></canvas><figcaption class="st">JavaScript <b id="m-js-t">—</b></figcaption></figure>
       </div>
       <div class="row">
         <label class="st">Iterations per pixel <select id="m-it"><option value="1000">1,000</option><option value="5000" selected>5,000</option><option value="20000">20,000</option></select></label>
-        <button class="btn" type="button" data-code="m" aria-pressed="false">Show code</button>
         <button class="btn mint" type="button" id="m-btn">Race</button>
       </div>
       <p class="st" id="m-out">The same Mandelbrot image, 230,400 pixels, each looping up to the iteration limit. Every pixel is independent and expensive, which is the shape of work GPUs are built for, and the shape of ML inference.</p>
@@ -536,14 +535,13 @@ device.lost.then(info =&gt; {
   <div class="head"><p class="eyebrow">Part five</p><h2>A chat model, running on this GPU</h2><p class="lede">WebLLM compiles small language models to WebGPU. The weights download once and the browser caches them. After that, every token is generated on this machine, and nothing you type leaves it.</p></div>
   <div class="two">
     <div class="demo">
-      <div class="row"><h3>03 · Local chat</h3><span class="st" id="ch-st">not loaded</span></div>
+      <div class="row"><h3>03 · Local chat</h3><span class="hd"><span class="st" id="ch-st">not loaded</span><button class="iconbtn" type="button" data-code="ch" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
       <div class="chat-log" id="ch-log" aria-live="polite"><p class="st">Pick a model and load it. The first load downloads the weights from Hugging Face; later loads come from the browser cache.</p></div>
       <div class="bar-prog" id="ch-prog" hidden><i id="ch-prog-i"></i></div>
       <form class="chat-in" id="ch-form"><input id="ch-input" type="text" placeholder="Load a model first" disabled autocomplete="off" aria-label="Message"><button class="btn mint" type="submit" id="ch-send" disabled>Send</button></form>
       <div class="row">
         <label class="st">Model <select id="ch-model"><option value="SmolLM2-360M-Instruct">SmolLM2 360M · ~200 MB</option><option value="Qwen2.5-0.5B-Instruct" selected>Qwen2.5 0.5B · ~280 MB</option><option value="Llama-3.2-1B-Instruct">Llama 3.2 1B · ~700 MB</option></select></label>
         <button class="btn" type="button" id="ch-clear" disabled>Clear</button>
-        <button class="btn" type="button" data-code="ch" aria-pressed="false">Show code</button>
         <button class="btn" type="button" id="ch-load">Load model</button>
       </div>
     </div>
@@ -971,7 +969,7 @@ device.lost.then(info =&gt; {
     vis.after(panel);
     b.addEventListener("click",function(){
       var on=b.getAttribute("aria-pressed")!=="true";
-      b.setAttribute("aria-pressed",String(on));b.textContent=on?"Hide code":"Show code";
+      b.setAttribute("aria-pressed",String(on));b.title=on?"Hide code":"Show code";b.setAttribute("aria-label",b.title);
       panel.hidden=!on;vis.hidden=on;
     });
   });
