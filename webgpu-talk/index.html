@@ -177,9 +177,6 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
 
 /* Uses */
 .uses{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:14px}
-.uses .card{cursor:pointer}
-.uses .card:hover{border-color:var(--muted)}
-.uses .card[aria-pressed="true"]{border-color:var(--mint);background:var(--panel2)}
 
 /* Resources */
 .res{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
@@ -463,16 +460,16 @@ device.lost.then(info =&gt; {
 
 <!-- 13 -->
 <section class="slide" id="s13">
-  <div class="head"><p class="eyebrow">Part four</p><h2>Where it earns its place</h2><p class="lede">Click the two closest to what this room builds.</p></div>
+  <div class="head"><p class="eyebrow">Part four</p><h2>Where it earns its place</h2></div>
   <div class="uses">
-    <button class="card" type="button" aria-pressed="false"><h3>Data visualization at scale</h3><p>Hundreds of thousands of interactive points, past what SVG or canvas2d can hold up under.</p></button>
-    <button class="card" type="button" aria-pressed="false"><h3>Real-time image and video</h3><p>Filters, color grading and effects applied per frame without leaving the GPU.</p></button>
-    <button class="card" type="button" aria-pressed="false"><h3>3D product configurators</h3><p>Commerce and marketing experiences that used to need a native app.</p></button>
-    <button class="card" type="button" aria-pressed="false"><h3>Design-tool canvases</h3><p>Infinite zoom, live effects, thousands of objects staying responsive.</p></button>
-    <button class="card" type="button" aria-pressed="false"><h3>Local ML inference</h3><p>transformers.js and WebLLM run models entirely client-side. No server round trip.</p></button>
-    <button class="card" type="button" aria-pressed="false"><h3>Games and XR</h3><p>Including WebXR on Vision Pro, rendered through WebGPU.</p></button>
+    <div class="card"><h3>Data visualization at scale</h3><p>Hundreds of thousands of interactive points, past what SVG or canvas2d can hold up under.</p></div>
+    <div class="card"><h3>Real-time image and video</h3><p>Filters, color grading and effects applied per frame without leaving the GPU.</p></div>
+    <div class="card"><h3>3D product configurators</h3><p>Commerce and marketing experiences that used to need a native app.</p></div>
+    <div class="card"><h3>Design-tool canvases</h3><p>Infinite zoom, live effects, thousands of objects staying responsive.</p></div>
+    <div class="card"><h3>Local ML inference</h3><p>transformers.js and WebLLM run models entirely client-side. No server round trip.</p></div>
+    <div class="card"><h3>Games and XR</h3><p>Including WebXR on Vision Pro, rendered through WebGPU.</p></div>
   </div>
-  <aside>Pick the two closest to what this room builds and dwell there. Skip the rest. Clicking a card highlights it so the room can see which two you chose.</aside>
+  <aside>Pick the two closest to what this room builds and dwell there. Skip the rest.</aside>
 </section>
 
 <!-- 14 -->
@@ -643,13 +640,6 @@ device.lost.then(info =&gt; {
     var nav=b.parentNode,host=nav.parentNode;
     nav.querySelectorAll("button").forEach(function(x){if(x===b)x.setAttribute("aria-current","step");else x.removeAttribute("aria-current");});
     host.querySelectorAll(".pane").forEach(function(p){p.classList.toggle("on",p.dataset.pane===b.dataset.g);});
-  });});
-
-  /* ── Uses: pick two ── */
-  document.querySelectorAll(".uses .card").forEach(function(b){b.addEventListener("click",function(){
-    var on=b.getAttribute("aria-pressed")==="true";
-    if(!on){var picked=document.querySelectorAll('.uses .card[aria-pressed="true"]');if(picked.length>=2)picked[0].setAttribute("aria-pressed","false");}
-    b.setAttribute("aria-pressed",String(!on));
   });});
 
   /* ── Mental model: one frame ── */
