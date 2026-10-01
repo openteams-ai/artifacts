@@ -181,6 +181,11 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
 /* Uses */
 .uses{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:14px}
 
+/* Takeaways */
+.take{list-style:none;margin:0;padding:0;display:grid;gap:clamp(14px,2.4vh,26px);counter-reset:t}
+.take li{display:grid;grid-template-columns:1.6em 1fr;gap:14px;align-items:baseline;font-size:clamp(1.2rem,2.3vw,2rem);font-weight:500;line-height:1.3;max-width:42ch;text-wrap:balance}
+.take li::before{counter-increment:t;content:counter(t);color:var(--mint);font-weight:700;font-variant-numeric:tabular-nums}
+
 /* Resources */
 .res{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
 .res a{display:grid;gap:4px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);text-decoration:none;color:inherit}
@@ -211,7 +216,7 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
   <a class="brand" href="#s1" id="brand-link"><i></i>WebGPU <span>· UI/UX CoP</span></a>
   <div class="bar-mid">
     <span class="nav"><button class="iconbtn" id="prev" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button></span>
-    <span class="pn" id="pn">1 / 19</span>
+    <span class="pn" id="pn">1 / 24</span>
     <span class="nav"><button class="iconbtn" id="next" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button></span>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
@@ -244,12 +249,13 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
 <section class="slide" id="s2">
   <div class="head"><h2>Running order</h2><p class="lede">Click a part to jump to it.</p></div>
   <div class="order">
-    <button data-goto="s3"><b>What it is</b><span>Definition, history, how it differs from WebGL</span><em>8 min</em></button>
-    <button data-goto="s9"><b>How it works</b><span>Three steps, the mental model underneath them, and async setup</span><em>8 min</em></button>
-    <button data-goto="s12"><b>What it means for your hardware</b><span>Integrated, discrete, and no GPU at all</span><em>3 min</em></button>
-    <button data-goto="s13"><b>Where it fits, and where it does not</b><span>Real uses, the honest counterweight, and uses outside the browser</span><em>4 min</em></button>
-    <button data-goto="s16"><b>Demos</b><span>Particles at scale, a GPU vs. JavaScript race, and a local chat model</span><em>6 min</em></button>
-    <button data-goto="s19"><b>Where to start</b><span>Plus questions</span><em>1 min</em></button>
+    <button data-goto="s3"><b>What it is</b><span>Definition, history, how it differs from WebGL</span><em>7 min</em></button>
+    <button data-goto="s9"><b>How it works</b><span>Three steps, the mental model underneath them, and async setup</span><em>7 min</em></button>
+    <button data-goto="s12"><b>What it means for your hardware</b><span>Integrated, discrete, and no GPU at all</span><em>2 min</em></button>
+    <button data-goto="s13"><b>Where it fits, and where it does not</b><span>Real uses, the honest counterweight, and uses outside the browser</span><em>3 min</em></button>
+    <button data-goto="s16"><b>Designing for it</b><span>Accessibility, the canvas in a page, the user's cost, and the four states</span><em>4 min</em></button>
+    <button data-goto="s20"><b>Demos</b><span>Particles at scale, a GPU vs. JavaScript race, and a local chat model</span><em>6 min</em></button>
+    <button data-goto="s22"><b>Takeaways and where to start</b><span>Three things to remember, links, and questions</span><em>1 min</em></button>
   </div>
   <aside>Timings are tight. If you overrun, cut depth from "How it works" rather than the demos. The demos are what people remember.</aside>
 </section>
@@ -501,7 +507,61 @@ device.lost.then(info =&gt; {
 
 <!-- 16 -->
 <section class="slide" id="s16">
-  <div class="head"><p class="eyebrow">Part five</p><h2>Demos</h2><p class="lede">Each runs the same work on this machine's GPU and on its CPU, so the difference is measured here, not claimed. Without WebGPU only the CPU side runs, which is the slide-12 fallback in practice.</p></div>
+  <div class="head"><p class="eyebrow">Part five · Designing for it</p><h2>A canvas is invisible to assistive tech</h2><p class="lede">Everything WebGPU draws is pixels. Screen readers, keyboard focus, text selection and browser zoom see none of it, so the accessible version is a second layer you build on purpose.</p></div>
+  <div class="cards">
+    <div class="card"><h3>Give it a DOM twin</h3><p>Behind a GPU chart, keep a real table or list of the data and a text summary of what it shows. Hide it visually if you must, never from assistive tech.</p></div>
+    <div class="card"><h3>Label the canvas</h3><p>A picture gets <code>role="img"</code> and an <code>aria-label</code>. An interactive surface needs real focusable controls, plus a focus indicator you draw yourself.</p></div>
+    <div class="card"><h3>Keyboard parity</h3><p>Anything the pointer can do on the canvas, such as select, pan, zoom or inspect, needs a keyboard path. Hit-testing is your code now, not the browser's.</p></div>
+    <div class="card"><h3>Motion and contrast</h3><p>Honor <code>prefers-reduced-motion</code> by pausing or simplifying animation. Check contrast on GPU-drawn colors; no browser tool will check them for you.</p></div>
+  </div>
+  <aside>This is the slide for this room. The rule of thumb: if the canvas disappeared, could someone still do the task? If not, the DOM layer is missing.</aside>
+</section>
+
+<!-- 17 -->
+<section class="slide" id="s17">
+  <div class="head"><p class="eyebrow">Part five · Designing for it</p><h2>The canvas sits inside a normal page</h2><p class="lede">Real products layer HTML over the GPU canvas. Let each layer do what it is good at.</p></div>
+  <div class="cmp">
+    <div class="card"><h3>The GPU canvas</h3><ul>
+      <li>Hundreds of thousands of marks</li>
+      <li>Per-frame animation and effects</li>
+      <li>Pan, zoom and density at speed</li>
+    </ul></div>
+    <div class="card"><h3>HTML and CSS on top</h3><ul>
+      <li>Text, labels and tooltips: crisp, selectable, translatable</li>
+      <li>Controls, menus and forms, with focus and keyboard support built in</li>
+      <li>Layout that responds to the rest of the page</li>
+    </ul></div>
+  </div>
+  <p class="callout"><strong>The seam is your code.</strong> Map pointer positions to data with the same scales the shader uses, keep overlays aligned through resizes and <code>devicePixelRatio</code> changes, and decide which layer receives each event.</p>
+  <aside>Most WebGPU UI bugs live at this seam: an overlay drifting off its point after a resize, or a tooltip swallowing the pointer events the canvas needed.</aside>
+</section>
+
+<!-- 18 -->
+<section class="slide" id="s18">
+  <div class="head"><p class="eyebrow">Part five · Designing for it</p><h2>What it costs the person using it</h2><p class="lede">The setup cost on slide 9 is yours. These costs are theirs.</p></div>
+  <div class="cards">
+    <div class="card"><h3>Battery and heat</h3><p>A render loop at 120 fps drains a laptop and warms a phone even when nothing on screen changes. Render on demand, and stop when the tab is hidden or the canvas scrolls out of view.</p></div>
+    <div class="card"><h3>The first load</h3><p>Pipelines compile on first use, which can stall the first frames. ML features add hundreds of megabytes of download. Design a loading state, cache what you can, and say what is happening.</p></div>
+    <div class="card"><h3>Memory</h3><p>GPU memory is shared with every other tab and app, and integrated GPUs share it with the whole system. Free buffers you no longer need; large models can fail to load on smaller machines.</p></div>
+  </div>
+  <aside>The demos in this deck run only when you press a button, which is the honest pattern. A page that keeps the GPU busy in the background for decoration is spending someone else's battery.</aside>
+</section>
+
+<!-- 19 -->
+<section class="slide" id="s19">
+  <div class="head"><p class="eyebrow">Part five · Designing for it</p><h2>Design the four states</h2><p class="lede">Every WebGPU feature needs more than its happy path.</p></div>
+  <div class="cards">
+    <div class="card"><h3>Loading</h3><p>Adapter request, shader compilation, downloads. Show progress for anything over a second; the chat demo's progress bar is the pattern.</p></div>
+    <div class="card"><h3>Unsupported</h3><p>No WebGPU, or a null adapter. Fall back to WebGL2, canvas2d or a static image, and say so plainly instead of showing a blank box.</p></div>
+    <div class="card"><h3>Lost</h3><p>The GPU can reset mid-session after a driver crash or update, or when the system reclaims memory. Watch <code>device.lost</code>, keep the user's state, and rebuild quietly.</p></div>
+    <div class="card"><h3>Slow</h3><p>Older or integrated hardware may run the feature at 15 fps. Measure frame time and degrade: fewer points, lower resolution, fewer effects.</p></div>
+  </div>
+  <aside>Ask the designers in the room to picture these four for their own feature. The happy path is usually the only one in the mockups.</aside>
+</section>
+
+<!-- 20 -->
+<section class="slide" id="s20">
+  <div class="head"><p class="eyebrow">Part six</p><h2>Demos</h2><p class="lede">Each runs the same work on this machine's GPU and on its CPU, so the difference is measured here, not claimed. Without WebGPU only the CPU side runs, which is the slide-12 fallback in practice.</p></div>
   <div class="two">
     <div class="demo">
       <div class="row"><h3>01 · Data at scale</h3><span class="hd"><span class="st" id="p-st">idle</span><button class="iconbtn" type="button" data-code="p" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
@@ -530,9 +590,9 @@ device.lost.then(info =&gt; {
   <aside>Open the deck before you start so the adapter is already requested. Demo one: start on WebGPU at a million, then flip to CPU. On a fast laptop the CPU keeps up at this size, which is worth saying out loud. Now go to four million: the CPU drops to a fraction of the frame rate (about 40 fps against 120 on an M-series Mac) while WebGPU holds. Both sides draw the identical image, so the frame rate is the only difference. That is the data visualization card from slide 13, live. Demo two: race at 5,000 iterations, then at 20,000. The gap widens as the work per pixel grows. That is why the GPU wins at ML, and it is the honest version of the claim: for light work per element, the CPU is fine. The GPU time includes reading the image back; the first race also compiles the shader, which is reported separately.</aside>
 </section>
 
-<!-- 17 -->
-<section class="slide" id="s17">
-  <div class="head"><p class="eyebrow">Part five</p><h2>A chat model, running on this GPU</h2><p class="lede">WebLLM compiles small language models to WebGPU. The weights download once and the browser caches them. After that, every token is generated on this machine, and nothing you type leaves it.</p></div>
+<!-- 21 -->
+<section class="slide" id="s21">
+  <div class="head"><p class="eyebrow">Part six</p><h2>A chat model, running on this GPU</h2><p class="lede">WebLLM compiles small language models to WebGPU. The weights download once and the browser caches them. After that, every token is generated on this machine, and nothing you type leaves it.</p></div>
   <div class="two">
     <div class="demo">
       <div class="row"><h3>03 · Local chat</h3><span class="hd"><span class="st" id="ch-st">not loaded</span><button class="iconbtn" type="button" data-code="ch" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
@@ -554,8 +614,19 @@ device.lost.then(info =&gt; {
   <aside>Load the model before the talk so it comes from the cache; on conference wifi a 280 MB download will not finish in time. Ask the room for a prompt. Point at the tokens-per-second figure: that is this laptop's GPU doing the work. Then say the privacy line out loud: nothing typed here leaves the machine.</aside>
 </section>
 
-<!-- 18 -->
-<section class="slide" id="s18">
+<!-- 22 -->
+<section class="slide" id="s22">
+  <div class="head"><p class="eyebrow">Wrap-up</p><h2>Three things to take away</h2></div>
+  <ol class="take">
+    <li>It is shipping in every major browser. Feature-detect, and keep a fallback.</li>
+    <li>It earns its place at scale or for compute, not for everyday UI. Reach for a library first.</li>
+    <li>Design for accessibility, loading and power from the start, not after.</li>
+  </ol>
+  <aside>Say these three slowly, then move to the links.</aside>
+</section>
+
+<!-- 23 -->
+<section class="slide" id="s23">
   <div class="head"><p class="eyebrow">After the talk</p><h2>More demos to try</h2><p class="lede">Not part of the presentation. Open these on your own machine later. They need a browser with WebGPU, and the ML ones download a model the first time.</p></div>
   <div class="res more">
     <a href="https://threejs.org/examples/?q=webgpu" target="_blank" rel="noopener"><em>Graphics</em><b>Three.js WebGPU examples</b><span>Hundreds of scenes on Three.js's WebGPU renderer. The library-first route in practice.</span></a>
@@ -571,8 +642,8 @@ device.lost.then(info =&gt; {
   <aside>This slide is for afterwards. Skip it in the talk, or leave it up for a few seconds and say the links are in the deck.</aside>
 </section>
 
-<!-- 19 -->
-<section class="slide" id="s19">
+<!-- 24 -->
+<section class="slide" id="s24">
   <div class="head"><h2>Where to start</h2></div>
   <div class="res">
     <a href="https://webgpufundamentals.org/" target="_blank" rel="noopener"><b>webgpufundamentals.org</b><span>The best beginner path. Builds up from a single triangle.</span></a>
@@ -725,7 +796,7 @@ device.lost.then(info =&gt; {
     }
   })();
 
-  /* ── Demo 1, slide 16: particles on the GPU vs the CPU ── */
+  /* ── Demo 1, slide 20: particles on the GPU vs the CPU ── */
   var MAXN=4000000,W=960,H=540,SX=0.5625;
   var pGpuC=document.getElementById("p-gpu"),pCpuC=document.getElementById("p-cpu"),pSt=document.getElementById("p-st"),pBtn=document.getElementById("p-btn"),pNSel=document.getElementById("p-n");
   var pMode="gpu",pRaf=0,pT=0,pN=0,pPtr=null,pFrames=0,pFpsT=0,pCpu=null,pImg=null,pG=null,pGpuOk=true;
@@ -817,14 +888,14 @@ device.lost.then(info =&gt; {
   document.querySelectorAll("[data-pmode]").forEach(function(b){b.addEventListener("click",function(){if(!b.disabled)pSetMode(b.dataset.pmode);});});
   pNSel.addEventListener("change",function(){if(pRaf)pStart();});
   pBtn.addEventListener("click",function(){if(pRaf)pStop();else pStart();});
-  onLeave.s16=function(){if(pRaf)pStop();};
+  onLeave.s20=function(){if(pRaf)pStop();};
   [pGpuC,pCpuC].forEach(function(c){
     c.addEventListener("pointermove",function(e){var r=c.getBoundingClientRect();pPtr=[((e.clientX-r.left)/r.width*2-1)/SX,1-(e.clientY-r.top)/r.height*2];});
     c.addEventListener("pointerleave",function(){pPtr=null;});
   });
   initGPU().catch(function(e){if(pGpuOk)pNoGPU(e);});
 
-  /* ── Demo 2, slide 16: Mandelbrot race, WGSL vs JavaScript ── */
+  /* ── Demo 2, slide 20: Mandelbrot race, WGSL vs JavaScript ── */
   var MW=640,MH=360,MCX=-0.7453,MCY=0.1127,MSC=0.000015625;
   var mGpuC=document.getElementById("m-gpu"),mJsC=document.getElementById("m-js"),mSt=document.getElementById("m-st"),mOut=document.getElementById("m-out"),mBtn=document.getElementById("m-btn"),mItSel=document.getElementById("m-it");
   var mGpuT=document.getElementById("m-gpu-t"),mJsT=document.getElementById("m-js-t"),mRun=0,mG=null;
@@ -897,7 +968,7 @@ device.lost.then(info =&gt; {
   });
   mBlank(mGpuC);mBlank(mJsC);
 
-  /* ── Demo 3, slide 17: local chat with WebLLM ── */
+  /* ── Demo 3, slide 21: local chat with WebLLM ── */
   var WEBLLM="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/lib/index.js";
   var chLog=document.getElementById("ch-log"),chSt=document.getElementById("ch-st"),chForm=document.getElementById("ch-form"),chIn=document.getElementById("ch-input"),chSend=document.getElementById("ch-send");
   var chModel=document.getElementById("ch-model"),chLoad=document.getElementById("ch-load"),chProg=document.getElementById("ch-prog"),chProgI=document.getElementById("ch-prog-i");
