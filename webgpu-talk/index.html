@@ -371,7 +371,7 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
         <tr><td>Chrome / Edge</td><td class="v">113, in 2023</td><td>Android 12+ from Chrome 121, on Qualcomm and ARM GPUs.</td></tr>
         <tr><td>Safari</td><td class="v">26.0</td><td>macOS Tahoe, iOS, iPadOS and visionOS, on by default.</td></tr>
         <tr><td>Firefox</td><td class="v">141 on Windows</td><td>macOS followed in 145, on Apple Silicon.</td></tr>
-        <tr class="partial"><td>Linux / Android</td><td class="v">still rolling out</td><td>Partial and flag-gated in places. Verify before you rely on it.</td></tr>
+        <tr class="partial"><td>Linux / Android</td><td class="v">partial</td><td>Chrome: on for Linux with Intel Gen12+ (144) and NVIDIA on Wayland (147), other GPUs behind a flag; Android 12+ since 121 on most GPUs. Firefox: Linux in Nightly, Android behind a flag.</td></tr>
       </tbody>
     </table>
     <div class="stack">
@@ -379,7 +379,7 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
       <div class="log" id="detect-log"><span>Detecting in this browser…</span></div>
     </div>
   </div>
-  <aside>Chrome has had this for three years. What changed recently is Safari and Firefox, which is what moves it from experiment to deployment target. The log on the right is this browser's own answer.</aside>
+  <aside>If someone asks about Linux: AMD GPUs still need a flag in Chrome, which is the biggest gap. Chrome has had this for three years. What changed recently is Safari and Firefox, which is what moves it from experiment to deployment target. The log on the right is this browser's own answer.</aside>
 </section>
 
 <!-- 9 -->
