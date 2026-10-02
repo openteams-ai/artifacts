@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Modern Web Motion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>
+/* Layout: one slide per screen, sticky bar on top, notes drawer at the bottom; phone stacks every slide.
+   Palette: warm paper and ink with a film-amber accent (optical-printer wipes) and a cool blue counter-accent. */
+:root{
+  color-scheme:light;
+  --bg:#F7F5F0; --panel:#FFFFFF; --panel2:#ECE8DF; --well:#F1EEE6; --line:#D8D2C4;
+  --fg:#1B1915; --muted:#5B564B; --dim:#847D6E;
+  --accent:#9A5B00; --accent-ink:#FFFFFF; --accent-2:#2454C7;
+  --code-k:#9A5B00; --code-s:#1F6B3A; --code-a:#2454C7;
+  --sans:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,"Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#15140F; --panel:#211F18; --panel2:#2C2920; --well:#0F0E0A; --line:#3B3729;
+    --fg:#F1ECE0; --muted:#A79F8C; --dim:#776F5E;
+    --accent:#F2C14E; --accent-ink:#1B1600; --accent-2:#7AA2FF;
+    --code-k:#F2C14E; --code-s:#8FD3A5; --code-a:#7AA2FF;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#15140F; --panel:#211F18; --panel2:#2C2920; --well:#0F0E0A; --line:#3B3729;
+  --fg:#F1ECE0; --muted:#A79F8C; --dim:#776F5E;
+  --accent:#F2C14E; --accent-ink:#1B1600; --accent-2:#7AA2FF;
+  --code-k:#F2C14E; --code-s:#8FD3A5; --code-a:#7AA2FF;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:clamp(1rem,1.45vw,1.35rem);line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:underline;text-underline-offset:.15em;text-decoration-thickness:1px}
+code,pre{font-family:var(--mono)}
+code{font-size:.88em;background:var(--panel2);color:var(--fg);padding:.08em .35em;border-radius:5px}
+pre{margin:0;background:var(--well);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:clamp(12px,1.4vw,22px);overflow-x:auto;font-size:clamp(.8rem,1.15vw,1.05rem);line-height:1.5}
+pre code{background:none;padding:0;font-size:inherit}
+pre .c{color:var(--dim)} pre .k{color:var(--code-k)} pre .s{color:var(--code-s)} pre .a{color:var(--code-a)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3,p{margin:0}
+h1{font-size:clamp(2.6rem,7vw,6.4rem);font-weight:700;letter-spacing:-.03em;line-height:1;text-wrap:balance}
+h2{font-size:clamp(1.7rem,3.6vw,3.2rem);font-weight:600;letter-spacing:-.02em;line-height:1.1;text-wrap:balance}
+h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
+.eyebrow{font-size:clamp(.75rem,1vw,.95rem);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.lede{color:var(--muted);max-width:60ch}
+.statement{font-size:clamp(1.4rem,2.6vw,2.3rem);font-weight:500;line-height:1.3;max-width:34ch;text-wrap:balance}
+.big{font-size:clamp(5rem,16vw,13rem);font-weight:700;letter-spacing:-.04em;line-height:.9;color:var(--accent);font-variant-numeric:tabular-nums}
+
+/* Title slide: each line rises in on a baked spring easing (set on :root by the script), staggered 110ms */
+#s1.active .title>*{animation:title-in var(--spring-soft-dur,700ms) var(--ease-spring-soft,cubic-bezier(.2,0,0,1)) both;animation-delay:calc(var(--i,0) * 110ms)}
+@keyframes title-in{from{opacity:0;translate:0 22px}to{opacity:1;translate:0 0}}
+
+/* Bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 12px 0 16px;background:var(--bg);border-bottom:1px solid var(--line);view-transition-name:deck-bar}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:.95rem;white-space:nowrap;color:inherit;text-decoration:none}
+.brand i{width:12px;height:12px;border-radius:3px;background:var(--accent);display:inline-block}
+.brand span{color:var(--muted);font-weight:500}
+.bar-mid{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar-mid .pn{min-width:5ch;text-align:center}
+.iconbtn{appearance:none;border:0;background:transparent;color:inherit;font:inherit;width:34px;height:34px;border-radius:8px;cursor:pointer;display:inline-grid;place-items:center}
+.iconbtn:hover,.iconbtn[aria-pressed="true"]{background:var(--panel2)}
+.iconbtn svg{width:18px;height:18px}
+.progress{position:fixed;left:0;right:0;top:calc(56px + env(safe-area-inset-top,0px));height:3px;z-index:31;pointer-events:none}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s ease}
+
+/* Slides */
+.slide{display:none;min-height:calc(100dvh - 56px);padding:clamp(28px,5vh,64px) clamp(16px,6vw,96px);flex-direction:column;gap:clamp(16px,2.6vh,30px);justify-content:center;max-width:1500px;margin:0 auto;width:100%}
+.slide.active{display:flex}
+.slide>.head{display:grid;gap:8px}
+.slide>aside{display:none}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:clamp(16px,2.5vw,36px);align-items:start}
+.two>*{min-width:0}
+.stack{display:grid;gap:14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
+.cards.three{grid-template-columns:repeat(3,1fr)}
+@media (max-width:760px){.cards.three{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:clamp(14px,1.6vw,24px);display:grid;gap:6px;align-content:start;min-width:0}
+.card p{color:var(--muted);font-size:.92em}
+.card .tag{font-family:var(--mono);font-size:.75em;color:var(--accent)}
+.card .tag a{color:inherit}
+.callout{border-left:3px solid var(--accent);padding:2px 0 2px 14px;color:var(--muted)}
+.callout strong{color:var(--fg)}
+.callout.warn{border-color:var(--accent-2)}
+.foot{font-size:.8em;color:var(--dim)}
+.kbd{font-family:var(--mono);font-size:.78em;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;color:var(--muted)}
+.btn{appearance:none;font:inherit;font-size:.9rem;font-weight:600;padding:8px 16px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* Running order */
+.order{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px;counter-reset:part}
+.order button{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:4px;cursor:pointer}
+.order button:hover{border-color:var(--accent)}
+.order button::before{counter-increment:part;content:counter(part);width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:.85rem;margin-bottom:6px}
+.order span{color:var(--muted);font-size:.88em}
+.order em{font-style:normal;color:var(--dim);font-size:.8em;font-family:var(--mono)}
+
+/* Compare */
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.cmp ul{margin:6px 0 0;padding-left:1.1em;display:grid;gap:6px;color:var(--muted);font-size:.92em}
+.cmp .card.win{border-color:var(--accent)}
+
+/* Stepper */
+.stepper{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.stepper{grid-template-columns:1fr}}
+.stepper nav{display:grid;gap:6px}
+.stepper nav button{appearance:none;text-align:left;font:inherit;color:inherit;background:transparent;border:1px solid transparent;border-radius:8px;padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:center}
+.stepper nav button:hover{background:var(--panel)}
+.stepper nav button[aria-current="step"]{background:var(--panel);border-color:var(--line)}
+.stepper nav button i{width:26px;height:26px;border-radius:50%;background:var(--panel2);color:var(--muted);display:grid;place-items:center;font-style:normal;font-weight:700;font-size:.8rem;flex:none;font-family:var(--mono)}
+.stepper nav button[aria-current="step"] i{background:var(--accent);color:var(--accent-ink)}
+.pane{display:none;gap:12px;min-width:0}
+.pane.on{display:grid}
+.pane p{color:var(--muted)}
+.pane .api{font-family:var(--mono);color:var(--accent);font-size:.95em;overflow-wrap:anywhere}
+.stepper.compact{grid-template-columns:1fr;gap:12px}
+.stepper.compact nav{display:flex;flex-wrap:wrap;gap:6px}
+
+/* Table */
+.tblwrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:.9em}
+.tbl th,.tbl td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:.75em;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)}
+.tbl td.ok{color:var(--accent)} .tbl td.no{color:var(--accent-2)}
+.tbl td code{white-space:nowrap}
+
+/* Demo card */
+.demo.lit{background:var(--panel2);border-color:var(--accent)}
+.demo{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px;min-width:0}
+.demo .row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.demo .hd{display:flex;align-items:center;gap:6px}
+.demo .st{font-family:var(--mono);font-size:.78em;color:var(--muted)}
+.demo .st b{color:var(--accent);font-weight:500}
+.demo select,.demo input[type=range]{font:inherit;font-size:.95em;background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+.demo input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--accent);width:140px}
+.demo label{font-size:.85em;color:var(--muted);display:inline-flex;align-items:center;gap:8px}
+.code{max-height:46vh;overflow:auto}
+.code pre{font-size:clamp(.68rem,.9vw,.85rem);white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 14px}
+.stage{position:relative;height:clamp(140px,26vh,240px);background:var(--well);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.log{font-family:var(--mono);font-size:.8em;background:var(--well);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:4px;min-height:5em;color:var(--muted)}
+.log .ok{color:var(--accent)} .log .no{color:var(--accent-2)}
+
+/* Demo 2: @starting-style panel */
+#d2-panel{display:none;opacity:0;translate:0 10px;scale:.97;transition:opacity 220ms cubic-bezier(.2,0,0,1),translate 220ms cubic-bezier(.2,0,0,1),scale 220ms cubic-bezier(.2,0,0,1),display 220ms allow-discrete}
+#d2-panel.open{display:grid;opacity:1;translate:0 0;scale:1}
+@starting-style{#d2-panel.open{opacity:0;translate:0 10px;scale:.97}}
+.toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;gap:4px;min-width:min(90%,320px);box-shadow:0 10px 30px rgba(0,0,0,.12)}
+.toast b{font-weight:600}.toast span{color:var(--muted);font-size:.9em}
+
+/* Demo 3: spring vs bezier */
+.lane{position:absolute;left:16px;right:16px;height:34px;display:flex;align-items:center}
+.lane .lbl{position:absolute;left:0;top:-18px;font-family:var(--mono);font-size:.7em;color:var(--dim)}
+.puck{width:34px;height:34px;border-radius:50%;background:var(--accent);translate:0 0;transition:translate 0s}
+.lane.bz .puck{background:var(--accent-2)}
+#d3-vis.go .lane.bz .puck{translate:calc(100% * var(--d3-run)) 0;transition:translate 500ms cubic-bezier(.2,0,0,1)}
+#d3-vis.go .lane.sp .puck{translate:calc(100% * var(--d3-run)) 0;transition:translate var(--spring-dur,700ms) var(--spring-ease,linear)}
+
+/* Demo 4: scroll-driven */
+.scroller{height:clamp(140px,26vh,240px);overflow-y:auto;background:var(--well);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:10px;scroll-timeline:--d4 block;position:relative}
+.scroller .item{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:.9em;color:var(--muted)}
+.scroller .item b{color:var(--fg);font-family:var(--mono);font-weight:500;margin-right:8px}
+.d4bar{height:4px;background:var(--panel2);border-radius:2px;overflow:hidden}
+.d4bar i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transform:scaleX(0)}
+@supports (animation-timeline: scroll()){
+  .d4bar i{animation:d4-grow linear both;animation-timeline:--d4}
+  .scroller .item{animation:d4-reveal linear both;animation-timeline:view();animation-range:entry 0% entry 70%}
+}
+@supports not (animation-timeline: scroll()){ .d4bar i{transform:none;opacity:.35} }
+@keyframes d4-grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes d4-reveal{from{opacity:.15;translate:0 14px}to{opacity:1;translate:0 0}}
+
+/* Demo 5: FLIP */
+.chips{display:flex;flex-wrap:wrap;gap:10px;min-height:52px}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-family:var(--mono);font-size:.85em;color:var(--fg)}
+.chip.lead{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+/* Takeaways */
+.take{list-style:none;margin:0;padding:0;display:grid;gap:clamp(12px,2vh,22px);counter-reset:t}
+.take li{display:grid;grid-template-columns:1.6em 1fr;gap:14px;align-items:baseline;font-size:clamp(1.2rem,2.3vw,2rem);font-weight:500;line-height:1.3;max-width:42ch;text-wrap:balance}
+.take li>span{min-width:0}
+.take li::before{counter-increment:t;content:counter(t);color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums}
+
+/* Link cards */
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+@media (min-width:900px){.res.three{grid-template-columns:repeat(3,1fr)}}
+.res a,.res .rescard{display:grid;gap:4px;align-content:start;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);text-decoration:none;color:inherit;min-width:0;font:inherit;text-align:left;cursor:pointer;appearance:none}
+.res a:hover,.res .rescard:hover{border-color:var(--accent)}
+.res em{font-style:normal;font-family:var(--mono);font-size:.7em;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.res b{font-family:var(--mono);font-weight:500;font-size:.92em;color:var(--accent);overflow-wrap:anywhere}
+.res span{color:var(--muted);font-size:.88em}
+
+/* Notes drawer */
+.notes{position:fixed;left:0;right:0;bottom:0;z-index:32;background:var(--panel);border-top:1px solid var(--line);padding:14px clamp(16px,6vw,96px) calc(14px + env(safe-area-inset-bottom,0px));font-size:.95rem;max-height:34vh;overflow:auto;transform:translateY(110%);transition:transform .35s cubic-bezier(.2,0,0,1);view-transition-name:deck-notes}
+.notes.open{transform:none}
+.notes .nl{font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.notes p{max-width:80ch;color:var(--muted)}
+
+/* ── Slide wipes: the five film wipes, on the View Transitions API (ported from motion-lab) ──
+   go() stamps data-wipe + --wipe-* on <html> before startViewTransition, so the root snapshot
+   pair picks up these keyframes. The old frame is frozen so the result reads as a wipe, not a dissolve. */
+@property --wipe-angle{syntax:"<angle>";inherits:false;initial-value:0deg}
+html[data-wipe]::view-transition-old(root){animation:none;mix-blend-mode:normal}
+html[data-wipe]::view-transition-new(root){animation-duration:var(--wipe-duration,650ms);animation-timing-function:var(--wipe-ease,linear);animation-fill-mode:both;mix-blend-mode:normal}
+html[data-wipe]::view-transition-group(deck-bar),html[data-wipe]::view-transition-group(deck-notes){animation:none}
+html[data-wipe="wipe-right"]::view-transition-new(root){animation-name:ml-wipe-right}
+@keyframes ml-wipe-right{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+html[data-wipe="wipe-left"]::view-transition-new(root){animation-name:ml-wipe-left}
+@keyframes ml-wipe-left{from{clip-path:inset(0 0 0 100%)}to{clip-path:inset(0 0 0 0)}}
+/* Both frames keep the same vertex count so clip-path interpolates. */
+html[data-wipe="wipe-diagonal"]::view-transition-new(root){animation-name:ml-wipe-diagonal}
+@keyframes ml-wipe-diagonal{from{clip-path:polygon(0 0,0 0,0 0)}to{clip-path:polygon(0 0,250% 0,0 250%)}}
+/* 75% radius covers the corners at any aspect ratio. */
+html[data-wipe="wipe-iris"]::view-transition-new(root){animation-name:ml-wipe-iris}
+@keyframes ml-wipe-iris{from{clip-path:circle(0% at 50% 50%)}to{clip-path:circle(75% at 50% 50%)}}
+/* Conic mask swept by the registered --wipe-angle; +1deg overshoot so the sweep ends fully opaque. */
+html[data-wipe="wipe-clock"]::view-transition-new(root){animation-name:ml-wipe-clock;mask-image:conic-gradient(from 0deg at 50% 50%,#000 var(--wipe-angle),transparent calc(var(--wipe-angle) + 1deg))}
+@keyframes ml-wipe-clock{from{--wipe-angle:0deg}to{--wipe-angle:361deg}}
+
+@media (prefers-reduced-motion:reduce){
+  .notes,.progress i,#d2-panel,.puck{transition:none!important}
+  #s1.active .title>*{animation:none}
+  .scroller .item,.d4bar i{animation:none!important;opacity:1;translate:none;transform:none}
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}
+}
+/* Phone: every slide stacks, one after another */
+@media (max-width:699px){
+  .slide{display:flex;min-height:0;border-bottom:1px solid var(--line)}
+  .bar-mid .nav,.progress,.notes{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="bar" aria-label="Deck controls">
+  <a class="brand" href="#s1" id="brand-link"><i></i>Modern Web Motion <span>· UI/UX CoP</span></a>
+  <div class="bar-mid">
+    <span class="nav"><button class="iconbtn" id="prev" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button></span>
+    <span class="pn" id="pn">1 / 22</span>
+    <span class="nav"><button class="iconbtn" id="next" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button></span>
+  </div>
+  <span style="display:flex;align-items:center;gap:8px">
+    <button class="iconbtn" id="notes-btn" aria-pressed="false" aria-label="Toggle speaker notes" title="Speaker notes (N)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg></button>
+  </span>
+</header>
+<div class="progress" aria-hidden="true"><i id="prog"></i></div>
+
+<main class="deck" id="deck">
+
+<!-- 1 -->
+<section class="slide" id="s1">
+  <div class="stack title" style="gap:18px">
+    <p class="eyebrow" style="--i:0">UI/UX Community of Practice · 30 minutes</p>
+    <h1 style="--i:1">Modern Web Motion</h1>
+    <p class="statement" style="--i:2;color:var(--muted);font-weight:400">Advanced techniques, everyday UI. What the platform can do now, when a library still earns its place, and how we do it in Nebari.</p>
+    <p class="foot" style="--i:3"><span class="kbd">←</span> <span class="kbd">→</span> to move, <span class="kbd">N</span> for speaker notes. Every slide change in this deck is a real View Transition, with a random film wipe.</p>
+  </div>
+  <aside>The four lines rise in on a baked spring easing, the technique from the linear() slide; mention it only if someone asks. Open with the promise: by the end, the room should know which motion techniques are native now, how to ship them safely across browsers, and the three rules we follow in Nebari. Mention that the slide wipes they are about to see are the first demo, and that they come from your Motion Lab. Thirty seconds here.</aside>
+</section>
+<!-- 2 -->
+<section class="slide" id="s2">
+  <div class="head"><h2>Running order</h2></div>
+  <div class="order">
+    <button data-goto="s3"><b>Why motion</b><span>Feedback, not decoration; transition vs. animation</span><em>3 min</em></button>
+    <button data-goto="s5"><b>The modern toolkit</b><span>View Transitions, @starting-style, linear() springs, scroll timelines, WAAPI</span><em>9 min</em></button>
+    <button data-goto="s11"><b>Browser compatibility</b><span>Support today, this browser live, progressive enhancement</span><em>3 min</em></button>
+    <button data-goto="s14"><b>Libraries</b><span>When no-library is enough and what Motion, GSAP and friends earn</span><em>3 min</em></button>
+    <button data-goto="s16"><b>In Nebari</b><span>Tokens, hard rules, Base UI recipes</span><em>4 min</em></button>
+    <button data-goto="s19"><b>Where it doesn't belong</b><span>The counterweight</span><em>2 min</em></button>
+    <button data-goto="s20"><b>Live demos</b><span>Punchlist with motion on and off, then Motion Lab for questions</span><em>4 min</em></button>
+    <button data-goto="s21"><b>Takeaways and where to start</b><span>Three things to remember, links, questions</span><em>2 min</em></button>
+  </div>
+  <aside>Each part is clickable if you need to jump. If you run over, cut the libraries part to one slide (skip the comparison) and do only Punchlist on the demos slide. The demos in part two are the heart; protect them.</aside>
+</section>
+<!-- 3 -->
+<section class="slide" id="s3">
+  <div class="head"><p class="eyebrow">Part one · Why motion</p><h2>Motion is feedback, not decoration</h2></div>
+  <div class="cards">
+    <div class="card"><span class="tag">orientation</span><h3>Where did that come from?</h3><p>A panel that slides in from the right tells you where it lives and which way it goes back.</p></div>
+    <div class="card"><span class="tag">continuity</span><h3>Is this the same thing?</h3><p>A card that grows into a detail page keeps the user's mental model intact. A hard cut makes them rebuild it.</p></div>
+    <div class="card"><span class="tag">feedback</span><h3>Did that work?</h3><p>A button that presses, a row that settles into its new spot. Confirmation without a toast.</p></div>
+    <div class="card"><span class="tag">hierarchy</span><h3>What should I look at?</h3><p>The one thing that moves is the one thing people look at. Use that budget carefully.</p></div>
+  </div>
+  <p class="callout"><strong>The test:</strong> if you removed the motion, would the user lose information? If not, it's decoration, and decoration has a very short welcome.</p>
+  <aside>Set the frame for the whole talk. The advanced techniques coming up are only worth it in service of one of these four jobs. Ask the room for the last animation that annoyed them; it almost always fails the test on this slide.</aside>
+</section>
+<!-- 4 -->
+<section class="slide" id="s4">
+  <div class="head"><p class="eyebrow">Part one · Why motion</p><h2>Six kinds of motion, and the tool that fits each</h2><p class="lede">Most UI motion is one of these. Name the kind first; the technique follows.</p></div>
+  <div class="cards three">
+    <div class="card"><span class="tag">transitions · @starting-style</span><h3>State changes</h3><p>Enter and exit: tooltips, menus, dialogs, toasts. Two states, interruptible, reversible.</p></div>
+    <div class="card"><span class="tag">FLIP · View Transitions</span><h3>Layout changes</h3><p>Reorder, filter, resize, insert. The thing that moved is the same thing; motion keeps that true for the eye.</p></div>
+    <div class="card"><span class="tag">View Transitions</span><h3>Navigation</h3><p>Route changes, tab switches, list to detail, shared-element morphs. Where did I go, and how do I get back.</p></div>
+    <div class="card"><span class="tag">transform · springs</span><h3>Feedback</h3><p>Press, toggle, success, error. Under 200ms, on the thing you touched. Confirmation without a message.</p></div>
+    <div class="card"><span class="tag">scroll timelines</span><h3>Scroll-linked</h3><p>Reveals, parallax, progress, sticky scenes. Driven by position, not time, so it can never fall behind.</p></div>
+    <div class="card"><span class="tag">@keyframes · sparingly</span><h3>Continuous</h3><p>Loading pulses, spinners, attention loops. The only kind with no end state, so it needs a reason to stop.</p></div>
+  </div>
+  <p class="callout"><strong>The split that matters:</strong> the first four are motion between two states and should be transitions, so the browser handles interruption and reversal. The last two are motion over time, and need a reason to start and to stop.</p>
+  <aside>One minute. Point at the tags: every technique in part two is on this slide, and part two takes them roughly top to bottom. The callout carries the transition-versus-animation distinction, which is worth saying once: if you can express it as "from state A to state B", make it a transition. Punchlist, in the demos, exercises the first four kinds with one switch.</aside>
+</section>
+<!-- 5 -->
+<section class="slide" id="s5">
+  <div class="head"><p class="eyebrow">Part two · The modern toolkit</p><h2>The platform caught up</h2><p class="lede">Five additions since 2023 cover most of what we used to need a library for. No build step, no bundle.</p></div>
+  <div class="cards">
+    <div class="card"><span class="tag">2023</span><h3><code>linear()</code> easing</h3><p>Any curve as a list of points. Springs and bounces in pure CSS.</p></div>
+    <div class="card"><span class="tag">2023 → 2025</span><h3>View Transitions</h3><p>Snapshot the old DOM, swap, animate between. Page and element morphs.</p></div>
+    <div class="card"><span class="tag">2023 → 2026</span><h3>Scroll-driven animations</h3><p>Progress bound to scroll position, off the main thread.</p></div>
+    <div class="card"><span class="tag">2024</span><h3><code>@starting-style</code></h3><p>Transition from <code>display:none</code>. Enter and exit without JavaScript.</p></div>
+    <div class="card"><span class="tag">2024 · Chromium</span><h3><code>interpolate-size</code></h3><p>Animate to <code>height: auto</code>. Still Chromium only.</p></div>
+  </div>
+  <aside>Years are when the first stable browser shipped each feature; the full support table is in part three. Each one maps to a kind of motion from the previous slide. The point is the trend: the platform has absorbed the common cases. The next five slides take one each, with a working example you can poke at.</aside>
+</section>
+<!-- 6 -->
+<section class="slide" id="s6">
+  <div class="head"><p class="eyebrow">Part two · View Transitions</p><h2>You've been watching one on every slide change</h2></div>
+  <div class="two">
+    <div class="stepper compact">
+      <nav aria-label="How a view transition works">
+        <button type="button" data-step="vt1" aria-current="step"><i>1</i>Snapshot</button>
+        <button type="button" data-step="vt2"><i>2</i>Swap</button>
+        <button type="button" data-step="vt3"><i>3</i>Animate</button>
+      </nav>
+      <div>
+        <div class="pane on" data-pane="vt1"><h3>The browser captures the old state</h3><p class="api">document.startViewTransition(cb)</p><p>Every element with a <code>view-transition-name</code> gets its own snapshot; everything else is part of <code>root</code>.</p></div>
+        <div class="pane" data-pane="vt2"><h3>Your callback changes the DOM</h3><p class="api">cb() → swap slides, swap routes, re-render</p><p>Any DOM change at all. The page is frozen under the old snapshot while this runs.</p></div>
+        <div class="pane" data-pane="vt3"><h3>Old and new snapshots animate</h3><p class="api">::view-transition-old(root) / ::view-transition-new(root)</p><p>Pseudo-elements you style with ordinary CSS. The default is a crossfade; this deck freezes the old frame and clips the new one.</p></div>
+      </div>
+    </div>
+    <div class="demo">
+      <div class="row"><h3>01 · Film wipes</h3><span class="hd"><span class="st" id="d1-st">last: none</span><button class="iconbtn" type="button" data-code="d1" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
+      <div id="d1-vis" class="stack">
+        <p class="lede" style="font-size:.95em">The slide transitions are the five optical-printer wipes from Motion Lab: right, left, diagonal, iris and clock, chosen at random on every slide change.</p>
+        <div class="log" id="d1-log"><span>Waiting for the first transition.</span></div>
+      </div>
+      <div class="row"><span class="st">Falls back to a cut when unsupported or reduced motion is on.</span><span style="display:flex;gap:8px"><button class="btn" type="button" id="d1-replay">Replay wipe</button></span></div>
+    </div>
+  </div>
+  <aside>Click the three steps. Then press "Replay wipe" a few times: the only DOM change is a highlight on this card, so the room sees each wipe reveal it without leaving the slide. The log on the right names the last five. Show code: it's about 20 lines of JS and the CSS is clip-path keyframes on the new snapshot. In Safari, the clock wipe needs @property support for the mask angle; if it looks like a crossfade there, say so. Firefox 143 and earlier cuts straight to the next slide.</aside>
+</section>
+<!-- 7 -->
+<section class="slide" id="s7">
+  <div class="head"><p class="eyebrow">Part two · @starting-style</p><h2>Enter and exit from <code>display: none</code>, in CSS alone</h2></div>
+  <div class="two">
+    <div class="stack">
+      <pre><code><span class="c">/* closed */</span>
+.toast { <span class="k">display</span>: none; <span class="k">opacity</span>: 0; <span class="k">translate</span>: 0 10px;
+  <span class="k">transition</span>: opacity .22s, translate .22s,
+              <span class="a">display .22s allow-discrete</span>; }
+
+<span class="c">/* open */</span>
+.toast.open { <span class="k">display</span>: grid; <span class="k">opacity</span>: 1; <span class="k">translate</span>: 0 0; }
+
+<span class="c">/* the frame before "open" applies */</span>
+<span class="a">@starting-style</span> { .toast.open { <span class="k">opacity</span>: 0; <span class="k">translate</span>: 0 10px; } }</code></pre>
+      <p class="callout"><strong>Two halves:</strong> <code>@starting-style</code> gives the entry a "from" state, and <code>transition-behavior: allow-discrete</code> keeps <code>display</code> on until the exit finishes. Base UI's <code>data-starting-style</code> is this pattern with the attribute flipped for you.</p>
+    </div>
+    <div class="demo">
+      <div class="row"><h3>02 · Toast</h3><span class="hd"><span class="st" id="d2-st">closed</span><button class="iconbtn" type="button" data-code="d2" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
+      <div id="d2-vis" class="stage"><div id="d2-panel" class="toast" role="status"><b>Saved</b><span>Your changes are live. No JavaScript ran to animate this.</span></div></div>
+      <div class="row"><span class="st">One class toggle. The browser does both directions.</span><button class="btn primary" type="button" id="d2-btn">Show toast</button></div>
+    </div>
+  </div>
+  <aside>Click Show, then Hide while it's still entering: it reverses smoothly because it's a transition, not a keyframe animation. This is the single most useful new thing for everyday UI: menus, tooltips, dialogs and toasts no longer need a "mounted" state in React to animate out. If the room is on Safari before 17.5 or Firefox before 129, the toast will snap; say which browser you're on.</aside>
+</section>
+<!-- 8 -->
+<section class="slide" id="s8">
+  <div class="head"><p class="eyebrow">Part two · linear() easing</p><h2>A spring is just a list of points</h2><p class="lede">Run a damped-spring integrator once, sample the curve, and hand it to CSS as <code>linear(…)</code>. No runtime physics, no library, and it works on any transition.</p></div>
+  <div class="demo">
+    <div class="row"><h3>03 · cubic-bezier vs. baked spring</h3><span class="hd"><span class="st" id="d3-st">stiffness 260 · damping 24</span><button class="iconbtn" type="button" data-code="d3" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
+    <div id="d3-vis" class="stage" style="--d3-run:1">
+      <div class="lane bz" style="top:30%"><span class="lbl">cubic-bezier(.2,0,0,1) · 500ms</span><div class="puck"></div></div>
+      <div class="lane sp" style="top:66%"><span class="lbl" id="d3-lbl">linear(…) · spring</span><div class="puck"></div></div>
+    </div>
+    <div class="row">
+      <span style="display:flex;gap:16px;flex-wrap:wrap">
+        <label>Stiffness <input type="range" id="d3-k" min="60" max="500" value="260"></label>
+        <label>Damping <input type="range" id="d3-c" min="4" max="40" value="24"></label>
+      </span>
+      <button class="btn primary" type="button" id="d3-btn">Run</button>
+    </div>
+  </div>
+  <aside>Run once with the defaults: the spring arrives with a small settle, the bezier just decelerates. Drop damping to 8 and run again for a visible overshoot; raise stiffness for a snappier arrival. The status line shows the natural duration the spring needs, which you pass alongside the easing. Show code: this is the integrator from Motion Lab's springs.ts, about 40 lines. Presets (soft, snappy, bouncy) can be installed as CSS custom properties once at app start.</aside>
+</section>
+<!-- 9 -->
+<section class="slide" id="s9">
+  <div class="head"><p class="eyebrow">Part two · Scroll-driven animations</p><h2>Bind progress to scroll, not to time</h2></div>
+  <div class="two">
+    <div class="stack">
+      <pre><code><span class="c">/* the container names a timeline */</span>
+.scroller { <span class="k">scroll-timeline</span>: <span class="a">--feed</span> block; }
+
+<span class="c">/* a progress bar reads it */</span>
+.bar i { <span class="k">animation</span>: grow linear both;
+         <span class="k">animation-timeline</span>: <span class="a">--feed</span>; }
+
+<span class="c">/* each item animates as it enters the viewport */</span>
+.item { <span class="k">animation</span>: reveal linear both;
+        <span class="k">animation-timeline</span>: <span class="a">view()</span>;
+        <span class="k">animation-range</span>: entry 0% entry 70%; }</code></pre>
+      <p class="callout"><strong>Replaces:</strong> scroll listeners, IntersectionObserver reveal hooks, and the jank that comes with them. Runs off the main thread in Chromium.</p>
+    </div>
+    <div class="demo">
+      <div class="row"><h3>04 · Feed</h3><span class="hd"><span class="st" id="d4-st">scroll the list</span><button class="iconbtn" type="button" data-code="d4" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
+      <div id="d4-vis" class="stack" style="gap:8px">
+        <div class="d4bar"><i></i></div>
+        <div class="scroller" id="d4-scroller" tabindex="0" aria-label="Scrollable activity feed">
+          <div class="item"><b>09:12</b>Deploy nebari-landing v2.4.1 finished</div>
+          <div class="item"><b>09:15</b>Alerts: cluster-east CPU back under 70%</div>
+          <div class="item"><b>09:31</b>Review requested on PR #412</div>
+          <div class="item"><b>09:48</b>Nightly data-science pack build passed</div>
+          <div class="item"><b>10:02</b>New workspace created: analytics-q4</div>
+          <div class="item"><b>10:20</b>Keycloak theme published to staging</div>
+          <div class="item"><b>10:41</b>Storage quota raised for team-ml</div>
+          <div class="item"><b>11:05</b>Comms: #platform channel archived</div>
+          <div class="item"><b>11:30</b>Lunch</div>
+          <div class="item"><b>12:14</b>Helm chart 0.9.0 tagged</div>
+          <div class="item"><b>12:40</b>Argo synced 3 apps</div>
+          <div class="item"><b>13:02</b>Support ticket 1181 closed</div>
+        </div>
+      </div>
+      <div class="row"><span class="st">Zero JavaScript. The bar and the reveals are CSS reading the scroll position.</span></div>
+    </div>
+  </div>
+  <aside>Scroll the feed slowly, then fast; the reveals and the bar track the finger, not a clock, so there's nothing to fall behind. If this browser lacks support, the items just show in their final state and the bar sits full and dim; point that out as the fallback working. Chrome and Edge since 115, Safari since 26, Firefox since 160.</aside>
+</section>
+<!-- 10 -->
+<section class="slide" id="s10">
+  <div class="head"><p class="eyebrow">Part two · Web Animations API</p><h2>FLIP: let layout happen, then animate the difference</h2></div>
+  <div class="two">
+    <div class="stack">
+      <pre><code><span class="c">// First: measure</span>
+<span class="k">const</span> first = <span class="k">new</span> Map([...items].map(el =&gt; [el, el.getBoundingClientRect()]));
+<span class="c">// Last: change the DOM (reorder, filter, resize)</span>
+reorder();
+<span class="c">// Invert + Play: animate from the old box to the new one</span>
+<span class="k">for</span> (<span class="k">const</span> el <span class="k">of</span> items) {
+  <span class="k">const</span> a = first.get(el), b = el.getBoundingClientRect();
+  el.<span class="a">animate</span>([{ translate: <span class="s">`${a.left-b.left}px ${a.top-b.top}px`</span> }, { translate: <span class="s">"0 0"</span> }],
+             { duration: 350, easing: <span class="s">"cubic-bezier(.2,0,0,1)"</span> });
+}</code></pre>
+      <p class="callout"><strong>Why WAAPI:</strong> <code>element.animate()</code> is the same compositor path as CSS, but it takes values you computed a millisecond ago. FLIP is the technique every "layout animation" feature in every library is built on.</p>
+    </div>
+    <div class="demo">
+      <div class="row"><h3>05 · Reorder</h3><span class="hd"><span class="st" id="d5-st">idle</span><button class="iconbtn" type="button" data-code="d5" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
+      <div id="d5-vis" class="stage" style="height:auto;padding:16px">
+        <div class="chips" id="d5-chips">
+          <span class="chip lead">nebi</span><span class="chip">jhub-apps</span><span class="chip">nebari-landing</span><span class="chip">collab-hub</span><span class="chip">llm-serving</span><span class="chip">provenance</span><span class="chip">data-science</span><span class="chip">keycloak-theme</span>
+        </div>
+      </div>
+      <div class="row"><span class="st">Flex wrap decides the layout; FLIP animates whatever it decided.</span><span style="display:flex;gap:8px"><button class="btn" type="button" id="d5-sort">Sort A–Z</button><button class="btn primary" type="button" id="d5-shuffle">Shuffle</button></span></div>
+    </div>
+  </div>
+  <aside>Shuffle a few times, then sort. Point out that the layout engine did the hard part: wrapping, sizing, positions. The script only measured before and after. Motion Lab has this as a ~60-line React hook (useFlip). Mention that View Transitions do the same measurement for you when the thing moving has a view-transition-name, which is why they're often the simpler answer now.</aside>
+</section>
+<!-- 11 -->
+<section class="slide" id="s11">
+  <div class="head"><p class="eyebrow">Part three · Browser compatibility</p><h2>Everything in part two is shippable today, with one exception</h2></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Feature</th><th>Chrome / Edge</th><th>Safari</th><th>Firefox</th><th>Global use</th></tr></thead>
+    <tbody>
+      <tr><td><code>linear()</code> easing</td><td class="ok">113</td><td class="ok">17.2</td><td class="ok">112</td><td>93%</td></tr>
+      <tr><td>Web Animations API</td><td class="ok">84</td><td class="ok">13.1</td><td class="ok">75</td><td>97%</td></tr>
+      <tr><td>View Transitions (same document)</td><td class="ok">111</td><td class="ok">18.0</td><td class="ok">144</td><td>92%</td></tr>
+      <tr><td><code>@starting-style</code> + <code>allow-discrete</code></td><td class="ok">117</td><td class="ok">17.5</td><td class="ok">129</td><td>92%</td></tr>
+      <tr><td>Scroll-driven animations</td><td class="ok">115</td><td class="ok">26.0</td><td class="ok">160</td><td>87%</td></tr>
+      <tr><td><code>interpolate-size</code> (animate to <code>auto</code>)</td><td class="ok">129</td><td class="no">no</td><td class="no">no</td><td>72%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="foot">First supporting version per browser, from <a href="https://caniuse.com/" target="_blank" rel="noopener">caniuse.com</a> and <a href="https://github.com/mdn/browser-compat-data" target="_blank" rel="noopener">MDN browser-compat-data</a>, checked October 2026. "Global use" is caniuse's share of tracked traffic.</p>
+  <aside>The headline: four of the five are in every current browser; scroll-driven animations landed in Firefox and Safari within the past year, so check your audience's version floor. interpolate-size is the one to treat as an enhancement only. Don't read the table; let people photograph it, and move on after the exception row.</aside>
+</section>
+<!-- 12 -->
+<section class="slide" id="s12">
+  <div class="head"><p class="eyebrow">Part three · Browser compatibility</p><h2>What this browser can do right now</h2><p class="lede">Detected on load with <code>CSS.supports()</code> and feature checks. This is the same test your code should run.</p></div>
+  <div class="log" id="caps" aria-live="polite"><span>Detecting…</span></div>
+  <p class="callout"><strong>Rule:</strong> detect the feature, never the browser. Every check above is one line, and each has a cheap fallback: a cut instead of a wipe, a visible final state instead of a reveal.</p>
+  <aside>Read the lines that say "no" out loud, if any; that's your audience's reality too. If you're presenting from the latest Chrome, say so and mention that a year-old Safari would show two "no" lines. The reduced-motion line matters: when it's on, this deck turns off every transition, and so should your app.</aside>
+</section>
+<!-- 13 -->
+<section class="slide" id="s13">
+  <div class="head"><p class="eyebrow">Part three · Browser compatibility</p><h2>Progressive enhancement is one <code>if</code> and one <code>@supports</code></h2></div>
+  <div class="two">
+    <pre><code><span class="c">// JS: the swap always runs; the transition is optional</span>
+<span class="k">function</span> navigate(update) {
+  <span class="k">const</span> reduce = matchMedia(<span class="s">"(prefers-reduced-motion: reduce)"</span>).matches;
+  <span class="k">if</span> (!document.<span class="a">startViewTransition</span> || reduce) { update(); <span class="k">return</span>; }
+  document.startViewTransition(update);
+}</code></pre>
+    <pre><code><span class="c">/* CSS: the enhancement lives inside the guard */</span>
+.item { opacity: 1; }
+<span class="a">@supports</span> (animation-timeline: scroll()) {
+  .item { animation: reveal linear both;
+          animation-timeline: view(); }
+}
+<span class="a">@media</span> (prefers-reduced-motion: reduce) {
+  .item { animation: none; }
+}</code></pre>
+  </div>
+  <p class="callout"><strong>The pattern:</strong> write the final state first, with no motion. Add the motion inside a guard. Content is never hidden waiting for an animation that may not run.</p>
+  <aside>This is the slide to slow down on. The failure mode of modern motion isn't "it looks worse in Firefox", it's "the content never appears" because someone set opacity: 0 in the base rule and the reveal animation didn't run. Final state first, enhancement inside the guard.</aside>
+</section>
+<!-- 14 -->
+<section class="slide" id="s14">
+  <div class="head"><p class="eyebrow">Part four · Libraries</p><h2>Use the platform until it costs you code</h2></div>
+  <div class="cmp">
+    <div class="card win"><h3>The platform is enough when…</h3>
+      <ul><li>The motion is between two states (enter, exit, open, close, route change)</li><li>You're animating <code>opacity</code> and <code>transform</code></li><li>Reversal and interruption should just work</li><li>You want zero bundle cost and no version churn</li></ul></div>
+    <div class="card"><h3>A library earns its place when…</h3>
+      <ul><li>Sequences depend on runtime state (choreography across many elements)</li><li>Gestures: drag with velocity, throw, snap</li><li>Layout animations across component boundaries you don't control</li><li>Designer-authored animation (Rive, Lottie) that must match a file exactly</li></ul></div>
+  </div>
+  <p class="callout"><strong>Honest cost:</strong> Motion Lab has zero animation libraries, and the price was hand-rolling a spring, a FLIP hook and a particle emitter. For most product UI you won't need any of those.</p>
+  <aside>The point is not "libraries bad". It's that the default flipped: in 2019 you reached for a library first; now the library is the exception you justify. Mention that every library on the next slide now uses WAAPI under the hood where it can, which is why they're smaller and smoother than they used to be.</aside>
+</section>
+<!-- 15 -->
+<section class="slide" id="s15">
+  <div class="head"><p class="eyebrow">Part four · Libraries</p><h2>Four worth knowing, and what each is for</h2></div>
+  <div class="cards">
+    <div class="card"><span class="tag"><a href="https://motion.dev/" target="_blank" rel="noopener">motion.dev</a> · React, JS, Vue</span><h3>Motion</h3><p>Formerly Framer Motion; import from <code>motion/react</code>. Hybrid engine: WAAPI where possible, JS where needed. Declarative <code>animate</code> props, layout animations, gestures, <code>AnimatePresence</code> for exits. The default for React apps that need more than CSS.</p></div>
+    <div class="card"><span class="tag"><a href="https://gsap.com/" target="_blank" rel="noopener">gsap.com</a> · framework-agnostic</span><h3>GSAP</h3><p>Timelines and sequencing. Free for all uses since 3.13, including the formerly paid plugins (SplitText, MorphSVG, DrawSVG and the rest), after Webflow's 2024 acquisition. Best for choreographed marketing and storytelling pages.</p></div>
+    <div class="card"><span class="tag"><a href="https://animejs.com/" target="_blank" rel="noopener">animejs.com</a> · small</span><h3>anime.js</h3><p>Lightweight timeline library with a tidy API, now at v4. A good fit when you want GSAP-style sequencing without GSAP's size.</p></div>
+    <div class="card"><span class="tag"><a href="https://rive.app/" target="_blank" rel="noopener">rive.app</a> · <a href="https://lottiefiles.com/" target="_blank" rel="noopener">lottiefiles.com</a></span><h3>Rive and Lottie</h3><p>Designer-authored vector animation played at runtime. Rive adds state machines and interactivity; Lottie is After Effects export. For icons, illustrations and brand moments, not for layout.</p></div>
+  </div>
+  <aside>Keep this to a minute. If someone asks "which one for us", the answer is on the Nebari slides: CSS and Base UI first, Motion through the render prop when needed. GSAP's free licensing is worth a mention because many people still think it costs money.</aside>
+</section>
+<!-- 16 -->
+<section class="slide" id="s16">
+  <div class="head"><p class="eyebrow">Part five · In Nebari</p><h2>Nebari ships motion tokens; use them, don't invent durations</h2><p class="lede">The <code>@nebari/theme</code> registry item installs these next to the color and radius tokens.</p></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Token</th><th>Value</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td><code>--duration-fast</code></td><td>100ms</td><td>Micro-interactions: icon swap, badge count</td></tr>
+      <tr><td><code>--duration-base</code></td><td>200ms</td><td>Standard enter and exit: tooltip, dropdown</td></tr>
+      <tr><td><code>--duration-slow</code></td><td>350ms</td><td>Page-level overlays: dialog, sheet, drawer</td></tr>
+      <tr><td><code>--duration-loading</code></td><td>1600ms</td><td>Skeleton pulse</td></tr>
+      <tr><td><code>--ease-standard</code></td><td><code>cubic-bezier(.4,0,.2,1)</code></td><td>Most transitions</td></tr>
+      <tr><td><code>--ease-emphasized</code></td><td><code>cubic-bezier(.2,0,0,1)</code></td><td>Overlays sliding into view</td></tr>
+    </tbody>
+  </table></div>
+  <p class="callout"><strong>Five ready-made utilities:</strong> <code>animate-fade-in</code>, <code>animate-fade-out</code>, <code>animate-slide-up-fade</code> (6px), <code>animate-slide-down-fade</code>, <code>animate-skeleton-pulse</code>. Always behind <code>motion-safe:</code>; the keyframes live inside <code>@theme inline</code>.</p>
+  <aside>Three durations plus a loading pulse, two easings. That's the whole vocabulary, and it's deliberately small: if a motion needs 600ms in product UI, it's probably too much. Note the ceiling: 350ms is for a full dialog. The 200ms base is where most things live, which is the "everyday UI" in the title.</aside>
+</section>
+<!-- 17 -->
+<section class="slide" id="s17">
+  <div class="head"><p class="eyebrow">Part five · In Nebari</p><h2>Four hard rules, and the two gotchas that break them silently</h2></div>
+  <div class="cards">
+    <div class="card"><span class="tag">rule 1</span><h3>Gate on <code>motion-safe:</code></h3><p>Every animation class is prefixed: <code>motion-safe:animate-fade-in</code>. WCAG 2.1 SC 2.3.3.</p></div>
+    <div class="card"><span class="tag">rule 2</span><h3>Tokens, never literals</h3><p><code>var(--duration-base)</code> in CSS, <code>duration-(--duration-base)</code> in classes. Never <code>0.2s</code>.</p></div>
+    <div class="card"><span class="tag">rule 3</span><h3>Animate opacity and transform only</h3><p>Height, width, padding and top force layout. Use FLIP or View Transitions when position must change.</p></div>
+    <div class="card"><span class="tag">rule 4</span><h3>CSS and Base UI first</h3><p>Reach for a JS library only when the CSS primitives can't express it. Never edit <code>ui/*</code> to add motion; it's overwritten on upgrade.</p></div>
+  </div>
+  <div class="two">
+    <p class="callout warn"><strong>Gotcha 1, parentheses:</strong> Tailwind v4 reads <code>duration-(--duration-base)</code>. The v3 bracket form <code>duration-[--duration-base]</code> is invalid, so <code>transition-duration</code> resets to 0s and nothing moves.</p>
+    <p class="callout warn"><strong>Gotcha 2, <code>cn()</code>:</strong> tailwind-merge dedupes <code>transition-*</code> against the component's own classes. Re-enumerate every property you need: <code>transition-[color,background-color,transform]</code>, not bare <code>transition</code>.</p>
+  </div>
+  <aside>Both gotchas fail silently, which is why they're on the slide. The bracket one has bitten more than one PR. If people remember one thing from this part: motion lives at the call site in globals.css, a CSS module or a wrapper, with tokens, behind motion-safe.</aside>
+</section>
+<!-- 18 -->
+<section class="slide" id="s18">
+  <div class="head"><p class="eyebrow">Part five · In Nebari</p><h2>Base UI already flips the attributes; you write the CSS</h2></div>
+  <div class="two">
+    <div class="stack">
+      <h3>Overlay enter and exit, no JavaScript</h3>
+      <pre><code><span class="c">/* globals.css: Base UI popups set these during transitions */</span>
+[<span class="a">data-starting-style</span>] { opacity: 0; transform: translateY(4px); }
+
+[data-starting-style],
+[<span class="a">data-ending-style</span>] {
+  transition-property: opacity, transform;
+  transition-duration: <span class="k">var(--duration-base)</span>;
+  transition-timing-function: <span class="k">var(--ease-emphasized)</span>;
+}</code></pre>
+      <p class="card" style="display:block"><span class="tag">applies to</span> Dialog, Popover, Select, Tooltip, Menu: anything built on Base UI's popup primitives.</p>
+    </div>
+    <div class="stack">
+      <h3>The escape hatch: Motion through <code>render</code></h3>
+      <pre><code><span class="k">import</span> { motion } <span class="k">from</span> <span class="s">"motion/react"</span>;
+<span class="k">import</span> { Button } <span class="k">from</span> <span class="s">"@/components/ui/button"</span>;
+
+&lt;Button <span class="a">render</span>={&lt;motion.button animate={{ scale: [1, .96, 1] }} /&gt;}&gt;
+  Save
+&lt;/Button&gt;</code></pre>
+      <p class="callout"><strong>Keeps</strong> the component's classes and <code>data-*</code> attributes intact. Install Motion only when a screen needs it; it's not a registry dependency.</p>
+    </div>
+  </div>
+  <aside>Left side is the @starting-style pattern from part two, wearing Base UI's attribute names. Right side is the one sanctioned way to bring a library in: through the render prop, so the design-system component stays the source of truth. Use it for staggered lists, state-dependent exits, or spring physics you don't want to bake yourself.</aside>
+</section>
+<!-- 19 -->
+<section class="slide" id="s19">
+  <div class="head"><p class="eyebrow">Part six · Where it doesn't belong</p><h2>Motion that fails the test on slide three</h2></div>
+  <div class="cards">
+    <div class="card"><h3>Anything a user waits for</h3><p>A 400ms entrance on a list the user opens fifty times a day is 20 seconds of their day. Speed up or cut.</p></div>
+    <div class="card"><h3>Layout properties</h3><p>Animating <code>height</code> or <code>top</code> re-lays out every frame. If it must move, move a transform or let View Transitions snapshot it.</p></div>
+    <div class="card"><h3>Autoplaying, looping, ambient</h3><p>Background motion competes with content for attention and drains batteries. Decorative loops belong on a marketing page, if anywhere.</p></div>
+    <div class="card"><h3>Hiding content behind it</h3><p>If the animation doesn't run, the content must still be there. Reduced motion is a hard override, never a soft suggestion.</p></div>
+  </div>
+  <p class="callout"><strong>And the five film wipes?</strong> They fail the test for product UI. They're in this deck because a deck is theater, and in Motion Lab because it's a lab. Know which one you're building.</p>
+  <aside>Say the last line with a straight face; it's the honest counterweight for the whole talk. Everything in part two is a tool, and the wipes show that the same API does both tasteful route transitions and film wipes. The craft is in choosing.</aside>
+</section>
+<!-- 20 -->
+<section class="slide" id="s20">
+  <div class="head"><p class="eyebrow">Part seven · Live demos</p><h2>Live demos: Punchlist, then Motion Lab</h2><p class="lede">Punchlist is a small task tracker with one switch that turns all of its motion off. Motion Lab is the playground where every effect in this talk is tunable. Both are React, Vite, Tailwind and shadcn on Base UI, with no animation libraries.</p></div>
+  <div class="res three">
+    <a href="https://jbouder.github.io/punchlist/" target="_blank" rel="noopener"><em>Product · motion on/off</em><b>Punchlist</b><span>A team task tracker with one switch in the header. Flip it off and every transition becomes a cut: same app, same data, so the room judges the difference directly.</span></a>
+    <a href="https://jbouder.github.io/motion-lab/" target="_blank" rel="noopener"><em>Playground · 53 effects</em><b>Motion Lab</b><span>Every effect from this talk with sliders: the five wipes, springs, FLIP, scroll reveals, and four app scenarios that use them in context.</span></a>
+    <button type="button" class="rescard" data-goto="s6"><em>In this deck · slides 6 to 10</em><b>The five demos</b><span>Film wipes, @starting-style toast, spring vs. bezier, scroll-driven feed, FLIP reorder. Each has a show-code toggle.</span></button>
+  </div>
+  <p class="callout"><strong>Suggested order:</strong> Punchlist with motion on, do three things, flip it off and do the same three things. Then open the lab for anything the room asks about.</p>
+  <aside>Switch to a browser tab. In Punchlist: add a task, complete one (it moves to the bottom), open a task's detail panel, then flip motion off in the header and repeat exactly those three actions. Ask the room which version told them more about what just happened. Keep the lab in reserve for questions; the page-transitions page is the one people ask for. Four minutes for this slide, including the switch to the browser.</aside>
+</section>
+<!-- 21 -->
+<section class="slide" id="s21">
+  <div class="head"><p class="eyebrow">Wrap-up</p><h2>Three things to take away</h2></div>
+  <ol class="take">
+    <li><span>Motion is feedback. If removing it loses no information, remove it.</span></li>
+    <li><span>The platform covers the everyday cases. Guard each feature and ship the final state first.</span></li>
+    <li><span>In Nebari: tokens, <code>motion-safe:</code>, opacity and transform, at the call site. Libraries come in through <code>render</code>, when they earn it.</span></li>
+  </ol>
+  <aside>Say these three slowly. Then the links.</aside>
+</section>
+<!-- 22 -->
+<section class="slide" id="s22">
+  <div class="head"><h2>Where to start</h2></div>
+  <div class="res">
+    <a href="https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API" target="_blank" rel="noopener"><b>MDN · View Transition API</b><span>The reference, with the pseudo-element tree and cross-document notes.</span></a>
+    <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/@starting-style" target="_blank" rel="noopener"><b>MDN · @starting-style</b><span>Entry transitions from display:none, with transition-behavior.</span></a>
+    <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_scroll-driven_animations" target="_blank" rel="noopener"><b>MDN · Scroll-driven animations</b><span>scroll() and view() timelines, animation-range.</span></a>
+    <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/easing-function/linear" target="_blank" rel="noopener"><b>MDN · linear() easing</b><span>The syntax behind baked springs.</span></a>
+    <a href="https://motion.dev/docs/react" target="_blank" rel="noopener"><b>motion.dev · React docs</b><span>When the escape hatch is the right call.</span></a>
+    <a href="https://jbouder.github.io/motion-lab/" target="_blank" rel="noopener"><b>Motion Lab</b><span>Try everything from this talk with sliders.</span></a>
+  </div>
+  <h2 style="margin-top:12px">Questions?</h2>
+  <aside>Leave this up during questions so people can photograph it. Likely questions: "cross-document view transitions?" (Chromium yes, Safari 18.2+, Firefox not yet as of the compat check; same CSS, opt in with @view-transition { navigation: auto }); "does Motion conflict with Base UI?" (no, through render); "what about Framer Motion?" (same library, renamed).</aside>
+</section>
+
+</main>
+
+<div class="notes" id="notes" aria-live="polite"><div class="nl">Speaker notes</div><p id="notes-text"></p></div>
+
+<script>
+(function(){
+  /* ── Slide wipes on the View Transitions API (demo 1) ── */
+  var WIPES=["wipe-right","wipe-left","wipe-diagonal","wipe-iris","wipe-clock"],lastWipe=null;
+  function reduceMotion(){return window.matchMedia("(prefers-reduced-motion: reduce)").matches;}
+  // Random wipe, never the same one twice in a row.
+  function pickWipe(){
+    var pool=WIPES.filter(function(w){return w!==lastWipe;});
+    lastWipe=pool[Math.floor(Math.random()*pool.length)];
+    return lastWipe;
+  }
+  // Stamp the wipe on <html>, run `update` inside a view transition, clean up when it finishes.
+  function withWipe(update){
+    var wipe=pickWipe(),root=document.documentElement;
+    if(!document.startViewTransition||reduceMotion()||phone()){update();logWipe("cut (no View Transitions here)");return;}
+    root.dataset.wipe=wipe;
+    // The iris grows by radius, so its area accelerates; give it more time and an ease-in-out.
+    var timing={"wipe-clock":["800ms","linear"],"wipe-iris":["1000ms","cubic-bezier(.65,0,.35,1)"]}[wipe]||["650ms","linear"];
+    root.style.setProperty("--wipe-duration",timing[0]);
+    root.style.setProperty("--wipe-ease",timing[1]);
+    var vt=document.startViewTransition(update);
+    vt.finished.catch(function(){}).then(function(){if(root.dataset.wipe===wipe)delete root.dataset.wipe;});
+    logWipe(wipe);
+  }
+  var d1log=document.getElementById("d1-log"),d1st=document.getElementById("d1-st"),wipeHistory=[];
+  function logWipe(name){
+    wipeHistory.unshift(name);wipeHistory=wipeHistory.slice(0,5);
+    d1st.textContent="last: "+name;
+    d1log.innerHTML=wipeHistory.map(function(w,i){return'<span class="'+(w.indexOf("cut")===0?"no":"ok")+'">'+(i===0?"→ ":"  ")+w+"</span>";}).join("");
+  }
+
+  /* ── Navigation ── */
+  var slides=Array.prototype.slice.call(document.querySelectorAll(".slide")),cur=0;
+  var pn=document.getElementById("pn"),prog=document.getElementById("prog"),notes=document.getElementById("notes"),notesText=document.getElementById("notes-text"),notesBtn=document.getElementById("notes-btn");
+  var onLeave={}, onEnter={};
+  function phone(){return window.matchMedia("(max-width: 699px)").matches;}
+  function show(i,push){
+    if(onLeave[slides[cur].id])onLeave[slides[cur].id]();
+    cur=i;
+    slides.forEach(function(s,k){s.classList.toggle("active",k===i);});
+    if(onEnter[slides[i].id])onEnter[slides[i].id]();
+    pn.textContent=(i+1)+" / "+slides.length;
+    prog.style.width=((i+1)/slides.length*100)+"%";
+    var a=slides[i].querySelector(":scope > aside");notesText.textContent=a?a.textContent:"No notes for this slide.";
+    if(push!==false){try{history.replaceState(null,"","#"+slides[i].id);}catch(e){}}
+    if(phone()){slides[i].scrollIntoView({block:"start"});}else{window.scrollTo(0,0);}
+  }
+  function go(i,push){
+    i=Math.max(0,Math.min(slides.length-1,i));
+    if(i===cur){show(i,push);return;}
+    withWipe(function(){show(i,push);});
+  }
+  document.getElementById("prev").addEventListener("click",function(){go(cur-1);});
+  document.getElementById("next").addEventListener("click",function(){go(cur+1);});
+  document.getElementById("brand-link").addEventListener("click",function(e){e.preventDefault();go(0);});
+  document.querySelectorAll("[data-goto]").forEach(function(b){b.addEventListener("click",function(){var k=slides.findIndex(function(s){return s.id===b.dataset.goto;});if(k>=0)go(k);});});
+  document.addEventListener("keydown",function(e){
+    if(e.target.matches("input,textarea,select"))return;
+    if(e.key==="ArrowRight"||e.key==="PageDown"||e.key===" "){e.preventDefault();go(cur+1);}
+    else if(e.key==="ArrowLeft"||e.key==="PageUp"){e.preventDefault();go(cur-1);}
+    else if(e.key==="Home"){go(0);}else if(e.key==="End"){go(slides.length-1);}
+    else if(e.key==="n"||e.key==="N"){toggleNotes();}
+  });
+  function toggleNotes(){var o=!notes.classList.contains("open");notes.classList.toggle("open",o);notesBtn.setAttribute("aria-pressed",String(o));}
+  notesBtn.addEventListener("click",toggleNotes);
+  function fromHash(){var h=(location.hash||"").replace("#","");var k=slides.findIndex(function(s){return s.id===h;});show(k>=0?k:0,false);}
+  window.addEventListener("hashchange",fromHash);
+  // Demo 1 control: a transition with no DOM change, so the room sees the wipe without leaving the slide.
+  var d1card=document.getElementById("d1-replay").closest(".demo");
+  document.getElementById("d1-replay").addEventListener("click",function(){withWipe(function(){d1card.classList.toggle("lit");});});
+
+  /* ── Steppers ── */
+  document.querySelectorAll(".stepper nav button").forEach(function(b){b.addEventListener("click",function(){
+    var nav=b.parentNode,host=nav.parentNode;
+    nav.querySelectorAll("button").forEach(function(x){if(x===b)x.setAttribute("aria-current","step");else x.removeAttribute("aria-current");});
+    host.querySelectorAll(".pane").forEach(function(p){p.classList.toggle("on",p.dataset.pane===b.dataset.step);});
+  });});
+
+  /* ── Demo 2: @starting-style toast (slide 7) ── */
+  var d2panel=document.getElementById("d2-panel"),d2btn=document.getElementById("d2-btn"),d2st=document.getElementById("d2-st");
+  function d2Toggle(){
+    var open=!d2panel.classList.contains("open");
+    d2panel.classList.toggle("open",open);
+    d2btn.textContent=open?"Hide toast":"Show toast";
+    d2st.textContent=open?"open":"closed";
+  }
+  d2btn.addEventListener("click",d2Toggle);
+  var d2css='#d2-panel{display:none;opacity:0;translate:0 10px;scale:.97;\n  transition:opacity 220ms,translate 220ms,scale 220ms,display 220ms allow-discrete}\n#d2-panel.open{display:grid;opacity:1;translate:0 0;scale:1}\n@starting-style{#d2-panel.open{opacity:0;translate:0 10px;scale:.97}}';
+
+  /* ── Demo 3: baked spring easing (slide 8), ported from motion-lab springs.ts ── */
+  function simulateSpring(config,initialVelocity){
+    var stiffness=config.stiffness,damping=config.damping,mass=config.mass||1;
+    var STEP=1/120,REST_DELTA=0.001,REST_SPEED=0.001,MAX_S=10;
+    var position=0,velocity=initialVelocity||0,samples=[0];
+    for(var t=STEP;t<=MAX_S;t+=STEP){
+      var springForce=-stiffness*(position-1);
+      var dampingForce=-damping*velocity;
+      var acceleration=(springForce+dampingForce)/mass;
+      velocity+=acceleration*STEP;
+      position+=velocity*STEP;
+      samples.push(position);
+      if(Math.abs(position-1)<REST_DELTA&&Math.abs(velocity)<REST_SPEED)break;
+    }
+    samples[samples.length-1]=1;
+    return {samples:samples,durationMs:(samples.length-1)*STEP*1000};
+  }
+  function springLinearEasing(config){
+    var sim=simulateSpring(config),samples=sim.samples;
+    // Downsample to ~60 stops so the easing string stays small.
+    var stride=Math.max(1,Math.ceil(samples.length/60)),stops=[];
+    for(var i=0;i<samples.length;i+=stride){
+      var progress=((i/(samples.length-1))*100).toFixed(1);
+      stops.push(samples[i].toFixed(4)+" "+progress+"%");
+    }
+    if((samples.length-1)%stride!==0)stops.push("1 100%");
+    return {easing:"linear("+stops.join(", ")+")",durationMs:sim.durationMs};
+  }
+  var d3stage=document.getElementById("d3-vis"),d3k=document.getElementById("d3-k"),d3c=document.getElementById("d3-c"),d3st=document.getElementById("d3-st"),d3lbl=document.getElementById("d3-lbl"),d3btn=document.getElementById("d3-btn");
+  var d3dir=1;
+  function d3Apply(){
+    var k=+d3k.value,c=+d3c.value,r=springLinearEasing({stiffness:k,damping:c});
+    d3stage.style.setProperty("--spring-ease",r.easing);
+    d3stage.style.setProperty("--spring-dur",Math.round(r.durationMs)+"ms");
+    d3st.textContent="stiffness "+k+" · damping "+c+" · "+Math.round(r.durationMs)+"ms · "+(r.easing.split(",").length)+" stops";
+    d3lbl.textContent="linear(…) · spring · "+Math.round(r.durationMs)+"ms";
+  }
+  function d3Run(){
+    d3Apply();
+    var lane=d3stage.querySelector(".lane"),puck=lane.querySelector(".puck");
+    var travel=(lane.clientWidth-puck.clientWidth)/puck.clientWidth; // puck widths, so translate is 100% * n
+    d3stage.style.setProperty("--d3-run",d3dir>0?travel:0);
+    d3stage.classList.add("go");
+    d3dir=-d3dir;
+  }
+  d3k.addEventListener("input",d3Apply);d3c.addEventListener("input",d3Apply);
+  d3btn.addEventListener("click",d3Run);
+  d3Apply();
+  // Install the soft spring as a token for the title-slide entrance (same idea as motion-lab's installSpringEasingTokens).
+  (function(){var soft=springLinearEasing({stiffness:120,damping:20});document.documentElement.style.setProperty("--ease-spring-soft",soft.easing);document.documentElement.style.setProperty("--spring-soft-dur",Math.round(soft.durationMs)+"ms");})();
+  d3stage.style.setProperty("--d3-run",0);d3stage.classList.add("go");
+
+  /* ── Demo 4: scroll-driven feed (slide 9): CSS only; JS just reports support ── */
+  var d4st=document.getElementById("d4-st");
+  d4st.textContent=(window.CSS&&CSS.supports("animation-timeline: scroll()"))?"scroll the list":"no scroll timelines here: final state shown";
+  var d4css='.scroller{scroll-timeline:--d4 block}\n.d4bar i{animation:d4-grow linear both;animation-timeline:--d4}\n.scroller .item{animation:d4-reveal linear both;animation-timeline:view();animation-range:entry 0% entry 70%}\n@keyframes d4-grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}\n@keyframes d4-reveal{from{opacity:.15;translate:0 14px}to{opacity:1;translate:0 0}}';
+
+  /* ── Demo 5: FLIP reorder with WAAPI (slide 10) ── */
+  var d5chips=document.getElementById("d5-chips"),d5st=document.getElementById("d5-st");
+  function flip(container,change){
+    var items=Array.prototype.slice.call(container.children);
+    var first=new Map(items.map(function(el){return [el,el.getBoundingClientRect()];}));
+    change();
+    var moved=0;
+    items.forEach(function(el){
+      var a=first.get(el),b=el.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top;
+      if(!dx&&!dy)return;
+      moved++;
+      if(reduceMotion())return;
+      el.animate([{translate:dx+"px "+dy+"px"},{translate:"0 0"}],{duration:350,easing:"cubic-bezier(.2,0,0,1)"});
+    });
+    return moved;
+  }
+  function d5Shuffle(){
+    var n=flip(d5chips,function(){
+      var kids=Array.prototype.slice.call(d5chips.children);
+      for(var i=kids.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=kids[i];kids[i]=kids[j];kids[j]=t;}
+      kids.forEach(function(k){d5chips.appendChild(k);});
+    });
+    d5st.textContent=n+" moved · "+d5chips.children.length+" measured";
+  }
+  function d5Sort(){
+    var n=flip(d5chips,function(){
+      Array.prototype.slice.call(d5chips.children).sort(function(a,b){return a.textContent.localeCompare(b.textContent);}).forEach(function(k){d5chips.appendChild(k);});
+    });
+    d5st.textContent=n+" moved · sorted";
+  }
+  document.getElementById("d5-shuffle").addEventListener("click",d5Shuffle);
+  document.getElementById("d5-sort").addEventListener("click",d5Sort);
+
+  /* ── Live panel: what this browser supports (slide 12) ── */
+  (function(){
+    var sup=function(q){try{return !!(window.CSS&&CSS.supports(q));}catch(e){return false;}};
+    var rows=[
+      ["View Transitions (same document)",!!document.startViewTransition],
+      ["@starting-style",typeof CSSStartingStyleRule!=="undefined"],
+      ["transition-behavior: allow-discrete",sup("transition-behavior: allow-discrete")],
+      ["linear() easing",sup("transition-timing-function: linear(0, 1)")],
+      ["Scroll-driven animations",sup("animation-timeline: scroll()")],
+      ["interpolate-size: allow-keywords",sup("interpolate-size: allow-keywords")],
+      ["@property (registered custom properties)",typeof CSS!=="undefined"&&typeof CSS.registerProperty==="function"],
+      ["Web Animations API (element.animate)",typeof Element.prototype.animate==="function"],
+      ["prefers-reduced-motion: reduce (on)",reduceMotion()]
+    ];
+    var el=document.getElementById("caps");
+    el.innerHTML=rows.map(function(r){var last=r[0].indexOf("reduced-motion")===0;var cls=last?(r[1]?"no":"ok"):(r[1]?"ok":"no");return'<span class="'+cls+'">'+(r[1]?"yes":"no ")+"  "+r[0]+"</span>";}).join("")+'<span>'+navigator.userAgent.replace(/^Mozilla\/5\.0 /,"")+"</span>";
+  })();
+
+  /* ── Show code ── */
+  var CODE={
+    d1:{vis:"d1-vis",blocks:[["Run the slide change inside a view transition",withWipe.toString()],["CSS: freeze the old frame, clip the new one (one of five)","html[data-wipe]::view-transition-old(root){animation:none}\nhtml[data-wipe]::view-transition-new(root){animation-duration:var(--wipe-duration,650ms);animation-fill-mode:both}\nhtml[data-wipe=\"wipe-iris\"]::view-transition-new(root){animation-name:ml-wipe-iris}\n@keyframes ml-wipe-iris{from{clip-path:circle(0% at 50% 50%)}to{clip-path:circle(75% at 50% 50%)}}"]]},
+    d2:{vis:"d2-vis",blocks:[["The CSS that runs (nothing else animates it)",d2css],["The only JavaScript: a class toggle",d2Toggle.toString()]]},
+    d3:{vis:"d3-vis",blocks:[["Integrate a unit spring at 120 Hz",simulateSpring.toString()],["Bake it into linear()",springLinearEasing.toString()],["Apply to the transition",d3Apply.toString()]]},
+    d4:{vis:"d4-vis",blocks:[["The CSS that runs",d4css]]},
+    d5:{vis:"d5-vis",blocks:[["FLIP in one function",flip.toString()],["Shuffle, then let flip() animate the difference",d5Shuffle.toString()]]}
+  };
+  document.querySelectorAll("[data-code]").forEach(function(b){
+    var c=CODE[b.dataset.code],vis=document.getElementById(c.vis),panel=document.createElement("div");
+    panel.className="code";panel.hidden=true;
+    c.blocks.forEach(function(k){var l=document.createElement("p");l.className="st";l.textContent=k[0];var pre=document.createElement("pre"),code=document.createElement("code");code.textContent=k[1];pre.appendChild(code);panel.append(l,pre);});
+    vis.after(panel);
+    b.addEventListener("click",function(){
+      var on=b.getAttribute("aria-pressed")!=="true";
+      b.setAttribute("aria-pressed",String(on));b.title=on?"Hide code":"Show code";b.setAttribute("aria-label",b.title);
+      panel.hidden=!on;vis.hidden=on;
+    });
+  });
+
+  fromHash();
+})();
+</script>
+</body>
+</html>

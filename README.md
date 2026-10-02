@@ -10,6 +10,7 @@ Each page lives in its own folder as a single `index.html` with no build step.
 
 | Page | What it covers |
 |---|---|
+| [Modern Web Motion](https://openteams-ai.github.io/artifacts/modern-web-motion/) | A 30-minute UI/UX CoP talk deck on modern web motion: View Transitions, `@starting-style`, `linear()` springs, scroll-driven animations and FLIP, with five live demos, browser support, when a library earns its place, and how motion works in Nebari. |
 | [Nebari OSS & Delivery](https://openteams-ai.github.io/artifacts/nebari-oss-delivery/) | Status of the parallel efforts to improve Nebari OSS product development and delivery, from roadmap building and GitHub issue fields to work management tooling, delivery lifecycles, feature requests, releases and QA environments. |
 | [Jev vs. LLMs: one writes, one decides](https://openteams-ai.github.io/artifacts/jev-vs-llm/) | Interactive comparison of a typical LLM and TypeSafe AI's Jev on a support-ticket triage task: a simulated side-by-side run, the parse/validate/retry layer Jev removes, confidence-threshold routing, a cost calculator, and a feature table. |
 | [WebGPU](https://openteams-ai.github.io/artifacts/webgpu-talk/) | Interactive 30-minute UI/UX CoP talk on WebGPU: what it is, the object graph, compute, hardware, and demos that run on the viewer's own GPU, with speaker notes. |
