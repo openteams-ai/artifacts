@@ -276,7 +276,7 @@ html[data-wipe="wipe-clock"]::view-transition-new(root){animation-name:ml-wipe-c
     <button data-goto="s14"><b>Libraries</b><span>When no-library is enough and what Motion, GSAP and friends earn</span><em>3 min</em></button>
     <button data-goto="s16"><b>In Nebari</b><span>Tokens, hard rules, Base UI recipes</span><em>4 min</em></button>
     <button data-goto="s19"><b>Where it doesn't belong</b><span>The counterweight</span><em>2 min</em></button>
-    <button data-goto="s20"><b>Live demos</b><span>Punchlist with motion on and off, then Motion Lab for questions</span><em>4 min</em></button>
+    <button data-goto="s20"><b>Live demos</b><span>Punchlist with motion on and off, Holocron live with the room, then Motion Lab for questions</span><em>4 min</em></button>
     <button data-goto="s21"><b>Takeaways and where to start</b><span>Three things to remember, links, questions</span><em>2 min</em></button>
   </div>
   <aside>Each part is clickable if you need to jump. If you run over, cut the libraries part to one slide (skip the comparison) and do only Punchlist on the demos slide. The demos in part two are the heart; protect them.</aside>
@@ -607,14 +607,15 @@ reorder();
 </section>
 <!-- 20 -->
 <section class="slide" id="s20">
-  <div class="head"><p class="eyebrow">Part seven · Live demos</p><h2>Live demos: Punchlist, then Motion Lab</h2><p class="lede">Punchlist is a small task tracker with one switch that turns all of its motion off. Motion Lab is the playground where every effect in this talk is tunable. Both are React, Vite, Tailwind and shadcn on Base UI, with no animation libraries.</p></div>
-  <div class="res three">
+  <div class="head"><p class="eyebrow">Part seven · Live demos</p><h2>Live demos: Punchlist, Holocron, then Motion Lab</h2><p class="lede">Punchlist is a small task tracker with one switch that turns all of its motion off. Holocron is a live retro board on the same stack, where other people's changes animate on your screen. Motion Lab is the playground where every effect in this talk is tunable. All three are React, Vite, Tailwind and shadcn on Base UI, with no animation libraries.</p></div>
+  <div class="res">
     <a href="https://jbouder.github.io/punchlist/" target="_blank" rel="noopener"><em>Product · motion on/off</em><b>Punchlist</b><span>A team task tracker with four pages and one switch in the sidebar. Flip it off and every transition, including the page changes, becomes a cut: same app, same data, so the room judges the difference directly.</span></a>
+    <a href="https://holocron.beskar.workers.dev/" target="_blank" rel="noopener"><em>Product · live, multiplayer</em><b>Holocron</b><span>A retro board on Cloudflare Workers: share a code, run Write → Vote → Discuss. Cards enter with @starting-style, votes re-sort with FLIP, phase changes are view transitions, and a change from anyone in the room animates exactly like your own. Boards are wiped at 6 AM.</span></a>
     <a href="https://jbouder.github.io/motion-lab/" target="_blank" rel="noopener"><em>Playground · 53 effects</em><b>Motion Lab</b><span>Every effect from this talk with sliders: the five wipes, springs, FLIP, scroll reveals, and four app scenarios that use them in context.</span></a>
     <button type="button" class="rescard" data-goto="s6"><em>In this deck · slides 6 to 10</em><b>The five demos</b><span>Film wipes, @starting-style toast, spring vs. bezier, scroll-driven feed, FLIP reorder. Each has a show-code toggle.</span></button>
   </div>
-  <p class="callout"><strong>Suggested order:</strong> Punchlist with motion on, do four things, flip it off and do the same four things. Then open the lab for anything the room asks about.</p>
-  <aside>Switch to a browser tab. In Punchlist: add a task, complete one (it moves to the bottom), open a task's detail panel, then click through to Analytics (the page slides, the sidebar marker follows, the numbers count up). Flip motion off in the sidebar and repeat exactly those four actions. Ask the room which version told them more about what just happened. Keep the lab in reserve for questions; the page-transitions page is the one people ask for. Four minutes for this slide, including the switch to the browser.</aside>
+  <p class="callout"><strong>Suggested order:</strong> Punchlist with motion on, do four things, flip it off and do the same four things. Then open a Holocron board in two tabs and post a card in one: it enters in the other with the same transition. The lab stays in reserve for questions.</p>
+  <aside>Switch to a browser tab. In Punchlist: add a task, complete one (it moves to the bottom), open a task's detail panel, then click through to Analytics (the page slides, the sidebar marker follows, the numbers count up). Flip motion off in the sidebar and repeat exactly those four actions. Ask the room which version told them more about what just happened. Then Holocron: create a board, open the share link in a second tab under another name, post a card in tab one and watch it arrive in tab two; move the phase to Vote and both tabs crossfade the columns and lift the blur. The point: the same tokens and helpers as Punchlist, but the motion is now explaining what someone else did. Keep the lab in reserve for questions; the page-transitions page is the one people ask for. Four minutes for this slide, including the switch to the browser.</aside>
 </section>
 <!-- 21 -->
 <section class="slide" id="s21">
@@ -636,6 +637,7 @@ reorder();
     <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/easing-function/linear" target="_blank" rel="noopener"><b>MDN · linear() easing</b><span>The syntax behind baked springs.</span></a>
     <a href="https://motion.dev/docs/react" target="_blank" rel="noopener"><b>motion.dev · React docs</b><span>When the escape hatch is the right call.</span></a>
     <a href="https://jbouder.github.io/motion-lab/" target="_blank" rel="noopener"><b>Motion Lab</b><span>Try everything from this talk with sliders.</span></a>
+    <a href="https://github.com/jbouder/holocron" target="_blank" rel="noopener"><b>Holocron</b><span>The retro board from the demo: source, and the motion rules in its AGENTS.md.</span></a>
   </div>
   <h2 style="margin-top:12px">Questions?</h2>
   <aside>Leave this up during questions so people can photograph it. Likely questions: "cross-document view transitions?" (Chromium yes, Safari 18.2+, Firefox not yet as of the compat check; same CSS, opt in with @view-transition { navigation: auto }); "does Motion conflict with Base UI?" (no, through render); "what about Framer Motion?" (same library, renamed).</aside>
