@@ -88,9 +88,6 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
 .card p{color:var(--muted);font-size:.92em}
 .card .tag{font-family:var(--mono);font-size:.75em;color:var(--accent)}
 .card .tag a{color:inherit}
-.callout{border-left:3px solid var(--accent);padding:2px 0 2px 14px;color:var(--muted)}
-.callout strong{color:var(--fg)}
-.callout.warn{border-color:var(--accent-2)}
 .foot{font-size:.8em;color:var(--dim)}
 .kbd{font-family:var(--mono);font-size:.78em;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;color:var(--muted)}
 .btn{appearance:none;font:inherit;font-size:.9rem;font-weight:600;padding:8px 16px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);cursor:pointer}
@@ -290,8 +287,7 @@ html[data-wipe="wipe-clock"]::view-transition-new(root){animation-name:ml-wipe-c
     <div class="card"><span class="tag">feedback</span><h3>Did that work?</h3><p>A button that presses, a row that settles into its new spot. Confirmation without a toast.</p></div>
     <div class="card"><span class="tag">hierarchy</span><h3>What should I look at?</h3><p>The one thing that moves is the one thing people look at. Use that budget carefully.</p></div>
   </div>
-  <p class="callout"><strong>The test:</strong> if you removed the motion, would the user lose information? If not, it's decoration, and decoration has a very short welcome.</p>
-  <aside>Set the frame for the whole talk. The advanced techniques coming up are only worth it in service of one of these four jobs. Ask the room for the last animation that annoyed them; it almost always fails the test on this slide.</aside>
+  <aside>Set the frame for the whole talk. The advanced techniques coming up are only worth it in service of one of these four jobs. Ask the room for the last animation that annoyed them; it almost always fails the test: if you removed the motion, would the user lose information? If not, it's decoration.</aside>
 </section>
 <!-- 4 -->
 <section class="slide" id="s4">
@@ -304,8 +300,7 @@ html[data-wipe="wipe-clock"]::view-transition-new(root){animation-name:ml-wipe-c
     <div class="card"><span class="tag">scroll timelines</span><h3>Scroll-linked</h3><p>Reveals, parallax, progress, sticky scenes. Driven by position, not time, so it can never fall behind.</p></div>
     <div class="card"><span class="tag">@keyframes · sparingly</span><h3>Continuous</h3><p>Loading pulses, spinners, attention loops. The only kind with no end state, so it needs a reason to stop.</p></div>
   </div>
-  <p class="callout"><strong>The split that matters:</strong> the first four are motion between two states and should be transitions, so the browser handles interruption and reversal. The last two are motion over time, and need a reason to start and to stop.</p>
-  <aside>One minute. Point at the tags: every technique in part two is on this slide, and part two takes them roughly top to bottom. The callout carries the transition-versus-animation distinction, which is worth saying once: if you can express it as "from state A to state B", make it a transition. Punchlist, in the demos, exercises the first four kinds with one switch.</aside>
+  <aside>One minute. Point at the tags: every technique in part two is on this slide, and part two takes them roughly top to bottom. The transition-versus-animation distinction is worth saying once: if you can express it as "from state A to state B", make it a transition. Punchlist, in the demos, exercises the first four kinds with one switch.</aside>
 </section>
 <!-- 5 -->
 <section class="slide" id="s5">
@@ -361,7 +356,6 @@ html[data-wipe="wipe-clock"]::view-transition-new(root){animation-name:ml-wipe-c
 
 <span class="c">/* the frame before "open" applies */</span>
 <span class="a">@starting-style</span> { .toast.open { <span class="k">opacity</span>: 0; <span class="k">translate</span>: 0 10px; } }</code></pre>
-      <p class="callout"><strong>Two halves:</strong> <code>@starting-style</code> gives the entry a "from" state, and <code>transition-behavior: allow-discrete</code> keeps <code>display</code> on until the exit finishes. Base UI's <code>data-starting-style</code> is this pattern with the attribute flipped for you.</p>
     </div>
     <div class="demo">
       <div class="row"><h3>02 · Toast</h3><span class="hd"><span class="st" id="d2-st">closed</span><button class="iconbtn" type="button" data-code="d2" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
@@ -406,7 +400,6 @@ html[data-wipe="wipe-clock"]::view-transition-new(root){animation-name:ml-wipe-c
 .item { <span class="k">animation</span>: reveal linear both;
         <span class="k">animation-timeline</span>: <span class="a">view()</span>;
         <span class="k">animation-range</span>: entry 0% entry 70%; }</code></pre>
-      <p class="callout"><strong>Replaces:</strong> scroll listeners, IntersectionObserver reveal hooks, and the jank that comes with them. Runs off the main thread in Chromium.</p>
     </div>
     <div class="demo">
       <div class="row"><h3>04 · Feed</h3><span class="hd"><span class="st" id="d4-st">scroll the list</span><button class="iconbtn" type="button" data-code="d4" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
@@ -447,7 +440,6 @@ reorder();
   el.<span class="a">animate</span>([{ translate: <span class="s">`${a.left-b.left}px ${a.top-b.top}px`</span> }, { translate: <span class="s">"0 0"</span> }],
              { duration: 350, easing: <span class="s">"cubic-bezier(.2,0,0,1)"</span> });
 }</code></pre>
-      <p class="callout"><strong>Why WAAPI:</strong> <code>element.animate()</code> is the same compositor path as CSS, but it takes values you computed a millisecond ago. FLIP is the technique every "layout animation" feature in every library is built on.</p>
     </div>
     <div class="demo">
       <div class="row"><h3>05 · Reorder</h3><span class="hd"><span class="st" id="d5-st">idle</span><button class="iconbtn" type="button" data-code="d5" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
@@ -482,7 +474,6 @@ reorder();
 <section class="slide" id="s12">
   <div class="head"><p class="eyebrow">Part three · Browser compatibility</p><h2>What this browser can do right now</h2><p class="lede">Detected on load with <code>CSS.supports()</code> and feature checks. This is the same test your code should run.</p></div>
   <div class="log" id="caps" aria-live="polite"><span>Detecting…</span></div>
-  <p class="callout"><strong>Rule:</strong> detect the feature, never the browser. Every check above is one line, and each has a cheap fallback: a cut instead of a wipe, a visible final state instead of a reveal.</p>
   <aside>Read the lines that say "no" out loud, if any; that's your audience's reality too. If you're presenting from the latest Chrome, say so and mention that a year-old Safari would show two "no" lines. The reduced-motion line matters: when it's on, this deck turns off every transition, and so should your app.</aside>
 </section>
 <!-- 13 -->
@@ -505,7 +496,6 @@ reorder();
   .item { animation: none; }
 }</code></pre>
   </div>
-  <p class="callout"><strong>The pattern:</strong> write the final state first, with no motion. Add the motion inside a guard. Content is never hidden waiting for an animation that may not run.</p>
   <aside>This is the slide to slow down on. The failure mode of modern motion isn't "it looks worse in Firefox", it's "the content never appears" because someone set opacity: 0 in the base rule and the reveal animation didn't run. Final state first, enhancement inside the guard.</aside>
 </section>
 <!-- 14 -->
@@ -517,7 +507,6 @@ reorder();
     <div class="card"><h3>A library earns its place when…</h3>
       <ul><li>Sequences depend on runtime state (choreography across many elements)</li><li>Gestures: drag with velocity, throw, snap</li><li>Layout animations across component boundaries you don't control</li><li>Designer-authored animation (Rive, Lottie) that must match a file exactly</li></ul></div>
   </div>
-  <p class="callout"><strong>Honest cost:</strong> Motion Lab has zero animation libraries, and the price was hand-rolling a spring, a FLIP hook and a particle emitter. For most product UI you won't need any of those.</p>
   <aside>The point is not "libraries bad". It's that the default flipped: in 2019 you reached for a library first; now the library is the exception you justify. Mention that every library on the next slide now uses WAAPI under the hood where it can, which is why they're smaller and smoother than they used to be.</aside>
 </section>
 <!-- 15 -->
@@ -545,23 +534,18 @@ reorder();
       <tr><td><code>--ease-emphasized</code></td><td><code>cubic-bezier(.2,0,0,1)</code></td><td>Overlays sliding into view</td></tr>
     </tbody>
   </table></div>
-  <p class="callout"><strong>Five ready-made utilities:</strong> <code>animate-fade-in</code>, <code>animate-fade-out</code>, <code>animate-slide-up-fade</code> (6px), <code>animate-slide-down-fade</code>, <code>animate-skeleton-pulse</code>. Always behind <code>motion-safe:</code>; the keyframes live inside <code>@theme inline</code>.</p>
   <aside>Three durations plus a loading pulse, two easings. That's the whole vocabulary, and it's deliberately small: if a motion needs 600ms in product UI, it's probably too much. Note the ceiling: 350ms is for a full dialog. The 200ms base is where most things live, which is the "everyday UI" in the title.</aside>
 </section>
 <!-- 17 -->
 <section class="slide" id="s17">
-  <div class="head"><p class="eyebrow">Part five · In Nebari</p><h2>Four hard rules, and the two gotchas that break them silently</h2></div>
+  <div class="head"><p class="eyebrow">Part five · In Nebari</p><h2>Four hard rules</h2></div>
   <div class="cards">
     <div class="card"><span class="tag">rule 1</span><h3>Gate on <code>motion-safe:</code></h3><p>Every animation class is prefixed: <code>motion-safe:animate-fade-in</code>. WCAG 2.1 SC 2.3.3.</p></div>
     <div class="card"><span class="tag">rule 2</span><h3>Tokens, never literals</h3><p><code>var(--duration-base)</code> in CSS, <code>duration-(--duration-base)</code> in classes. Never <code>0.2s</code>.</p></div>
     <div class="card"><span class="tag">rule 3</span><h3>Animate opacity and transform only</h3><p>Height, width, padding and top force layout. Use FLIP or View Transitions when position must change.</p></div>
     <div class="card"><span class="tag">rule 4</span><h3>CSS and Base UI first</h3><p>Reach for a JS library only when the CSS primitives can't express it. Never edit <code>ui/*</code> to add motion; it's overwritten on upgrade.</p></div>
   </div>
-  <div class="two">
-    <p class="callout warn"><strong>Gotcha 1, parentheses:</strong> Tailwind v4 reads <code>duration-(--duration-base)</code>. The v3 bracket form <code>duration-[--duration-base]</code> is invalid, so <code>transition-duration</code> resets to 0s and nothing moves.</p>
-    <p class="callout warn"><strong>Gotcha 2, <code>cn()</code>:</strong> tailwind-merge dedupes <code>transition-*</code> against the component's own classes. Re-enumerate every property you need: <code>transition-[color,background-color,transform]</code>, not bare <code>transition</code>.</p>
-  </div>
-  <aside>Both gotchas fail silently, which is why they're on the slide. The bracket one has bitten more than one PR. If people remember one thing from this part: motion lives at the call site in globals.css, a CSS module or a wrapper, with tokens, behind motion-safe.</aside>
+  <aside>Two gotchas worth saying out loud, because both fail silently. Tailwind v4 reads duration-(--duration-base); the v3 bracket form duration-[--duration-base] is invalid, so transition-duration resets to 0s and nothing moves. And cn() dedupes transition-* against the component's own classes, so re-enumerate every property you need: transition-[color,background-color,transform], not bare transition. The bracket one has bitten more than one PR. If people remember one thing from this part: motion lives at the call site in globals.css, a CSS module or a wrapper, with tokens, behind motion-safe.</aside>
 </section>
 <!-- 18 -->
 <section class="slide" id="s18">
@@ -588,7 +572,6 @@ reorder();
 &lt;Button <span class="a">render</span>={&lt;motion.button animate={{ scale: [1, .96, 1] }} /&gt;}&gt;
   Save
 &lt;/Button&gt;</code></pre>
-      <p class="callout"><strong>Keeps</strong> the component's classes and <code>data-*</code> attributes intact. Install Motion only when a screen needs it; it's not a registry dependency.</p>
     </div>
   </div>
   <aside>Left side is the @starting-style pattern from part two, wearing Base UI's attribute names. Right side is the one sanctioned way to bring a library in: through the render prop, so the design-system component stays the source of truth. Use it for staggered lists, state-dependent exits, or spring physics you don't want to bake yourself.</aside>
@@ -602,8 +585,7 @@ reorder();
     <div class="card"><h3>Autoplaying, looping, ambient</h3><p>Background motion competes with content for attention and drains batteries. Decorative loops belong on a marketing page, if anywhere.</p></div>
     <div class="card"><h3>Hiding content behind it</h3><p>If the animation doesn't run, the content must still be there. Reduced motion is a hard override, never a soft suggestion.</p></div>
   </div>
-  <p class="callout"><strong>And the five film wipes?</strong> They fail the test for product UI. They're in this deck because a deck is theater, and in Motion Lab because it's a lab. Know which one you're building.</p>
-  <aside>Say the last line with a straight face; it's the honest counterweight for the whole talk. Everything in part two is a tool, and the wipes show that the same API does both tasteful route transitions and film wipes. The craft is in choosing.</aside>
+  <aside>End with the five film wipes: they fail the test for product UI, and they're in this deck because a deck is theater, and in Motion Lab because it's a lab. Say it with a straight face; it's the honest counterweight for the whole talk. Everything in part two is a tool, and the wipes show that the same API does both tasteful route transitions and film wipes. The craft is in choosing.</aside>
 </section>
 <!-- 20 -->
 <section class="slide" id="s20">
@@ -613,7 +595,6 @@ reorder();
     <a href="https://jbouder.github.io/punchlist/" target="_blank" rel="noopener"><em>Product · motion on/off</em><b>Punchlist</b><span>A team task tracker with four pages and one switch in the sidebar. Flip it off and every transition, including the page changes, becomes a cut: same app, same data, so the room judges the difference directly.</span></a>
     <a href="https://holocron.vibeproject.workers.dev/" target="_blank" rel="noopener"><em>Product · live, multiplayer</em><b>Holocron</b><span>A retro board on Cloudflare Workers: share a code, run Write → Vote → Discuss. Cards enter with @starting-style, votes re-sort with FLIP, phase changes are view transitions, and a change from anyone in the room animates exactly like your own. Boards are wiped at 6 AM.</span></a>
   </div>
-  <p class="callout"><strong>Suggested order:</strong> Motion Lab first: the page-transitions page and one spring with the sliders, so the room has seen each effect on its own. Then Punchlist with motion on, do four things, flip it off and do the same four things. Finish with a Holocron board in two tabs: post a card in one and it enters in the other with the same transition.</p>
   <aside>Switch to a browser tab. Motion Lab first: open the page-transitions page and run two or three wipes, then one spring with the damping slider, so each effect has been seen on its own before it shows up inside an app. Then Punchlist: add a task, complete one (it moves to the bottom), open a task's detail panel, then click through to Analytics (the page slides, the sidebar marker follows, the numbers count up). Flip motion off in the sidebar and repeat exactly those four actions. Ask the room which version told them more about what just happened. Then Holocron: create a board, open the share link in a second tab under another name, post a card in tab one and watch it arrive in tab two; move the phase to Vote and both tabs crossfade the columns and lift the blur. The point: the same tokens and helpers as Punchlist, but the motion is now explaining what someone else did. Four minutes for this slide, including the switch to the browser.</aside>
 </section>
 <!-- 21 -->
