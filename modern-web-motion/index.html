@@ -107,22 +107,6 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
 .cmp ul{margin:6px 0 0;padding-left:1.1em;display:grid;gap:6px;color:var(--muted);font-size:.92em}
 .cmp .card.win{border-color:var(--accent)}
 
-/* Stepper */
-.stepper{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:20px;align-items:start}
-@media (max-width:760px){.stepper{grid-template-columns:1fr}}
-.stepper nav{display:grid;gap:6px}
-.stepper nav button{appearance:none;text-align:left;font:inherit;color:inherit;background:transparent;border:1px solid transparent;border-radius:8px;padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:center}
-.stepper nav button:hover{background:var(--panel)}
-.stepper nav button[aria-current="step"]{background:var(--panel);border-color:var(--line)}
-.stepper nav button i{width:26px;height:26px;border-radius:50%;background:var(--panel2);color:var(--muted);display:grid;place-items:center;font-style:normal;font-weight:700;font-size:.8rem;flex:none;font-family:var(--mono)}
-.stepper nav button[aria-current="step"] i{background:var(--accent);color:var(--accent-ink)}
-.pane{display:none;gap:12px;min-width:0}
-.pane.on{display:grid}
-.pane p{color:var(--muted)}
-.pane .api{font-family:var(--mono);color:var(--accent);font-size:.95em;overflow-wrap:anywhere}
-.stepper.compact{grid-template-columns:1fr;gap:12px}
-.stepper.compact nav{display:flex;flex-wrap:wrap;gap:6px}
-
 /* Table */
 .tblwrap{overflow-x:auto}
 .tbl{width:100%;border-collapse:collapse;font-size:.9em}
@@ -316,30 +300,16 @@ html[data-wipe="wipe-clock"]::view-transition-new(root){animation-name:ml-wipe-c
 </section>
 <!-- 6 -->
 <section class="slide" id="s6">
-  <div class="head"><p class="eyebrow">Part two · View Transitions</p><h2>You've been watching one on every slide change</h2></div>
-  <div class="two">
-    <div class="stepper compact">
-      <nav aria-label="How a view transition works">
-        <button type="button" data-step="vt1" aria-current="step"><i>1</i>Snapshot</button>
-        <button type="button" data-step="vt2"><i>2</i>Swap</button>
-        <button type="button" data-step="vt3"><i>3</i>Animate</button>
-      </nav>
-      <div>
-        <div class="pane on" data-pane="vt1"><h3>The browser captures the old state</h3><p class="api">document.startViewTransition(cb)</p><p>Every element with a <code>view-transition-name</code> gets its own snapshot; everything else is part of <code>root</code>.</p></div>
-        <div class="pane" data-pane="vt2"><h3>Your callback changes the DOM</h3><p class="api">cb() → swap slides, swap routes, re-render</p><p>Any DOM change at all. The page is frozen under the old snapshot while this runs.</p></div>
-        <div class="pane" data-pane="vt3"><h3>Old and new snapshots animate</h3><p class="api">::view-transition-old(root) / ::view-transition-new(root)</p><p>Pseudo-elements you style with ordinary CSS. The default is a crossfade; this deck freezes the old frame and clips the new one.</p></div>
-      </div>
+  <div class="head"><p class="eyebrow">Part two · View Transitions</p><h2>You've been watching one on every slide change</h2><p class="lede">The browser takes a snapshot of the page, you change the DOM, and it animates from the old snapshot to the new one. The animation itself is plain CSS.</p></div>
+  <div class="demo">
+    <div class="row"><h3>01 · Film wipes</h3><span class="hd"><span class="st" id="d1-st">last: none</span><button class="iconbtn" type="button" data-code="d1" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
+    <div id="d1-vis" class="stack">
+      <p class="lede" style="font-size:.95em">The slide transitions are the five optical-printer wipes from Motion Lab: right, left, diagonal, iris and clock, chosen at random on every slide change.</p>
+      <div class="log" id="d1-log"><span>Waiting for the first transition.</span></div>
     </div>
-    <div class="demo">
-      <div class="row"><h3>01 · Film wipes</h3><span class="hd"><span class="st" id="d1-st">last: none</span><button class="iconbtn" type="button" data-code="d1" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
-      <div id="d1-vis" class="stack">
-        <p class="lede" style="font-size:.95em">The slide transitions are the five optical-printer wipes from Motion Lab: right, left, diagonal, iris and clock, chosen at random on every slide change.</p>
-        <div class="log" id="d1-log"><span>Waiting for the first transition.</span></div>
-      </div>
-      <div class="row"><span class="st">Falls back to a cut when unsupported or reduced motion is on.</span><span style="display:flex;gap:8px"><button class="btn" type="button" id="d1-replay">Replay wipe</button></span></div>
-    </div>
+    <div class="row"><span class="st">Falls back to a cut when unsupported or reduced motion is on.</span><span style="display:flex;gap:8px"><button class="btn" type="button" id="d1-replay">Replay wipe</button></span></div>
   </div>
-  <aside>Click the three steps. Then press "Replay wipe" a few times: the only DOM change is a highlight on this card, so the room sees each wipe reveal it without leaving the slide. The log on the right names the last five. Show code: it's about 20 lines of JS and the CSS is clip-path keyframes on the new snapshot. In Safari, the clock wipe needs @property support for the mask angle; if it looks like a crossfade there, say so. Firefox 143 and earlier cuts straight to the next slide.</aside>
+  <aside>Press "Replay wipe" a few times: the only DOM change is a highlight on this card, so the room sees each wipe reveal it without leaving the slide. The log names the last five. Show code: it's about 20 lines of JS and the CSS is clip-path keyframes on the new snapshot. In Safari, the clock wipe needs @property support for the mask angle; if it looks like a crossfade there, say so. Firefox 143 and earlier cuts straight to the next slide.</aside>
 </section>
 <!-- 7 -->
 <section class="slide" id="s7">
@@ -698,13 +668,6 @@ reorder();
   // Demo 1 control: a transition with no DOM change, so the room sees the wipe without leaving the slide.
   var d1card=document.getElementById("d1-replay").closest(".demo");
   document.getElementById("d1-replay").addEventListener("click",function(){withWipe(function(){d1card.classList.toggle("lit");});});
-
-  /* ── Steppers ── */
-  document.querySelectorAll(".stepper nav button").forEach(function(b){b.addEventListener("click",function(){
-    var nav=b.parentNode,host=nav.parentNode;
-    nav.querySelectorAll("button").forEach(function(x){if(x===b)x.setAttribute("aria-current","step");else x.removeAttribute("aria-current");});
-    host.querySelectorAll(".pane").forEach(function(p){p.classList.toggle("on",p.dataset.pane===b.dataset.step);});
-  });});
 
   /* ── Demo 2: @starting-style toast (slide 7) ── */
   var d2panel=document.getElementById("d2-panel"),d2btn=document.getElementById("d2-btn"),d2st=document.getElementById("d2-st");
