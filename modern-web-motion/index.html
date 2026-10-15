@@ -343,7 +343,7 @@ html[data-wipe="wipe-clock"]::view-transition-new(root){animation-name:ml-wipe-c
 </section>
 <!-- 7 -->
 <section class="slide" id="s7">
-  <div class="head"><p class="eyebrow">Part two · @starting-style</p><h2>Enter and exit from <code>display: none</code>, in CSS alone</h2></div>
+  <div class="head"><p class="eyebrow">Part two · @starting-style</p><h2>Animate things appearing and disappearing, in CSS alone</h2></div>
   <div class="two">
     <div class="stack">
       <pre><code><span class="c">/* closed */</span>
@@ -367,7 +367,7 @@ html[data-wipe="wipe-clock"]::view-transition-new(root){animation-name:ml-wipe-c
 </section>
 <!-- 8 -->
 <section class="slide" id="s8">
-  <div class="head"><p class="eyebrow">Part two · linear() easing</p><h2>A spring is just a list of points</h2><p class="lede">Run a damped-spring integrator once, sample the curve, and hand it to CSS as <code>linear(…)</code>. No runtime physics, no library, and it works on any transition.</p></div>
+  <div class="head"><p class="eyebrow">Part two · linear() easing</p><h2>Springy motion in plain CSS, no physics library</h2><p class="lede">Run a damped-spring integrator once, sample the curve, and hand it to CSS as <code>linear(…)</code>. No runtime physics, no library, and it works on any transition.</p></div>
   <div class="demo">
     <div class="row"><h3>03 · cubic-bezier vs. baked spring</h3><span class="hd"><span class="st" id="d3-st">stiffness 260 · damping 24</span><button class="iconbtn" type="button" data-code="d3" aria-pressed="false" aria-label="Show code" title="Show code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button></span></div>
     <div id="d3-vis" class="stage" style="--d3-run:1">
@@ -386,7 +386,7 @@ html[data-wipe="wipe-clock"]::view-transition-new(root){animation-name:ml-wipe-c
 </section>
 <!-- 9 -->
 <section class="slide" id="s9">
-  <div class="head"><p class="eyebrow">Part two · Scroll-driven animations</p><h2>Bind progress to scroll, not to time</h2></div>
+  <div class="head"><p class="eyebrow">Part two · Scroll-driven animations</p><h2>Animations driven by scrolling, not a timer</h2></div>
   <div class="two">
     <div class="stack">
       <pre><code><span class="c">/* the container names a timeline */</span>
@@ -427,7 +427,7 @@ html[data-wipe="wipe-clock"]::view-transition-new(root){animation-name:ml-wipe-c
 </section>
 <!-- 10 -->
 <section class="slide" id="s10">
-  <div class="head"><p class="eyebrow">Part two · Web Animations API</p><h2>FLIP: let layout happen, then animate the difference</h2></div>
+  <div class="head"><p class="eyebrow">Part two · Web Animations API</p><h2>Animate items moving to new spots</h2></div>
   <div class="two">
     <div class="stack">
       <pre><code><span class="c">// First: measure</span>
@@ -478,7 +478,7 @@ reorder();
 </section>
 <!-- 13 -->
 <section class="slide" id="s13">
-  <div class="head"><p class="eyebrow">Part three · Browser compatibility</p><h2>Progressive enhancement is one <code>if</code> and one <code>@supports</code></h2></div>
+  <div class="head"><p class="eyebrow">Part three · Browser compatibility</p><h2>A safe fallback takes one check in JavaScript and one in CSS</h2></div>
   <div class="two">
     <pre><code><span class="c">// JS: the swap always runs; the transition is optional</span>
 <span class="k">function</span> navigate(update) {
@@ -500,7 +500,7 @@ reorder();
 </section>
 <!-- 14 -->
 <section class="slide" id="s14">
-  <div class="head"><p class="eyebrow">Part four · Libraries</p><h2>Use the platform until it costs you code</h2></div>
+  <div class="head"><p class="eyebrow">Part four · Libraries</p><h2>Use what the browser has built in; add a library when that falls short</h2></div>
   <div class="cmp">
     <div class="card win"><h3>The platform is enough when…</h3>
       <ul><li>The motion is between two states (enter, exit, open, close, route change)</li><li>You're animating <code>opacity</code> and <code>transform</code></li><li>Reversal and interruption should just work</li><li>You want zero bundle cost and no version churn</li></ul></div>
@@ -578,7 +578,7 @@ reorder();
 </section>
 <!-- 19 -->
 <section class="slide" id="s19">
-  <div class="head"><p class="eyebrow">Part six · Where it doesn't belong</p><h2>Motion that fails the test on slide three</h2></div>
+  <div class="head"><p class="eyebrow">Part six · Where it doesn't belong</p><h2>Motion that adds nothing for the user</h2></div>
   <div class="cards">
     <div class="card"><h3>Anything a user waits for</h3><p>A 400ms entrance on a list the user opens fifty times a day is 20 seconds of their day. Speed up or cut.</p></div>
     <div class="card"><h3>Layout properties</h3><p>Animating <code>height</code> or <code>top</code> re-lays out every frame. If it must move, move a transform or let View Transitions snapshot it.</p></div>
@@ -602,9 +602,9 @@ reorder();
 <section class="slide" id="s21">
   <div class="head"><p class="eyebrow">Wrap-up</p><h2>Three things to take away</h2></div>
   <ol class="take">
-    <li><span>Motion is feedback. If removing it loses no information, remove it.</span></li>
-    <li><span>The platform covers the everyday cases. Guard each feature and ship the final state first.</span></li>
-    <li><span>In Nebari: tokens, <code>motion-safe:</code>, opacity and transform, at the call site. Libraries come in through <code>render</code>, when they earn it.</span></li>
+    <li><span>Motion should tell the user something. If taking it away loses nothing, take it away.</span></li>
+    <li><span>Pick the motion for the need. Browsers now handle most of it without a library.</span></li>
+    <li><span>Use Nebari's motion tokens, and make sure the app still works with motion turned off.</span></li>
   </ol>
   <aside>Say these three slowly. Then the links.</aside>
 </section>
