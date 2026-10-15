@@ -100,7 +100,6 @@ h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
 .order button:hover{border-color:var(--accent)}
 .order button::before{counter-increment:part;content:counter(part);width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:.85rem;margin-bottom:6px}
 .order span{color:var(--muted);font-size:.88em}
-.order em{font-style:normal;color:var(--dim);font-size:.8em;font-family:var(--mono)}
 
 /* Compare */
 .cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
@@ -251,14 +250,14 @@ html[data-wipe="wipe-clock"]::view-transition-new(root){animation-name:ml-wipe-c
 <section class="slide" id="s2">
   <div class="head"><h2>Running order</h2></div>
   <div class="order">
-    <button data-goto="s3"><b>Why motion</b><span>Feedback, not decoration; transition vs. animation</span><em>3 min</em></button>
-    <button data-goto="s5"><b>The modern toolkit</b><span>View Transitions, @starting-style, linear() springs, scroll timelines, WAAPI</span><em>9 min</em></button>
-    <button data-goto="s11"><b>Browser compatibility</b><span>Support today, this browser live, progressive enhancement</span><em>3 min</em></button>
-    <button data-goto="s14"><b>Libraries</b><span>When no-library is enough and what Motion, GSAP and friends earn</span><em>3 min</em></button>
-    <button data-goto="s16"><b>In Nebari</b><span>Tokens, hard rules, Base UI recipes</span><em>4 min</em></button>
-    <button data-goto="s19"><b>Where it doesn't belong</b><span>The counterweight</span><em>2 min</em></button>
-    <button data-goto="s20"><b>Live demos</b><span>The Nebari Storybook, Motion Lab's effects on sliders, Punchlist with motion on and off, and Holocron's live retro board</span><em>4 min</em></button>
-    <button data-goto="s21"><b>Takeaways and where to start</b><span>Three things to remember, links, questions</span><em>2 min</em></button>
+    <button data-goto="s3"><b>Why motion</b><span>Feedback, not decoration; transition vs. animation</span></button>
+    <button data-goto="s5"><b>The modern toolkit</b><span>View Transitions, @starting-style, linear() springs, scroll timelines, WAAPI</span></button>
+    <button data-goto="s11"><b>Browser compatibility</b><span>Support today, this browser live, progressive enhancement</span></button>
+    <button data-goto="s14"><b>Libraries</b><span>When no-library is enough and what Motion, GSAP and friends earn</span></button>
+    <button data-goto="s16"><b>In Nebari</b><span>Tokens, hard rules, Base UI recipes</span></button>
+    <button data-goto="s19"><b>Where it doesn't belong</b><span>The counterweight</span></button>
+    <button data-goto="s20"><b>Live demos</b><span>The Nebari Storybook, Motion Lab's effects on sliders, Punchlist with motion on and off, and Holocron's live retro board</span></button>
+    <button data-goto="s21"><b>Takeaways and where to start</b><span>Three things to remember, links, questions</span></button>
   </div>
   <aside>Each part is clickable if you need to jump. If you run over, cut the libraries part to one slide (skip the comparison) and do only Punchlist on the demos slide. The demos in part two are the heart; protect them.</aside>
 </section>
