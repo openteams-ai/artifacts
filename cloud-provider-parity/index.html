@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Cloud Provider Parity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Nebari design tokens (nebari-dev/nebari-design registry/nebari/globals.css), mapped to this page's roles. */
+:root{
+  --bg:#ffffff; --surface:#ffffff; --ink:#262628; --muted:#5a5a61; --faint:#70707a; --line:#d9d9dc; --line-strong:#b7b7bb;
+  --accent:#9547c0; --accent-hover:#77399a; --ring:#b053e2; --head:#f8f8f8; --base-bg:#f7f1fa;
+  --ok-bg:#dbf7df; --ok-fg:#006e2e; --part-bg:#ffeeba; --part-fg:#6e5800; --gap-bg:#ffe9e5; --gap-fg:#d2161c;
+  --radius:0.625rem;
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#1a1a1c; --surface:#262628; --ink:#f8f8f8; --muted:#b7b7bb; --faint:#9d9da6; --line:#4a4a50; --line-strong:#5a5a61;
+    --accent:#c575f4; --accent-hover:#d79bf8; --ring:#c575f4; --head:#353538; --base-bg:#2e2635;
+    --ok-bg:#03411a; --ok-fg:#afe4b8; --part-bg:#423400; --part-fg:#f2d26e; --gap-bg:#6a0206; --gap-fg:#f29e93;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#1a1a1c; --surface:#262628; --ink:#f8f8f8; --muted:#b7b7bb; --faint:#9d9da6; --line:#4a4a50; --line-strong:#5a5a61;
+  --accent:#c575f4; --accent-hover:#d79bf8; --ring:#c575f4; --head:#353538; --base-bg:#2e2635;
+  --ok-bg:#03411a; --ok-fg:#afe4b8; --part-bg:#423400; --part-fg:#f2d26e; --gap-bg:#6a0206; --gap-fg:#f29e93;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;overflow-wrap:break-word}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:20px;padding-block:36px 56px}
+p{margin:0;color:var(--muted)}
+code{font-family:var(--mono);font-size:.86em;background:var(--head);border:1px solid var(--line);padding:0 4px;border-radius:calc(var(--radius)*.5);overflow-wrap:break-word;word-break:break-word}
+a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
+a:hover{color:var(--accent-hover);text-decoration-thickness:2px}
+a:focus-visible{outline:2px solid var(--ring);outline-offset:2px;border-radius:2px}
+
+/* Header */
+header{display:grid;gap:12px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(23px,3.2vw,30px);line-height:1.2;margin:0;font-weight:700;letter-spacing:-.025em;text-wrap:balance;max-width:30ch}
+header > p{font-size:15px;max-width:72ch}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.toc a{font-size:13px;font-weight:500;text-decoration:none;padding:4px 12px;border:1px solid var(--line-strong);border-radius:calc(var(--radius)*.8);background:var(--surface)}
+.toc a:hover{border-color:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+header .legend{padding-top:14px;border-top:1px solid var(--line)}
+
+/* Pills */
+.pill{display:inline-block;font-family:var(--mono);font-style:normal;font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:calc(var(--radius)*.6);white-space:nowrap;line-height:1.6}
+.ok{background:var(--ok-bg);color:var(--ok-fg)}
+.part{background:var(--part-bg);color:var(--part-fg)}
+.gap{background:var(--gap-bg);color:var(--gap-fg)}
+
+/* Sections */
+section{display:grid;gap:14px;padding-top:32px;margin-top:32px;border-top:1px solid var(--line-strong)}
+section h2{margin:0;font-size:21px;line-height:1.25;font-weight:600;text-wrap:balance}
+.lede{max-width:72ch}
+
+/* Comparison tables */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:separate;border-spacing:0;width:100%;min-width:1000px}
+th,td{text-align:left;vertical-align:top;padding:14px;border-bottom:1px solid var(--line)}
+thead th{background:var(--head);font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding-block:10px;border-bottom-color:var(--line-strong)}
+thead th.th-base{color:var(--accent)}
+tbody tr:last-child td{border-bottom:none}
+tr.group td{background:var(--head);font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);padding:8px 14px}
+
+td.cap{width:15%;font-weight:600;font-size:14px;line-height:1.35;position:sticky;left:0;z-index:1;background:var(--surface);box-shadow:inset 3px 0 0 var(--line-strong)}
+thead th:first-child{position:sticky;left:0;z-index:2}
+tr:has(.verdict .ok) td.cap{box-shadow:inset 3px 0 0 var(--ok-fg)}
+tr:has(.verdict .part) td.cap{box-shadow:inset 3px 0 0 var(--part-fg)}
+tr:has(.verdict .gap) td.cap{box-shadow:inset 3px 0 0 var(--gap-fg)}
+td.cap small{display:block;font-weight:400;color:var(--muted);font-size:12px;margin-top:4px;line-height:1.4}
+td.verdict{width:8%}
+td.base{width:26%;background:var(--base-bg);color:var(--ink);font-size:13.5px;border-right:1px solid var(--line)}
+td.base b{font-weight:600}
+td.cloud{width:17%;font-size:13px}
+td.cloud b{display:block;font-weight:600;color:var(--ink);line-height:1.35}
+td.cloud span{display:block;color:var(--muted);margin-top:3px}
+td.cloud.na b{color:var(--gap-fg)}
+
+/* Documentation links: <div class="docs"> after the cell's <span> */
+.docs{display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:8px;padding-top:6px;border-top:1px dashed var(--line);font-size:12px;line-height:1.45}
+.docs a{text-decoration:none;font-weight:500}
+.docs a:hover{text-decoration:underline}
+.docs a::after{content:"\2009\2197";font-size:10px;color:var(--faint)}
+
+/* Managed-mode matrix */
+table.matrix{min-width:720px}
+table.matrix td.cap{width:22%}
+table.matrix td{font-size:13px}
+table.matrix td span{display:block;color:var(--muted);margin-top:6px}
+
+/* Build / Avoid */
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px;margin-top:4px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:grid;gap:10px;align-content:start}
+.box h3{margin:0;font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.box h3::before{content:"";width:8px;height:8px;border-radius:2px;background:currentColor;flex:none}
+.box.do h3{color:var(--ok-fg)}
+.box.avoid h3{color:var(--gap-fg)}
+.box ul{margin:0;padding-left:18px;display:grid;gap:7px}
+.box li{color:var(--ink)}
+.box li::marker{color:var(--faint)}
+
+.foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);max-width:80ch}
+
+/* Phone / narrow: each row becomes a card, header row hidden, labels from data-label */
+@media (max-width:860px){
+  .wrap{padding-inline:16px;padding-block:24px 40px}
+  .tbl{overflow:visible;border:0;border-radius:0;background:none}
+  .tbl table{min-width:0;display:block}
+  .tbl thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .tbl tbody{display:grid;gap:12px}
+  .tbl tr{display:grid;grid-template-columns:minmax(0,1fr) auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .tbl td{display:block;width:auto;padding:11px 14px;border-bottom:1px solid var(--line)}
+  .tbl td.cap{grid-column:1;position:static;background:var(--head);font-size:15px}
+  .tbl td.verdict{grid-column:2;background:var(--head);text-align:right;padding-left:8px}
+  .tbl td.base,.tbl td.cloud{grid-column:1 / -1}
+  .tbl td.base{border-right:0;font-size:14px}
+  .tbl table.matrix tr{grid-template-columns:minmax(0,1fr)}
+  .tbl table.matrix td{grid-column:1 / -1}
+  .tbl td[data-label]::before{content:attr(data-label);display:block;margin-bottom:4px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .tbl td.base[data-label]::before{color:var(--accent)}
+  .tbl tbody tr:last-child td{border-bottom:1px solid var(--line)}
+  .tbl tbody tr td:last-child{border-bottom:none}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Cloud-agnostic baseline · Kubernetes</div>
+  <h1>Cloud provider parity: what's portable across AWS, GCP and Azure</h1>
+  <p>Goal: stick to features every major provider supports, so the same Kubernetes manifests work everywhere with only a per-cloud StorageClass / NodeClass mapping underneath. The <em>Agnostic baseline</em> column is the lowest common denominator to build against.</p>
+  <nav class="toc" aria-label="Sections"><a href="#storage">Storage</a><a href="#autoscaling">Node autoscaling</a><a href="#managed-storage">Storage on managed modes</a></nav>
+  <div class="legend">
+    <span><i class="pill ok">Parity</i> safe to depend on</span>
+    <span><i class="pill part">Partial</i> exists everywhere, behaviour differs</span>
+    <span><i class="pill gap">Gap</i> missing on at least one cloud — avoid</span>
+  </div>
+</header>
+
+<section id="storage">
+<h2>Storage</h2>
+<p class="lede">What Kubernetes workloads can mount or call, by storage type.</p>
+<div class="tbl">
+<table>
+<thead><tr><th>Capability</th><th>Verdict</th><th class="th-base">Agnostic baseline</th><th>AWS</th><th>GCP</th><th>Azure</th></tr></thead>
+<tbody>
+<tr>
+  <td class="cap">Object storage<small>S3-like</small></td>
+  <td class="verdict"><i class="pill part">Partial</i></td>
+  <td class="base" data-label="Agnostic baseline">Talk to object storage through an abstraction (fsspec / rclone / obstore, or an S3 shim on Azure), not raw S3 everywhere. Treat FUSE mounts as a convenience, not the primary data path — semantics differ per driver.</td>
+  <td class="cloud" data-label="AWS"><b>S3</b><span>S3 API (de facto standard). Mount: Mountpoint for S3 CSI.</span><div class="docs"><a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html">S3 user guide</a> <a href="https://docs.aws.amazon.com/eks/latest/userguide/s3-csi.html">Mountpoint S3 CSI</a></div></td>
+  <td class="cloud" data-label="GCP"><b>Cloud Storage (GCS)</b><span>Native JSON API; S3-interop XML API with HMAC keys. Mount: GCS FUSE CSI.</span><div class="docs"><a href="https://docs.cloud.google.com/storage/docs/interoperability">S3 interoperability</a> <a href="https://docs.cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/cloud-storage-fuse-csi-driver">GCS FUSE CSI</a></div></td>
+  <td class="cloud" data-label="Azure"><b>Blob Storage</b><span>No S3-compatible API — needs a shim (e.g. s3proxy). Mount: Blob CSI (BlobFuse2 / NFS 3.0).</span><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview">Blob overview</a> <a href="https://learn.microsoft.com/en-us/azure/aks/create-volume-azure-blob-storage">Blob CSI on AKS</a></div></td>
+</tr>
+<tr>
+  <td class="cap">Block, zonal<small>RWO PVC</small></td>
+  <td class="verdict"><i class="pill ok">Parity</i></td>
+  <td class="base" data-label="Agnostic baseline">RWO, <code>WaitForFirstConsumer</code>, online expansion, CSI <code>VolumeSnapshot</code>. Volumes are zone-pinned on all three — pods follow the disk.</td>
+  <td class="cloud" data-label="AWS"><b>EBS</b><span>gp3 / io2. EBS CSI.</span><div class="docs"><a href="https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html">EBS volume types</a> <a href="https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html">EBS CSI</a></div></td>
+  <td class="cloud" data-label="GCP"><b>Persistent Disk / Hyperdisk</b><span>pd-balanced, Hyperdisk Balanced. PD CSI.</span><div class="docs"><a href="https://docs.cloud.google.com/compute/docs/disks">Disk types</a> <a href="https://docs.cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/gce-pd-csi-driver">PD CSI</a></div></td>
+  <td class="cloud" data-label="Azure"><b>Managed Disks (LRS)</b><span>Premium SSD v1/v2. Azure Disk CSI.</span><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/virtual-machines/disks-types">Disk types</a> <a href="https://learn.microsoft.com/en-us/azure/aks/create-volume-azure-disk">Disk CSI on AKS</a></div></td>
+</tr>
+<tr>
+  <td class="cap">Block, multi-zone<small>sync-replicated disk</small></td>
+  <td class="verdict"><i class="pill gap">Gap</i></td>
+  <td class="base" data-label="Agnostic baseline">Don't depend on it. Get zone resilience at the app layer (DB replication, operators) or via snapshot → restore in another zone.</td>
+  <td class="cloud na" data-label="AWS"><b>None</b><span>EBS is single-AZ. Multi-Attach (io1/io2) is same-AZ only.</span><div class="docs"><a href="https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volumes-multi.html">EBS Multi-Attach</a></div></td>
+  <td class="cloud" data-label="GCP"><b>Regional PD / Hyperdisk Balanced HA</b><span>Sync across 2 zones.</span><div class="docs"><a href="https://docs.cloud.google.com/compute/docs/disks/high-availability-regional-persistent-disk">Regional PD</a> <a href="https://docs.cloud.google.com/compute/docs/disks/hd-types/hyperdisk-balanced-ha">Hyperdisk Balanced HA</a></div></td>
+  <td class="cloud" data-label="Azure"><b>ZRS Managed Disks</b><span>Premium SSD / Standard SSD ZRS, sync across 3 zones. Not available for Premium SSD v2 or Ultra.</span><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/virtual-machines/disks-redundancy">Disk redundancy</a></div></td>
+</tr>
+<tr>
+  <td class="cap">Block clone<small>PVC <code>dataSource</code> = PVC</small></td>
+  <td class="verdict"><i class="pill ok">Parity</i></td>
+  <td class="base" data-label="Agnostic baseline">Same-zone clones work on all three. To copy a volume into another zone, go snapshot → restore.</td>
+  <td class="cloud" data-label="AWS"><b>Supported</b><span>EBS CSI v1.51.0+, same AZ only.</span><div class="docs"><a href="https://github.com/kubernetes-sigs/aws-ebs-csi-driver/tree/master/examples/kubernetes/clone">EBS CSI clone example</a></div></td>
+  <td class="cloud" data-label="GCP"><b>Supported</b><span>PD CSI volume cloning; clone stays in the source zone.</span><div class="docs"><a href="https://docs.cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/volume-cloning">Volume cloning</a></div></td>
+  <td class="cloud" data-label="Azure"><b>Supported</b><span>Azure Disk CSI volume cloning.</span><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/aks/create-volume-azure-disk">Disk CSI: clone volumes</a></div></td>
+</tr>
+<tr>
+  <td class="cap">Shared file, general<small>EFS-like, RWX NFS</small></td>
+  <td class="verdict"><i class="pill part">Partial</i></td>
+  <td class="base" data-label="Agnostic baseline">RWX via an NFS CSI StorageClass. Set capacity explicitly and assume a minimum size + provisioned pricing — only EFS is truly elastic. Don't lean on NFS locking or small-file performance.</td>
+  <td class="cloud" data-label="AWS"><b>EFS</b><span>Regional (multi-AZ) or One Zone; elastic — no capacity to size. NFSv4.0/4.1. EFS CSI.</span><div class="docs"><a href="https://docs.aws.amazon.com/efs/latest/ug/whatisefs.html">EFS</a> <a href="https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html">EFS CSI</a></div></td>
+  <td class="cloud" data-label="GCP"><b>Filestore</b><span>Provisioned capacity (Basic HDD min 1 TiB, Basic SSD 2.5 TiB; Regional from 100 GiB). Zonal or regional tiers. NFSv3; v4.1 on all non-Basic tiers. Filestore CSI.</span><div class="docs"><a href="https://docs.cloud.google.com/filestore/docs/service-tiers">Service tiers</a> <a href="https://docs.cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/filestore-csi-driver">Filestore CSI</a></div></td>
+  <td class="cloud" data-label="Azure"><b>Azure Files (NFS)</b><span>NFSv4.1 on SSD (provisioned) shares only; LRS or ZRS. Azure Files CSI.</span><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/storage/files/files-nfs-protocol">NFS file shares</a> <a href="https://learn.microsoft.com/en-us/azure/aks/create-volume-azure-files">Files CSI on AKS</a></div></td>
+</tr>
+<tr>
+  <td class="cap">Shared file, high-perf<small>FSx OpenZFS-like: snapshots, clones, low latency</small></td>
+  <td class="verdict"><i class="pill part">Partial</i></td>
+  <td class="base" data-label="Agnostic baseline">OpenZFS is AWS-only. If this tier is needed, <b>NetApp ONTAP is the one cross-cloud option</b> (FSx ONTAP / GCNV / ANF), all driven by the same Trident CSI. Otherwise stay on the general RWX tier.</td>
+  <td class="cloud" data-label="AWS"><b>FSx for OpenZFS</b><span>Multi-AZ, Single-AZ HA or Single-AZ non-HA. Also FSx for NetApp ONTAP.</span><div class="docs"><a href="https://docs.aws.amazon.com/fsx/latest/OpenZFSGuide/availability-durability.html">OpenZFS deployment types</a> <a href="https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/what-is-fsx-ontap.html">FSx for ONTAP</a></div></td>
+  <td class="cloud" data-label="GCP"><b>Google Cloud NetApp Volumes</b><span>No OpenZFS offering.</span><div class="docs"><a href="https://docs.cloud.google.com/netapp/volumes/docs/discover/overview">NetApp Volumes</a> <a href="https://docs.netapp.com/us-en/trident/trident-get-started/requirements.html">Trident requirements</a></div></td>
+  <td class="cloud" data-label="Azure"><b>Azure NetApp Files</b><span>No OpenZFS offering.</span><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-introduction">Azure NetApp Files</a> <a href="https://learn.microsoft.com/en-us/azure/aks/azure-netapp-files">ANF on AKS</a></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cols">
+  <div class="box do">
+    <h3>Build to this</h3>
+    <ul>
+      <li>StorageClasses named by role (<code>block-rwo</code>, <code>shared-rwx</code>), mapped per cloud; charts reference the role name only.</li>
+      <li>Zonal RWO block with <code>WaitForFirstConsumer</code>, expansion and CSI snapshots.</li>
+      <li>RWX over NFS CSI, explicitly sized.</li>
+      <li>Object storage via an abstraction layer, not hardcoded S3.</li>
+    </ul>
+  </div>
+  <div class="box avoid">
+    <h3>Avoid in shared code</h3>
+    <ul>
+      <li>Multi-zone replicated disks (no AWS equivalent).</li>
+      <li>Cross-zone clones — clones are same-zone on every cloud.</li>
+      <li>OpenZFS-specific features; elastic-sizing assumptions from EFS.</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<section id="autoscaling">
+<h2>Node autoscaling</h2>
+<p class="lede">How the cluster adds and removes nodes for pending pods.</p>
+<div class="tbl">
+<table>
+<thead><tr><th>Capability</th><th>Verdict</th><th class="th-base">Agnostic baseline</th><th>AWS</th><th>GCP</th><th>Azure</th></tr></thead>
+<tbody>
+<tr>
+  <td class="cap">Classic node-group autoscaling<small>Cluster Autoscaler</small></td>
+  <td class="verdict"><i class="pill ok">Parity</i></td>
+  <td class="base" data-label="Agnostic baseline">The true lowest common denominator: pre-defined pools, scale min/max. Less bin-packing efficiency, but identical model everywhere.</td>
+  <td class="cloud" data-label="AWS"><b>Managed node groups + CA</b><div class="docs"><a href="https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html">Managed node groups</a> <a href="https://docs.aws.amazon.com/eks/latest/best-practices/cas.html">Cluster Autoscaler</a></div></td>
+  <td class="cloud" data-label="GCP"><b>Node pools + built-in CA</b><div class="docs"><a href="https://docs.cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler">Cluster autoscaler</a></div></td>
+  <td class="cloud" data-label="Azure"><b>Node pools + built-in CA</b><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/aks/cluster-autoscaler-overview">Cluster autoscaler</a></div></td>
+</tr>
+<tr>
+  <td class="cap">Managed node auto-provisioning<small>Karpenter-like: picks instance types per pending pod</small></td>
+  <td class="verdict"><i class="pill part">Partial</i></td>
+  <td class="base" data-label="Agnostic baseline">AWS and Azure share the Karpenter <code>NodePool</code> API; GCP doesn't. Keep workloads cloud-neutral by expressing needs only through resource requests and well-known labels (<code>kubernetes.io/arch</code>, <code>topology.kubernetes.io/zone</code>), and keep NodePool/ComputeClass definitions in the per-cloud layer.</td>
+  <td class="cloud" data-label="AWS"><b>EKS Auto Mode</b><span>Managed Karpenter. <code>NodePool</code> (karpenter.sh/v1) + EKS <code>NodeClass</code>.</span><div class="docs"><a href="https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html">NodePool</a> <a href="https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html">NodeClass</a></div></td>
+  <td class="cloud" data-label="GCP"><b>Node auto-provisioning + ComputeClasses</b><span>Google's own model, not Karpenter. The Karpenter GCP provider is a community project (CloudPilot AI), not Google-supported.</span><div class="docs"><a href="https://docs.cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning">Node auto-provisioning</a> <a href="https://docs.cloud.google.com/kubernetes-engine/docs/concepts/about-custom-compute-classes">ComputeClasses</a></div></td>
+  <td class="cloud" data-label="Azure"><b>AKS Node Auto Provisioning</b><span>Managed Karpenter, GA. <code>NodePool</code> (karpenter.sh/v1) + <code>AKSNodeClass</code>.</span><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/aks/node-auto-provisioning">Node auto-provisioning</a> <a href="https://karpenter.sh/docs/concepts/nodepools/">Karpenter NodePools</a></div></td>
+</tr>
+<tr>
+  <td class="cap">Spot / preemptible selection</td>
+  <td class="verdict"><i class="pill part">Partial</i></td>
+  <td class="base" data-label="Agnostic baseline">Labels and taints differ. Don't hardcode them in app charts — inject a per-cloud nodeSelector/toleration value, or define your own label (e.g. <code>nodeclass=spot</code>) on every cloud's pools.</td>
+  <td class="cloud" data-label="AWS"><b><code>karpenter.sh/capacity-type: spot</code></b><span>Managed node groups: <code>eks.amazonaws.com/capacityType: SPOT</code></span><div class="docs"><a href="https://karpenter.sh/docs/concepts/scheduling/">Karpenter labels</a> <a href="https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html">MNG capacity types</a></div></td>
+  <td class="cloud" data-label="GCP"><b><code>cloud.google.com/gke-spot: "true"</code></b><span>Also <code>cloud.google.com/gke-provisioning: spot</code>.</span><div class="docs"><a href="https://docs.cloud.google.com/kubernetes-engine/docs/concepts/spot-vms">Spot VMs</a></div></td>
+  <td class="cloud" data-label="Azure"><b><code>karpenter.sh/capacity-type: spot</code></b><span>Node pools: <code>kubernetes.azure.com/scalesetpriority: spot</code> label + matching <code>NoSchedule</code> taint.</span><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/aks/spot-node-pool">Spot node pools</a></div></td>
+</tr>
+<tr>
+  <td class="cap">Opinionated "fully managed" mode</td>
+  <td class="verdict"><i class="pill part">Partial</i></td>
+  <td class="base" data-label="Agnostic baseline">Same intent, different guardrails. If you target these, design to Autopilot's restrictions (no privileged pods, no hostPath writes, requests on every container) — the strictest one sets the bar.</td>
+  <td class="cloud" data-label="AWS"><b>EKS Auto Mode</b><span>Built-in Karpenter compute, EBS storage, load balancing, pod networking, DNS, Pod Identity. EFS / FSx / S3 CSI installed separately.</span><div class="docs"><a href="https://docs.aws.amazon.com/eks/latest/userguide/automode.html">Auto Mode</a></div></td>
+  <td class="cloud" data-label="GCP"><b>GKE Autopilot</b><span>Per-pod billing. Blocks privileged pods (except allowlisted partners) and hostPath writes (read-only <code>/var/log</code> only); non-privileged DaemonSets are fine.</span><div class="docs"><a href="https://docs.cloud.google.com/kubernetes-engine/docs/concepts/autopilot-overview">Autopilot overview</a> <a href="https://docs.cloud.google.com/kubernetes-engine/docs/concepts/autopilot-security">Autopilot security</a></div></td>
+  <td class="cloud" data-label="Azure"><b>AKS Automatic</b><span>Preconfigured node auto-provisioning, KEDA, VPA; Deployment Safeguards and baseline Pod Security Standards enforced.</span><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/aks/intro-aks-automatic">AKS Automatic</a></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="cols">
+  <div class="box do">
+    <h3>Build to this</h3>
+    <ul>
+      <li>Workloads schedule on resource requests and well-known labels (<code>kubernetes.io/arch</code>, <code>topology.kubernetes.io/zone</code>) only.</li>
+      <li>NodePool / ComputeClass / node-pool definitions live in the per-cloud layer, never in app charts.</li>
+      <li>Every container sets requests; no privileged pods or hostPath — passes the strictest managed mode.</li>
+    </ul>
+  </div>
+  <div class="box avoid">
+    <h3>Avoid in shared code</h3>
+    <ul>
+      <li>Cloud-specific spot / capacity labels.</li>
+      <li>Karpenter <code>NodePool</code> CRDs as a portable API — GKE doesn't have them.</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<section id="managed-storage">
+<h2>Storage on managed modes</h2>
+<p class="lede">Which of the storage types above each fully managed cluster mode runs out of the box, and which you add yourself.</p>
+<div class="legend">
+  <span><i class="pill ok">Built in</i> enabled by default</span>
+  <span><i class="pill part">Add-on</i> supported, you install it</span>
+  <span><i class="pill gap">No</i> not available or not supported</span>
+</div>
+<div class="tbl">
+<table class="matrix">
+<thead><tr><th>Storage</th><th>EKS Auto Mode</th><th>GKE Autopilot</th><th>AKS Automatic</th></tr></thead>
+<tbody>
+<tr><td class="cap">Block, zonal</td><td data-label="EKS Auto Mode"><i class="pill ok">Built in</i><span>EBS via <code>ebs.csi.eks.amazonaws.com</code>. You create the StorageClass; volumes from the standard <code>ebs.csi.aws.com</code> driver aren't managed by Auto Mode.</span><div class="docs"><a href="https://docs.aws.amazon.com/eks/latest/userguide/create-storage-class.html">Auto Mode StorageClass</a></div></td><td data-label="GKE Autopilot"><i class="pill ok">Built in</i><span>PD CSI is always on and can't be disabled.</span><div class="docs"><a href="https://docs.cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/gce-pd-csi-driver">PD CSI</a></div></td><td data-label="AKS Automatic"><i class="pill ok">Built in</i><span>Azure Disk CSI on by default.</span><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/aks/csi-storage-drivers">AKS CSI drivers</a></div></td></tr>
+<tr><td class="cap">Block, multi-zone</td><td data-label="EKS Auto Mode"><i class="pill gap">No</i><span>EBS has no multi-AZ volume.</span></td><td data-label="GKE Autopilot"><i class="pill ok">Built in</i><span>Regional PD and Hyperdisk Balanced HA.</span><div class="docs"><a href="https://docs.cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/regional-pd">Regional PD on GKE</a></div></td><td data-label="AKS Automatic"><i class="pill ok">Built in</i><span>Default StorageClasses use ZRS disks on zonal clusters (K8s 1.29+), except <code>managed-csi-premium-v2</code>.</span><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/aks/csi-storage-drivers">AKS CSI drivers</a></div></td></tr>
+<tr><td class="cap">Shared file (NFS)</td><td data-label="EKS Auto Mode"><i class="pill part">Add-on</i><span>EFS CSI add-on, supported on Auto Mode.</span><div class="docs"><a href="https://docs.aws.amazon.com/eks/latest/userguide/workloads-add-ons-available-eks.html">Add-on compatibility</a></div></td><td data-label="GKE Autopilot"><i class="pill ok">Built in</i><span>Filestore CSI enabled by default.</span><div class="docs"><a href="https://docs.cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/filestore-csi-driver">Filestore CSI</a></div></td><td data-label="AKS Automatic"><i class="pill ok">Built in</i><span>Azure Files CSI on by default.</span><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/aks/csi-storage-drivers">AKS CSI drivers</a></div></td></tr>
+<tr><td class="cap">Object storage mount</td><td data-label="EKS Auto Mode"><i class="pill part">Add-on</i><span>Mountpoint for S3 CSI add-on, supported on Auto Mode.</span><div class="docs"><a href="https://docs.aws.amazon.com/eks/latest/userguide/workloads-add-ons-available-eks.html">Add-on compatibility</a></div></td><td data-label="GKE Autopilot"><i class="pill ok">Built in</i><span>GCS FUSE CSI enabled by default.</span><div class="docs"><a href="https://docs.cloud.google.com/kubernetes-engine/docs/how-to/cloud-storage-fuse-csi-driver-setup">GCS FUSE setup</a></div></td><td data-label="AKS Automatic"><i class="pill part">Add-on</i><span>Blob CSI is opt-in (<code>--enable-blob-driver</code>).</span><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/aks/csi-storage-drivers">AKS CSI drivers</a></div></td></tr>
+<tr><td class="cap">Shared file, high-perf</td><td data-label="EKS Auto Mode"><i class="pill gap">Not documented</i><span>FSx for OpenZFS CSI and Trident (FSx ONTAP) aren't in the Auto Mode add-on compatibility list. FSx for Lustre CSI is.</span><div class="docs"><a href="https://docs.aws.amazon.com/eks/latest/userguide/workloads-add-ons-available-eks.html">Add-on compatibility</a></div></td><td data-label="GKE Autopilot"><i class="pill gap">Not documented</i><span>Trident's node pods need privileged access and NetApp isn't on the Autopilot partner allowlist — likely unsupported.</span><div class="docs"><a href="https://docs.cloud.google.com/kubernetes-engine/docs/resources/autopilot-partners">Autopilot partners</a></div></td><td data-label="AKS Automatic"><i class="pill gap">Not documented</i><span>Not documented for Automatic; baseline Pod Security Standards would likely block Trident's privileged node pods.</span><div class="docs"><a href="https://learn.microsoft.com/en-us/azure/aks/azure-netapp-files">ANF on AKS</a></div></td></tr>
+</tbody>
+</table>
+</div>
+<div class="cols">
+  <div class="box do">
+    <h3>Build to this</h3>
+    <ul>
+      <li>Zonal block is the only storage built in on all three managed modes.</li>
+      <li>Shared NFS and object mounts work everywhere, but are add-ons on EKS Auto Mode (and Blob CSI on AKS) — install them in the per-cloud layer.</li>
+    </ul>
+  </div>
+  <div class="box avoid">
+    <h3>Avoid in shared code</h3>
+    <ul>
+      <li>The NetApp/Trident high-perf tier on managed modes — use standard node groups / pools where that tier is needed.</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<p class="foot">Doc links checked 27 October 2026. Managed-mode feature lists move fast — check the linked docs before committing to a specific add-on or label.</p>
+</div>
+</body>
+</html>
