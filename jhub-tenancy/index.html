@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>JupyterHub Tenancy Models</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Nebari design tokens (nebari-dev/nebari-design registry/nebari/globals.css), mapped to this page's roles. */
+:root{
+  --bg:#ffffff; --surface:#ffffff; --ink:#262628; --muted:#5a5a61; --faint:#70707a; --line:#d9d9dc; --line-strong:#b7b7bb;
+  --accent:#9547c0; --accent-hover:#77399a; --ring:#b053e2; --head:#f8f8f8; --base-bg:#f7f1fa;
+  --a-fg:#77399a; --b-fg:#1d5aa8; --gap-fg:#d2161c;
+  --radius:0.625rem;
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#1a1a1c; --surface:#262628; --ink:#f8f8f8; --muted:#b7b7bb; --faint:#9d9da6; --line:#4a4a50; --line-strong:#5a5a61;
+    --accent:#c575f4; --accent-hover:#d79bf8; --ring:#c575f4; --head:#353538; --base-bg:#2e2635;
+    --a-fg:#dcb4f7; --b-fg:#a9cbf5; --gap-fg:#f29e93;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#1a1a1c; --surface:#262628; --ink:#f8f8f8; --muted:#b7b7bb; --faint:#9d9da6; --line:#4a4a50; --line-strong:#5a5a61;
+  --accent:#c575f4; --accent-hover:#d79bf8; --ring:#c575f4; --head:#353538; --base-bg:#2e2635;
+  --a-fg:#dcb4f7; --b-fg:#a9cbf5; --gap-fg:#f29e93;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;overflow-wrap:break-word}
+.wrap{max-width:960px;margin:0 auto;padding-inline:20px;padding-block:36px 56px}
+p{margin:0;color:var(--muted)}
+b{color:var(--ink)}
+code{font-family:var(--mono);font-size:.86em;background:var(--head);border:1px solid var(--line);padding:0 4px;border-radius:calc(var(--radius)*.5)}
+a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
+a:hover{color:var(--accent-hover);text-decoration-thickness:2px}
+a:focus-visible{outline:2px solid var(--ring);outline-offset:2px;border-radius:2px}
+header{display:grid;gap:12px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(23px,3.2vw,30px);line-height:1.2;margin:0;font-weight:700;letter-spacing:-.025em;text-wrap:balance}
+.summary{border-left:4px solid var(--accent);background:var(--base-bg);border-radius:var(--radius);padding:14px 18px;font-size:15px;color:var(--ink)}
+section{display:grid;gap:12px;padding-top:28px;margin-top:28px;border-top:1px solid var(--line-strong)}
+h2{margin:0;font-size:19px;line-height:1.25;font-weight:600}
+
+/* SVG diagrams: colours come from the page tokens, so they follow light/dark */
+.figs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+figure{margin:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px 12px 14px;display:grid;gap:8px;align-content:start}
+figcaption{font-family:var(--mono);font-size:12px;letter-spacing:.07em;text-transform:uppercase}
+figcaption.a{color:var(--a-fg)} figcaption.b{color:var(--b-fg)}
+figure p{font-size:13px}
+svg.dg{width:100%;height:auto;display:block}
+.dg text{font-family:var(--sans);font-size:13px;fill:var(--ink)}
+.dg text.s{font-size:12px;fill:var(--muted)}
+.dg text.mid{text-anchor:middle}
+.dg text.r{fill:var(--gap-fg);font-weight:600}
+.dg .bx{fill:var(--head);stroke:var(--line-strong)}
+.dg .hubA{fill:var(--base-bg);stroke:var(--a-fg);stroke-width:1.5}
+.dg .hubB{fill:var(--base-bg);stroke:var(--b-fg);stroke-width:1.5}
+.dg .nsA{fill:none;stroke:var(--a-fg);stroke-dasharray:6 4}
+.dg .nsB{fill:none;stroke:var(--b-fg);stroke-dasharray:6 4}
+.dg .wall{stroke:var(--ink);stroke-width:5;stroke-linecap:round}
+.dg .ln{stroke:var(--muted);stroke-width:1.5;fill:none}
+.dg .ah{fill:var(--muted)}
+.dg .risk{stroke:var(--gap-fg);stroke-width:3;fill:none}
+.dg .ahr{fill:var(--gap-fg)}
+.dg .bar{stroke:var(--gap-fg);stroke-width:2;stroke-dasharray:7 5}
+.dg .bg{fill:var(--surface)}
+.dg .rlab{fill:var(--surface);stroke:var(--gap-fg);stroke-width:1.5}
+.shape{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:center}
+.shape p{font-size:14px;color:var(--ink)}
+
+/* Comparison table */
+table{border-collapse:separate;border-spacing:0;width:100%;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden}
+th,td{text-align:left;vertical-align:top;padding:11px 14px;border-bottom:1px solid var(--line)}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:none}
+thead th{background:var(--head);font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+thead th.a{color:var(--a-fg)} thead th.b{color:var(--b-fg)}
+tbody th{width:20%;font-weight:600;background:var(--head)}
+td{width:40%;color:var(--ink)}
+ul{margin:0;padding-left:18px;display:grid;gap:6px}
+li::marker{color:var(--faint)}
+.note{font-size:13px}
+.foot{margin-top:32px;font-size:12px;color:var(--muted)}
+
+@media (max-width:640px){
+  .wrap{padding-inline:16px;padding-block:24px 40px}
+  table,thead,tbody,tr,th,td{display:block;width:auto}
+  table{border:0;background:none}
+  tbody th,td{width:auto}
+  .figs,.shape{grid-template-columns:1fr}
+  thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+  tbody{display:grid;gap:10px}
+  tbody tr{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden}
+  tbody tr:last-child th,tbody tr:last-child td{border-bottom:1px solid var(--line)}
+  tbody tr td:last-child{border-bottom:none!important}
+  td::before{content:attr(data-label);display:block;font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:2px}
+  td.a::before{color:var(--a-fg)} td.b::before{color:var(--b-fg)}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Nebari multi-tenancy · JupyterHub</div>
+  <h1>Notebooks for many tenants: a hub per tenant, or one shared hub?</h1>
+  <p class="summary"><b>Recommendation:</b> run two tiers. A <b>shared demo tier</b> (one hub and shared apps on sample data) lets anyone try the platform, holding no tenant credentials and no rights in any tenant. Real work runs in a <b>JupyterHub per tenant</b>, inside the tenant's namespace. Avoid one shared hub that maps users into tenants: it must be able to start pods as every tenant, so one bug or breach reaches all of them.</p>
+</header>
+
+<section>
+<h2>The two options</h2>
+<div class="figs">
+<figure>
+<figcaption class="a">A · Hub per tenant</figcaption>
+<svg class="dg" viewBox="0 0 360 330" role="img" aria-labelledby="tA dA">
+  <title id="tA">Option A: a hub per tenant</title>
+  <desc id="dA">Users pass a gateway group check and reach their own tenant's hub. Each tenant namespace holds its own hub and notebooks, with its own identity, storage and node pool. A wall separates the tenants.</desc>
+  <defs><marker id="ahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+  <rect class="bx" x="120" y="6" width="120" height="30" rx="15"/>
+  <text class="mid" x="180" y="26">Users</text>
+  <path class="ln" d="M180 36 V55" marker-end="url(#ahA)"/>
+  <rect class="bx" x="55" y="58" width="250" height="30" rx="7"/>
+  <text class="mid" x="180" y="78">Gateway · group check</text>
+  <path class="ln" d="M130 88 L92 125" marker-end="url(#ahA)"/>
+  <path class="ln" d="M230 88 L268 125" marker-end="url(#ahA)"/>
+  <rect class="nsA" x="8" y="128" width="164" height="196" rx="10"/>
+  <rect class="hubA" x="20" y="140" width="140" height="32" rx="7"/>
+  <text class="mid" x="90" y="161">Tenant A hub</text>
+  <path class="ln" d="M90 172 V187" marker-end="url(#ahA)"/>
+  <rect class="bx" x="20" y="190" width="140" height="30" rx="7"/>
+  <text class="mid" x="90" y="210">notebooks</text>
+  <text x="24" y="244">• own identity</text>
+  <text x="24" y="266">• own storage</text>
+  <text x="24" y="288">• own node pool</text>
+  <text class="s" x="18" y="314">tenant A namespace</text>
+  <rect class="nsA" x="188" y="128" width="164" height="196" rx="10"/>
+  <rect class="hubA" x="200" y="140" width="140" height="32" rx="7"/>
+  <text class="mid" x="270" y="161">Tenant B hub</text>
+  <path class="ln" d="M270 172 V187" marker-end="url(#ahA)"/>
+  <rect class="bx" x="200" y="190" width="140" height="30" rx="7"/>
+  <text class="mid" x="270" y="210">notebooks</text>
+  <text x="204" y="244">• own identity</text>
+  <text x="204" y="266">• own storage</text>
+  <text x="204" y="288">• own node pool</text>
+  <text class="s" x="198" y="314">tenant B namespace</text>
+  <line class="wall" x1="180" y1="122" x2="180" y2="326"/>
+</svg>
+<p>Each hub can only act inside its own tenant. A breach or bug stays there.</p>
+</figure>
+<figure>
+<figcaption class="b">B · Shared hub, mapped at spawn</figcaption>
+<svg class="dg" viewBox="0 0 360 392" role="img" aria-labelledby="tB dB">
+  <title id="tB">Option B: one shared hub mapped at spawn</title>
+  <desc id="dB">Users reach one shared hub in a platform namespace. A pre-spawn hook picks the tenant profile, and the hub creates notebook pods inside every tenant namespace. That cross-namespace privilege, shown in red, crosses every wall between tenants.</desc>
+  <defs>
+    <marker id="ahB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker>
+    <marker id="ahR" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path class="ahr" d="M0 0L10 5L0 10z"/></marker>
+  </defs>
+  <rect class="bx" x="120" y="6" width="120" height="30" rx="15"/>
+  <text class="mid" x="180" y="26">Users</text>
+  <path class="ln" d="M180 36 V55" marker-end="url(#ahB)"/>
+  <rect class="nsB" x="40" y="58" width="280" height="104" rx="10"/>
+  <text class="s" x="50" y="77">platform namespace</text>
+  <rect class="hubB" x="66" y="86" width="228" height="30" rx="7"/>
+  <text class="mid" x="180" y="106">One shared hub</text>
+  <rect class="bx" x="66" y="122" width="228" height="30" rx="7"/>
+  <text class="mid" x="180" y="142">pre-spawn hook picks tenant</text>
+  <rect class="nsA" x="8" y="222" width="164" height="166" rx="10"/>
+  <rect class="bx" x="20" y="236" width="140" height="30" rx="7"/>
+  <text class="mid" x="90" y="256">notebook pods</text>
+  <text x="24" y="290">• A identity</text>
+  <text x="24" y="312">• A storage</text>
+  <text x="24" y="334">• A node pool</text>
+  <text class="s" x="18" y="376">tenant A namespace</text>
+  <rect class="nsA" x="188" y="222" width="164" height="166" rx="10"/>
+  <rect class="bx" x="200" y="236" width="140" height="30" rx="7"/>
+  <text class="mid" x="270" y="256">notebook pods</text>
+  <text x="204" y="290">• B identity</text>
+  <text x="204" y="312">• B storage</text>
+  <text x="204" y="334">• B node pool</text>
+  <text class="s" x="198" y="376">tenant B namespace</text>
+  <line class="wall" x1="180" y1="216" x2="180" y2="390"/>
+  <path class="risk" d="M120 152 L90 233" marker-end="url(#ahR)"/>
+  <path class="risk" d="M240 152 L270 233" marker-end="url(#ahR)"/>
+  <rect class="rlab" x="70" y="172" width="220" height="26" rx="13"/>
+  <text class="mid r" x="180" y="190">can create pods in every tenant</text>
+</svg>
+<p>The hub's permission (red) crosses every wall, so a breach or mapping bug reaches every tenant.</p>
+</figure>
+</div>
+</section>
+
+<section>
+<h2>Per-tenant hub vs shared hub that maps users to tenants</h2>
+<table>
+<thead><tr><th></th><th class="a">Hub per tenant</th><th class="b">Shared hub, mapped at spawn</th></tr></thead>
+<tbody>
+<tr><th>Blast radius</th><td class="a" data-label="Hub per tenant">One tenant</td><td class="b" data-label="Shared hub">Every tenant</td></tr>
+<tr><th>Hub privileges</th><td class="a" data-label="Hub per tenant">Stock Role in its own namespace</td><td class="b" data-label="Shared hub">Pod-create in every tenant namespace, which means every tenant's ServiceAccounts, Secrets and cloud role</td></tr>
+<tr><th>How it fails</th><td class="a" data-label="Hub per tenant">Closed: wrong group is refused at the gateway and the hub; a config typo breaks only that tenant</td><td class="b" data-label="Shared hub">Can fail open: a loose group match, a fallback profile or an empty profile list can place a user in the wrong tenant or the hub's default</td></tr>
+<tr><th>Ops effort</th><td class="a" data-label="Hub per tenant">N hubs, N Keycloak clients, N upgrades, all templated from one tenant list</td><td class="b" data-label="Shared hub">One hub and client, but one outage hits everyone, and each new tenant changes the shared hub</td></tr>
+<tr><th>User experience</th><td class="a" data-label="Hub per tenant">One URL per tenant; separate homes per tenant</td><td class="b" data-label="Shared hub">One URL; pick the tenant from a profile list</td></tr>
+<tr><th>Wins when</th><td class="a" data-label="Hub per tenant">Tenants are security boundaries with their own cloud identity</td><td class="b" data-label="Shared hub">Tenants are many, small and mutually trusted</td></tr>
+</tbody>
+</table>
+</section>
+
+<section>
+<h2>Recommended shape</h2>
+<div class="shape">
+<figure><svg class="dg" viewBox="0 0 360 250" role="img" aria-labelledby="tT dT">
+  <title id="tT">Recommended: a shared demo tier above per-tenant instances</title>
+  <desc id="dT">On top, a shared demo tier for any user with a demo hub, demo apps and sample data. A red barrier marks that it has no rights in tenants. Below, each tenant has its own hub and app copies, its tenant identity and its tenant data, separated by a wall.</desc>
+  <rect class="nsB" x="6" y="6" width="348" height="80" rx="10"/>
+  <text class="s" x="18" y="26">Shared demo tier · any user</text>
+  <rect class="hubB" x="18" y="40" width="96" height="30" rx="7"/><text class="mid" x="66" y="60">demo hub</text>
+  <rect class="bx" x="124" y="40" width="100" height="30" rx="7"/><text class="mid" x="174" y="60">demo apps</text>
+  <rect class="bx" x="234" y="40" width="108" height="30" rx="7"/><text class="mid" x="288" y="60">sample data</text>
+  <line class="bar" x1="6" y1="106" x2="354" y2="106"/>
+  <rect class="rlab" x="100" y="93" width="160" height="26" rx="13"/>
+  <text class="mid r" x="180" y="111">no rights in tenants</text>
+  <rect class="nsA" x="6" y="128" width="166" height="116" rx="10"/>
+  <text class="s" x="18" y="148">Tenant A · its members</text>
+  <text x="18" y="174">• own hub + apps</text>
+  <text x="18" y="198">• tenant identity</text>
+  <text x="18" y="222">• tenant data</text>
+  <rect class="nsA" x="188" y="128" width="166" height="116" rx="10"/>
+  <text class="s" x="200" y="148">Tenant B · its members</text>
+  <text x="200" y="174">• own hub + apps</text>
+  <text x="200" y="198">• tenant identity</text>
+  <text x="200" y="222">• tenant data</text>
+  <line class="wall" x1="180" y1="126" x2="180" y2="246"/>
+</svg></figure>
+<p>Anyone can try the platform in the shared demo tier, which holds only sample data and has no rights in any tenant. To do real work, a user is added to a tenant's group. Notebooks move over through a Git repo; nothing is copied from the demo hub, and tenant data never flows back to the demo tier.</p>
+</div>
+</section>
+
+<section>
+<h2>When the shared mapping hub wins</h2>
+<ul>
+  <li><b>Many small tenants</b>, such as one per project or per person, where N hubs stop being a handful.</li>
+  <li><b>Tenants are budgets, not boundaries</b>: one organisation splitting quota, with no per-tenant cloud identity.</li>
+  <li><b>Most users work across many tenants</b> and one URL matters more than separation.</li>
+</ul>
+<p class="note">If you build it anyway: deny by default, match full group paths exactly, and give the hub a Role per tenant namespace rather than a ClusterRole. Avoid letting a shared component impersonate users: unrestricted user impersonation can reach cluster-admin.</p>
+</section>
+
+<section>
+<h2>Sources</h2>
+<ul>
+  <li><a href="https://github.com/nebari-dev/nebari-infrastructure-core/pull/674">Nebari multi-tenancy design doc (NIC#674)</a></li>
+  <li><a href="https://jupyterhub-kubespawner.readthedocs.io/en/latest/spawner.html">KubeSpawner configuration</a> (<code>profile_list</code>, <code>enable_user_namespaces</code>)</li>
+  <li><a href="https://z2jh.jupyter.org/en/stable/administrator/security.html">Zero to JupyterHub: security</a></li>
+  <li><a href="https://kubernetes.io/docs/concepts/security/rbac-good-practices/#workload-creation">Kubernetes RBAC good practices: workload creation</a></li>
+  <li><a href="https://kubernetes.io/docs/concepts/security/rbac-good-practices/#impersonate-verb">Kubernetes RBAC good practices: impersonate verb</a></li>
+</ul>
+</section>
+
+<p class="foot">October 2026.</p>
+</div>
+</body>
+</html>
