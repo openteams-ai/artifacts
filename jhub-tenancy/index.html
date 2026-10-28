@@ -73,6 +73,8 @@ svg.dg{width:100%;height:auto;display:block}
 .dg .rlab{fill:var(--surface);stroke:var(--gap-fg);stroke-width:1.5}
 .shape{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:center}
 .shape p{font-size:14px;color:var(--ink)}
+.fut{display:grid;gap:8px}
+.fut ul{font-size:14px}
 
 /* Comparison table */
 table{border-collapse:separate;border-spacing:0;width:100%;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden}
@@ -262,6 +264,58 @@ li::marker{color:var(--faint)}
 <p class="note">If you build it anyway: deny by default, match full group paths exactly, and give the hub a Role per tenant namespace rather than a ClusterRole. Avoid letting a shared component impersonate users: unrestricted user impersonation can reach cluster-admin.</p>
 </section>
 
+<section id="operator">
+<h2>Looking ahead: a workspace operator</h2>
+<p>A hub per tenant is a hand-built version of what a Kubernetes workspace operator, such as <a href="https://github.com/jupyter-infra/jupyter-k8s">jupyter-k8s</a>, does natively: a notebook is a <code>Workspace</code> object in the tenant's namespace, and who can open it is decided by Kubernetes RBAC on the user's OIDC username and groups.</p>
+<div class="shape">
+<figure><svg class="dg" viewBox="0 0 360 340" role="img" aria-labelledby="tO dO">
+  <title id="tO">Future: a workspace operator</title>
+  <desc id="dO">Users pass an authorization check against Kubernetes RBAC and open workspaces that live in their own tenant namespace. Workspaces are Kubernetes objects; a workspace can belong to one person or the whole team. One small controller in a platform namespace reconciles workspaces in every tenant namespace.</desc>
+  <defs><marker id="ahO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+  <rect class="bx" x="120" y="6" width="120" height="30" rx="15"/>
+  <text class="mid" x="180" y="26">Users</text>
+  <path class="ln" d="M180 36 V55" marker-end="url(#ahO)"/>
+  <rect class="bx" x="40" y="58" width="280" height="30" rx="7"/>
+  <text class="mid" x="180" y="78">Login · Kubernetes RBAC check</text>
+  <path class="ln" d="M130 88 L92 121" marker-end="url(#ahO)"/>
+  <path class="ln" d="M230 88 L268 121" marker-end="url(#ahO)"/>
+  <rect class="nsA" x="8" y="124" width="164" height="150" rx="10"/>
+  <rect class="hubA" x="20" y="136" width="140" height="30" rx="7"/>
+  <text class="mid" x="90" y="156">workspace: alice</text>
+  <rect class="hubA" x="20" y="174" width="140" height="30" rx="7"/>
+  <text class="mid" x="90" y="194">workspace: team</text>
+  <text x="24" y="226">• tenant identity</text>
+  <text x="24" y="246">• tenant data</text>
+  <text class="s" x="18" y="266">tenant A namespace</text>
+  <rect class="nsA" x="188" y="124" width="164" height="150" rx="10"/>
+  <rect class="hubA" x="200" y="136" width="140" height="30" rx="7"/>
+  <text class="mid" x="270" y="156">workspace: bob</text>
+  <text x="204" y="226">• tenant identity</text>
+  <text x="204" y="246">• tenant data</text>
+  <text class="s" x="198" y="266">tenant B namespace</text>
+  <line class="wall" x1="180" y1="118" x2="180" y2="278"/>
+  <rect class="nsB" x="60" y="292" width="240" height="42" rx="10"/>
+  <text class="mid" x="180" y="318">One workspace controller</text>
+  <path class="ln" d="M120 292 L100 276" marker-end="url(#ahO)" stroke-dasharray="4 3"/>
+  <path class="ln" d="M240 292 L260 276" marker-end="url(#ahO)" stroke-dasharray="4 3"/>
+</svg></figure>
+<div class="fut">
+<p><b>What it would change</b></p>
+<ul>
+  <li><b>The boundary stays in Kubernetes RBAC</b>, not hub code: a user can open a workspace only where a RoleBinding allows it, so it fails closed like A.</li>
+  <li><b>One control plane</b> to upgrade instead of N hubs. Shared templates set default images, storage and resource bounds; idle workspaces shut down.</li>
+  <li><b>Single-user tenants become cheap</b>: a namespace and a workspace, not a whole hub. Inside a team tenant, a workspace can be owner-only.</li>
+</ul>
+<p><b>Still open</b></p>
+<ul>
+  <li>The controller is trusted across tenants: its default ClusterRole creates Deployments and NetworkPolicies, and <code>pods/exec</code>, in every namespace. Unlike a shared hub, it has no user-facing web app.</li>
+  <li>Routing integrates with Traefik, while Nebari routes through Envoy Gateway; Keycloak's group claims must match the RoleBindings. Neither is tested with Nebari.</li>
+  <li>The API is <code>v1alpha1</code>, and hub add-ons such as jhub-apps have no equivalent yet.</li>
+</ul>
+</div>
+</div>
+</section>
+
 <section>
 <h2>Sources</h2>
 <ul>
@@ -269,6 +323,7 @@ li::marker{color:var(--faint)}
   <li><a href="https://jupyterhub-kubespawner.readthedocs.io/en/latest/spawner.html">KubeSpawner configuration</a> (<code>profile_list</code>, <code>enable_user_namespaces</code>)</li>
   <li><a href="https://z2jh.jupyter.org/en/stable/administrator/security.html">Zero to JupyterHub: security</a></li>
   <li><a href="https://kubernetes.io/docs/concepts/security/rbac-good-practices/#workload-creation">Kubernetes RBAC good practices: workload creation</a></li>
+  <li><a href="https://jupyter-k8s.readthedocs.io/en/latest/">jupyter-k8s documentation</a> (workspace access types, routing and identity provider)</li>
   <li><a href="https://kubernetes.io/docs/concepts/security/rbac-good-practices/#impersonate-verb">Kubernetes RBAC good practices: impersonate verb</a></li>
 </ul>
 </section>
