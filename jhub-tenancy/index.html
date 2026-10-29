@@ -12,7 +12,7 @@
 :root{
   --bg:#ffffff; --surface:#ffffff; --ink:#262628; --muted:#5a5a61; --faint:#70707a; --line:#d9d9dc; --line-strong:#b7b7bb;
   --accent:#9547c0; --accent-hover:#77399a; --ring:#b053e2; --head:#f8f8f8; --base-bg:#f7f1fa;
-  --a-fg:#77399a; --b-fg:#1d5aa8; --gap-fg:#d2161c;
+  --a-fg:#77399a; --b-fg:#1d5aa8; --c-fg:#8a5a00; --d-fg:#0b6b66; --gap-fg:#d2161c;
   --radius:0.625rem;
   --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -22,18 +22,18 @@
     color-scheme:dark;
     --bg:#1a1a1c; --surface:#262628; --ink:#f8f8f8; --muted:#b7b7bb; --faint:#9d9da6; --line:#4a4a50; --line-strong:#5a5a61;
     --accent:#c575f4; --accent-hover:#d79bf8; --ring:#c575f4; --head:#353538; --base-bg:#2e2635;
-    --a-fg:#dcb4f7; --b-fg:#a9cbf5; --gap-fg:#f29e93;
+    --a-fg:#dcb4f7; --b-fg:#a9cbf5; --c-fg:#f2c46e; --d-fg:#7fd6cf; --gap-fg:#f29e93;
   }
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
   --bg:#1a1a1c; --surface:#262628; --ink:#f8f8f8; --muted:#b7b7bb; --faint:#9d9da6; --line:#4a4a50; --line-strong:#5a5a61;
   --accent:#c575f4; --accent-hover:#d79bf8; --ring:#c575f4; --head:#353538; --base-bg:#2e2635;
-  --a-fg:#dcb4f7; --b-fg:#a9cbf5; --gap-fg:#f29e93;
+  --a-fg:#dcb4f7; --b-fg:#a9cbf5; --c-fg:#f2c46e; --d-fg:#7fd6cf; --gap-fg:#f29e93;
 }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;overflow-wrap:break-word}
-.wrap{max-width:960px;margin:0 auto;padding-inline:20px;padding-block:36px 56px}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:20px;padding-block:36px 56px}
 p{margin:0;color:var(--muted)}
 b{color:var(--ink)}
 code{font-family:var(--mono);font-size:.86em;background:var(--head);border:1px solid var(--line);padding:0 4px;border-radius:calc(var(--radius)*.5)}
@@ -47,11 +47,11 @@ h1{font-size:clamp(23px,3.2vw,30px);line-height:1.2;margin:0;font-weight:700;let
 section{display:grid;gap:12px;padding-top:28px;margin-top:28px;border-top:1px solid var(--line-strong)}
 h2{margin:0;font-size:19px;line-height:1.25;font-weight:600}
 
-/* SVG diagrams: colours come from the page tokens, so they follow light/dark */
-.figs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+/* SVG diagrams */
+.figs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 figure{margin:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px 12px 14px;display:grid;gap:8px;align-content:start}
 figcaption{font-family:var(--mono);font-size:12px;letter-spacing:.07em;text-transform:uppercase}
-figcaption.a{color:var(--a-fg)} figcaption.b{color:var(--b-fg)}
+figcaption.a{color:var(--a-fg)} figcaption.b{color:var(--b-fg)} figcaption.c{color:var(--c-fg)} figcaption.d{color:var(--d-fg)}
 figure p{font-size:13px}
 svg.dg{width:100%;height:auto;display:block}
 .dg text{font-family:var(--sans);font-size:13px;fill:var(--ink)}
@@ -59,8 +59,15 @@ svg.dg{width:100%;height:auto;display:block}
 .dg text.mid{text-anchor:middle}
 .dg text.r{fill:var(--gap-fg);font-weight:600}
 .dg .bx{fill:var(--head);stroke:var(--line-strong)}
+.dg .podC{fill:var(--head);stroke:var(--c-fg);stroke-width:1.5}
+.dg .nsC{fill:none;stroke:var(--c-fg);stroke-dasharray:6 4}
+.dg .wlab{fill:var(--surface);stroke:var(--c-fg);stroke-width:1.5}
+.dg text.w{fill:var(--c-fg);font-weight:600}
+.dg .ln.dash{stroke-dasharray:4 3}
 .dg .hubA{fill:var(--base-bg);stroke:var(--a-fg);stroke-width:1.5}
 .dg .hubB{fill:var(--base-bg);stroke:var(--b-fg);stroke-width:1.5}
+.dg .hubD{fill:var(--base-bg);stroke:var(--d-fg);stroke-width:1.5}
+.dg .nsD{fill:none;stroke:var(--d-fg);stroke-dasharray:6 4}
 .dg .nsA{fill:none;stroke:var(--a-fg);stroke-dasharray:6 4}
 .dg .nsB{fill:none;stroke:var(--b-fg);stroke-dasharray:6 4}
 .dg .wall{stroke:var(--ink);stroke-width:5;stroke-linecap:round}
@@ -68,44 +75,73 @@ svg.dg{width:100%;height:auto;display:block}
 .dg .ah{fill:var(--muted)}
 .dg .risk{stroke:var(--gap-fg);stroke-width:3;fill:none}
 .dg .ahr{fill:var(--gap-fg)}
-.dg .bar{stroke:var(--gap-fg);stroke-width:2;stroke-dasharray:7 5}
-.dg .bg{fill:var(--surface)}
 .dg .rlab{fill:var(--surface);stroke:var(--gap-fg);stroke-width:1.5}
-.shape{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:center}
-.shape p{font-size:14px;color:var(--ink)}
-.fut{display:grid;gap:8px}
-.fut ul{font-size:14px}
 
 /* Comparison table */
 table{border-collapse:separate;border-spacing:0;width:100%;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden}
 th,td{text-align:left;vertical-align:top;padding:11px 14px;border-bottom:1px solid var(--line)}
 tbody tr:last-child th,tbody tr:last-child td{border-bottom:none}
 thead th{background:var(--head);font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
-thead th.a{color:var(--a-fg)} thead th.b{color:var(--b-fg)}
-tbody th{width:20%;font-weight:600;background:var(--head)}
-td{width:40%;color:var(--ink)}
+thead th.a{color:var(--a-fg)} thead th.b{color:var(--b-fg)} thead th.c{color:var(--c-fg)} thead th.d{color:var(--d-fg)}
+tbody th{width:16%;font-weight:600;background:var(--head)}
+td{width:21%;color:var(--ink)}
+tr.grp th{background:none;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);padding-top:16px}
 ul{margin:0;padding-left:18px;display:grid;gap:6px}
 li::marker{color:var(--faint)}
 .note{font-size:13px}
 .callout{border:1px solid var(--line);background:var(--head);border-radius:var(--radius);padding:12px 16px;display:grid;gap:6px}
 .callout h3{margin:0;font-size:15px;font-weight:600}
 .callout p{color:var(--ink);font-size:14px}
-.better{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--b-fg);border:1px solid var(--b-fg);border-radius:5px;padding:0 6px;margin-right:6px;vertical-align:1px}
+.glance{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.card{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:14px 16px;display:grid;gap:10px;align-content:start}
+.card h3{margin:0;font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.07em;text-transform:uppercase}
+.card h3.a{color:var(--a-fg)} .card h3.b{color:var(--b-fg)} .card h3.c{color:var(--c-fg)} .card h3.d{color:var(--d-fg)}
+.card dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:baseline}
+.card dt{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+.card dd{margin:0;font-size:13.5px;color:var(--ink)}
+.dots{display:inline-flex;gap:3px;margin-right:7px;vertical-align:-1px}
+.dots i{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--ink);display:block}
+.dots i.on{background:var(--ink)}
+.hz{display:inline-block;white-space:nowrap;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;border:1px solid currentColor;border-radius:5px;padding:0 6px}
+.hz.a{color:var(--a-fg)} .hz.b{color:var(--gap-fg)} .hz.c{color:var(--c-fg)} .hz.d{color:var(--d-fg)}
+.qs{margin:0;padding-left:20px;display:grid;gap:6px}
+.legend{font-size:13px;color:var(--muted)}
+td .dots{display:flex;margin:0 0 4px}
+/* Diagrams keep the light palette in both themes, on their own solid light background */
+svg.dg{--surface:#ffffff;--ink:#262628;--muted:#5a5a61;--line-strong:#b7b7bb;--head:#f8f8f8;--base-bg:#f7f1fa;--a-fg:#77399a;--b-fg:#1d5aa8;--c-fg:#8a5a00;--d-fg:#0b6b66;--gap-fg:#d2161c;border-radius:calc(var(--radius)*.6)}
+.dg .svgbg{fill:var(--surface)}
+pre{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.55;background:var(--head);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;overflow-x:auto;color:var(--ink)}
+pre .cm{color:var(--faint)}
+.figD{grid-column:1/-1}
+.dwrap{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:20px;align-items:start}
+.dside{display:grid;gap:10px;align-content:start}
+.dside p{font-size:13px}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:13.5px;color:var(--ink)}
+.steps li{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:baseline}
+.steps b{display:inline-grid;place-items:center;width:19px;height:19px;border-radius:50%;background:var(--d-fg);color:var(--surface);font-size:12px;font-weight:700}
+.dg .num{fill:var(--d-fg)}
+.dg text.n{fill:#ffffff;font-size:12px;font-weight:700;text-anchor:middle}
 .foot{margin-top:32px;font-size:12px;color:var(--muted)}
 
+@media (max-width:980px){
+  .figs,.glance{grid-template-columns:1fr 1fr}
+  .dwrap{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+}
 @media (max-width:640px){
   .wrap{padding-inline:16px;padding-block:24px 40px}
   table,thead,tbody,tr,th,td{display:block;width:auto}
   table{border:0;background:none}
   tbody th,td{width:auto}
-  .figs,.shape{grid-template-columns:1fr}
+  .figs,.glance,.dwrap{grid-template-columns:1fr}
+  tr.grp{border:0!important;background:none!important}
+  tr.grp th{padding:10px 2px 0}
   thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
   tbody{display:grid;gap:10px}
   tbody tr{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden}
   tbody tr:last-child th,tbody tr:last-child td{border-bottom:1px solid var(--line)}
   tbody tr td:last-child{border-bottom:none!important}
   td::before{content:attr(data-label);display:block;font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:2px}
-  td.a::before{color:var(--a-fg)} td.b::before{color:var(--b-fg)}
+  td.a::before{color:var(--a-fg)} td.b::before{color:var(--b-fg)} td.c::before{color:var(--c-fg)} td.d::before{color:var(--d-fg)}
 }
 </style>
 </head>
@@ -113,16 +149,18 @@ li::marker{color:var(--faint)}
 <div class="wrap">
 <header>
   <div class="eyebrow">Nebari multi-tenancy · JupyterHub</div>
-  <h1>Notebooks for many tenants: a hub per tenant, or one shared hub?</h1>
-  <p class="summary"><b>Recommendation:</b> run two tiers. A <b>shared demo tier</b> (one hub and shared apps on sample data) lets anyone try the platform, holding no tenant credentials and no rights in any tenant. Real work runs in a <b>JupyterHub per tenant</b>, inside the tenant's namespace. Avoid one shared hub that maps users into tenants: it must be able to start pods as every tenant, so one bug or breach reaches all of them.</p>
+  <h1>Notebooks for many tenants: four JupyterHub shapes compared</h1>
+  <p class="summary">Four ways to give multi-tenant Nebari users notebooks: <b>A</b>, a JupyterHub per tenant; <b>B</b>, a shared hub that maps users into tenant namespaces through impersonation; <b>B′ (B-prime)</b>, a shared hub with a per-tenant profile; and <b>D</b>, a tenant operator that creates A's setup from one resource per tenant. Each is rated on weight, security, work left and time horizon, then compared on tenant self-administration, users in several tenants and gateway auth.</p>
 </header>
 
 <section>
-<h2>The two options</h2>
+<h2>The options</h2>
+<p>Four design options, A to D.</p>
 <div class="figs">
 <figure>
 <figcaption class="a">A · Hub per tenant</figcaption>
 <svg class="dg" viewBox="0 0 360 330" role="img" aria-labelledby="tA dA">
+  <rect class="svgbg" x="0" y="0" width="360" height="330"/>
   <title id="tA">Option A: a hub per tenant</title>
   <desc id="dA">Users pass a gateway group check and reach their own tenant's hub. Each tenant namespace holds its own hub and notebooks, with its own identity, storage and node pool. A wall separates the tenants.</desc>
   <defs><marker id="ahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
@@ -158,8 +196,9 @@ li::marker{color:var(--faint)}
 <p>Each hub can only act inside its own tenant. A breach or bug stays there.</p>
 </figure>
 <figure>
-<figcaption class="b">B · Shared hub, mapped at spawn</figcaption>
+<figcaption class="b">B · Shared hub, mapped by impersonation</figcaption>
 <svg class="dg" viewBox="0 0 360 392" role="img" aria-labelledby="tB dB">
+  <rect class="svgbg" x="0" y="0" width="360" height="392"/>
   <title id="tB">Option B: one shared hub mapped at spawn</title>
   <desc id="dB">Users reach one shared hub in a platform namespace; a user in two tenants picks profile A or B. A pre-spawn hook picks the tenant profile, and the hub creates notebook pods inside every tenant namespace. That cross-namespace privilege, shown in red, crosses every wall between tenants.</desc>
   <defs>
@@ -197,124 +236,218 @@ li::marker{color:var(--faint)}
   <rect class="rlab" x="70" y="172" width="220" height="26" rx="13"/>
   <text class="mid r" x="180" y="190">can create pods in every tenant</text>
 </svg>
-<p>The hub's permission (red) crosses every wall, so a breach or mapping bug reaches every tenant.</p>
+<p>The hub's permission (red: cross-namespace grants or impersonation) crosses every wall, so a breach or mapping bug reaches every tenant.</p>
+</figure>
+<figure>
+<figcaption class="c">B′ · Shared hub, per-tenant profile</figcaption>
+<svg class="dg" viewBox="0 0 360 392" role="img" aria-labelledby="tC dC">
+  <rect class="svgbg" x="0" y="0" width="360" height="392"/>
+  <title id="tC">Option B′: one shared hub with a per-tenant profile</title>
+  <desc id="dC">Users reach one shared hub, which shows each tenant's profile only to that tenant's group. The notebook pod stays in the hub namespace, runs as a per-tenant ServiceAccount bound to a narrow cloud role that can read and add files in the tenant's bucket, and is scheduled onto the tenant's node pool. It gets no rights in the tenant namespace. The hub's ServiceAccount can start pods as any tenant, so a hub compromise reaches every tenant's role.</desc>
+  <defs><marker id="ahC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+  <rect class="bx" x="120" y="6" width="120" height="30" rx="15"/>
+  <text class="mid" x="180" y="26">Users</text>
+  <text class="s" x="248" y="20">one login:</text>
+  <text class="s" x="248" y="35">pick a profile</text>
+  <path class="ln" d="M180 36 V55" marker-end="url(#ahC)"/>
+  <rect class="nsB" x="8" y="58" width="344" height="196" rx="10"/>
+  <rect class="hubB" x="66" y="68" width="228" height="30" rx="7"/>
+  <text class="mid" x="180" y="88">One shared hub</text>
+  <rect class="bx" x="66" y="104" width="228" height="28" rx="7"/>
+  <text class="mid" x="180" y="123">profile shown by group</text>
+  <path class="ln" d="M140 132 L100 144" marker-end="url(#ahC)"/>
+  <path class="ln" d="M220 132 L260 144" marker-end="url(#ahC)"/>
+  <rect class="podC" x="20" y="146" width="150" height="56" rx="7"/>
+  <text class="mid" x="95" y="168">A profile pod</text>
+  <text class="s mid" x="95" y="189">A SA → narrow role</text>
+  <rect class="podC" x="190" y="146" width="150" height="56" rx="7"/>
+  <text class="mid" x="265" y="168">B profile pod</text>
+  <text class="s mid" x="265" y="189">B SA → narrow role</text>
+  <text class="s mid" x="180" y="240">hub namespace (shared)</text>
+  <path class="ln dash" d="M60 202 V277" marker-end="url(#ahC)"/>
+  <path class="ln dash" d="M300 202 V277" marker-end="url(#ahC)"/>
+  <rect class="nsA" x="8" y="280" width="164" height="72" rx="10"/>
+  <text class="mid" x="90" y="299">tenant A node pool</text>
+  <text class="s" x="20" y="320">• read + add, A bucket</text>
+  <text class="s" x="20" y="340">• no rights in A namespace</text>
+  <rect class="nsA" x="188" y="280" width="164" height="72" rx="10"/>
+  <text class="mid" x="270" y="299">tenant B node pool</text>
+  <text class="s" x="200" y="320">• read + add, B bucket</text>
+  <text class="s" x="200" y="340">• no rights in B namespace</text>
+  <rect class="wlab" x="50" y="362" width="260" height="26" rx="13"/>
+  <text class="mid w" x="180" y="380">hub compromise reaches every role</text>
+</svg>
+<p>No impersonation and no rights in tenant namespaces; storage and pods stay apart. But the group gate lives in hub code, a hub compromise reaches every tenant's role, and the pod misses the tenant's quota and policies.</p>
+</figure>
+<figure class="figD">
+<figcaption class="d">D · Tenant operator</figcaption>
+<div class="dwrap">
+<svg class="dg" viewBox="0 0 420 500" role="img" aria-labelledby="tD dD">
+  <rect class="svgbg" x="0" y="0" width="420" height="500"/>
+  <title id="tD">Option D: a tenant operator</title>
+  <desc id="dD">1: a platform admin or GitOps applies one tenant resource. 2: the operator watches it. 3: it creates the tenant namespace, with the tenant label, quota, LimitRange, default-deny policies and the workload ServiceAccount, and the hub namespace, with the tenant's hub as a gateway app behind a group check, an auth client per hub copy, the tenant admin group mapped to hub admins, quota and default-deny policies. 4: an admission webhook refuses tenant-labelled namespaces and grants the operator did not make. 5: status flows back to the resource. The cloud role sits outside the cluster: the deployer makes it and the workload ServiceAccount only references it.</desc>
+  <defs><marker id="ahD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+  <rect class="bx" x="110" y="12" width="200" height="32" rx="16"/>
+  <text class="mid" x="210" y="33">Platform admin or GitOps</text>
+  <line class="ln" x1="210" y1="44" x2="210" y2="77" marker-end="url(#ahD)"/>
+  <circle class="num" cx="228" cy="62" r="9"/><text class="n" x="228" y="66">1</text>
+  <text class="s" x="242" y="66">applies</text>
+  <rect class="hubD" x="60" y="80" width="300" height="44" rx="8"/>
+  <text class="mid" x="210" y="99">Tenant resource: example-team</text>
+  <text class="s mid" x="210" y="116">group, admin group, quota, role ref</text>
+  <line class="ln" x1="140" y1="124" x2="140" y2="157" marker-end="url(#ahD)"/>
+  <circle class="num" cx="120" cy="142" r="9"/><text class="n" x="120" y="146">2</text>
+  <text class="s" x="106" y="146" style="text-anchor:end">watches</text>
+  <line class="ln" x1="200" y1="160" x2="200" y2="127" marker-end="url(#ahD)"/>
+  <circle class="num" cx="218" cy="142" r="9"/><text class="n" x="218" y="146">5</text>
+  <text class="s" x="232" y="146">status</text>
+  <rect class="hubD" x="30" y="160" width="210" height="36" rx="8"/>
+  <text class="mid" x="135" y="183">Tenant operator</text>
+  <rect class="rlab" x="250" y="160" width="160" height="36" rx="8"/>
+  <circle class="num" cx="268" cy="178" r="9"/><text class="n" x="268" y="182">4</text>
+  <text class="s r" x="283" y="182">Admission webhook</text>
+  <line class="ln" x1="110" y1="196" x2="108" y2="233" marker-end="url(#ahD)"/>
+  <line class="ln" x1="160" y1="196" x2="306" y2="233" marker-end="url(#ahD)"/>
+  <circle class="num" cx="156" cy="220" r="9"/><text class="n" x="156" y="224">3</text>
+  <text class="s" x="170" y="224">creates</text>
+  <rect class="nsD" x="12" y="236" width="192" height="144" rx="8"/>
+  <text x="24" y="258">Tenant namespace</text>
+  <text class="s" x="24" y="280">• tenant label</text>
+  <text class="s" x="24" y="298">• quota, LimitRange</text>
+  <text class="s" x="24" y="316">• default-deny policies</text>
+  <rect class="bx" x="24" y="330" width="168" height="32" rx="6"/>
+  <text class="mid" x="108" y="351">workload ServiceAccount</text>
+  <rect class="nsD" x="216" y="236" width="192" height="144" rx="8"/>
+  <text x="228" y="258">Hub namespace</text>
+  <rect class="hubD" x="228" y="268" width="168" height="28" rx="6"/>
+  <text class="mid" x="312" y="287">tenant's hub</text>
+  <text class="s" x="228" y="316">• gateway app + group check</text>
+  <text class="s" x="228" y="334">• auth client per hub copy</text>
+  <text class="s" x="228" y="352">• admin group → hub admins</text>
+  <text class="s" x="228" y="370">• quota, default-deny</text>
+  <line class="ln dash" x1="108" y1="362" x2="108" y2="437" marker-end="url(#ahD)"/>
+  <text class="s" x="116" y="400">references, not created</text>
+  <line class="ln dash" x1="12" y1="414" x2="408" y2="414"/>
+  <text class="s" x="408" y="406" style="text-anchor:end">cluster</text>
+  <text class="s" x="408" y="432" style="text-anchor:end">outside the cluster</text>
+  <rect class="bx" x="12" y="440" width="192" height="46" rx="8"/>
+  <text class="mid" x="108" y="460">Cloud role</text>
+  <text class="s mid" x="108" y="477">made by the deployer</text>
+</svg>
+<div class="dside">
+<ol class="steps">
+  <li><b>1</b> A platform admin, or GitOps, applies one tenant resource.</li>
+  <li><b>2</b> The operator watches tenant resources.</li>
+  <li><b>3</b> It creates the tenant and hub namespaces with quota, LimitRange and default-deny policies; the workload ServiceAccount; the tenant's hub as a gateway app with the group check; an auth client per hub copy; and the tenant admin group mapped to hub admins.</li>
+  <li><b>4</b> An admission webhook refuses tenant-labelled namespaces and grants the operator didn't make.</li>
+  <li><b>5</b> Status flows back to the resource: Ready, its namespaces, allowed apps.</li>
+</ol>
+<p>The cloud role stays outside the cluster: the deployer makes it, and the resource only references it.</p>
+<pre><span class="cm"># Illustrative: one resource per tenant</span>
+apiVersion: tenancy.nebari.dev/v1alpha1
+kind: NebariTenant
+metadata:
+  name: example-team
+spec:
+  <span class="cm"># Keycloak group that owns the tenant</span>
+  group: /example-team
+  <span class="cm"># becomes the hub's admins</span>
+  adminGroup: /example-team-admins
+  apps:
+    notebooks:
+      enabled: true  <span class="cm"># a hub per tenant</span>
+  quota:
+    cpu: "64"
+    memory: 256Gi
+    gpu: "0"
+  storage:
+    homeSize: 10Gi
+  identity:
+    <span class="cm"># cloud role made by the deployer</span>
+    roleRef: example-team-workload</pre>
+</div>
+</div>
+<p>One resource per tenant becomes everything A sets up per tenant, so each hub is bounded as in A. The operator itself is trusted across tenants and needs an upgrade path for every hub it owns. Upstream workspace operators such as <a href="https://github.com/jupyter-infra/jupyter-k8s">jupyter-k8s</a> take a related approach for single notebooks (a notebook is an object in the tenant's namespace and Kubernetes RBAC decides who opens it), but route through Traefik and are untested with Nebari's gateway and Keycloak.</p>
 </figure>
 </div>
 </section>
 
 <section>
-<h2>Per-tenant hub vs shared hub that maps users to tenants</h2>
+<h2>At a glance</h2>
+<p class="legend">More dots: heavier (weight), stronger (security), more work left (work left).</p>
+<div class="glance">
+<div class="card"><h3 class="a">A · Hub per tenant</h3><dl>
+<dt>Weight</dt><dd><span class="dots" role="img" aria-label="weight: 3 of 3, more dots means heavier"><i class="on"></i><i class="on"></i><i class="on"></i></span>Heavy: a hub, proxy and database per tenant</dd>
+<dt>Security</dt><dd><span class="dots" role="img" aria-label="security: 3 of 3, more dots means stronger"><i class="on"></i><i class="on"></i><i class="on"></i></span>Strong: the namespace and gateway are the boundary</dd>
+<dt>Work left</dt><dd><span class="dots" role="img" aria-label="work left: 2 of 3, more dots means more work left"><i class="on"></i><i class="on"></i><i></i></span>Port onto the current tenant chart, add tenants, per-copy chart support</dd>
+<dt>Horizon</dt><dd><span class="hz a">Now to mid term</span></dd>
+</dl></div>
+<div class="card"><h3 class="b">B · Shared hub, mapped by impersonation</h3><dl>
+<dt>Weight</dt><dd><span class="dots" role="img" aria-label="weight: 1 of 3, more dots means heavier"><i class="on"></i><i></i><i></i></span>Light: one hub</dd>
+<dt>Security</dt><dd><span class="dots" role="img" aria-label="security: 1 of 3, more dots means stronger"><i class="on"></i><i></i><i></i></span>Weak: hub code decides, with cluster-wide grants</dd>
+<dt>Work left</dt><dd><span class="dots" role="img" aria-label="work left: 3 of 3, more dots means more work left"><i class="on"></i><i class="on"></i><i class="on"></i></span>Scoped impersonation grants and admission rules, not yet available</dd>
+<dt>Horizon</dt><dd><span class="hz b">Not ready</span></dd>
+</dl></div>
+<div class="card"><h3 class="c">B′ · Shared hub, per-tenant profile</h3><dl>
+<dt>Weight</dt><dd><span class="dots" role="img" aria-label="weight: 1 of 3, more dots means heavier"><i class="on"></i><i></i><i></i></span>Light: near-zero added running cost</dd>
+<dt>Security</dt><dd><span class="dots" role="img" aria-label="security: 2 of 3, more dots means stronger"><i class="on"></i><i class="on"></i><i></i></span>Partial: storage and pods are isolated, but a hub compromise reaches every tenant and the group gate is hub code</dd>
+<dt>Work left</dt><dd><span class="dots" role="img" aria-label="work left: 1 of 3, more dots means more work left"><i class="on"></i><i></i><i></i></span>Low: a chart value and a few cloud resources per tenant</dd>
+<dt>Horizon</dt><dd><span class="hz c">Short term</span></dd>
+</dl></div>
+<div class="card"><h3 class="d">D · Tenant operator</h3><dl>
+<dt>Weight</dt><dd><span class="dots" role="img" aria-label="weight: 2 of 3, more dots means heavier"><i class="on"></i><i class="on"></i><i></i></span>Runs like A; setup drops to one resource</dd>
+<dt>Security</dt><dd><span class="dots" role="img" aria-label="security: 3 of 3, more dots means stronger"><i class="on"></i><i class="on"></i><i class="on"></i></span>Strong: as A, and only the operator creates tenant namespaces and labels</dd>
+<dt>Work left</dt><dd><span class="dots" role="img" aria-label="work left: 3 of 3, more dots means more work left"><i class="on"></i><i class="on"></i><i class="on"></i></span>CRD, controller, webhook, upgrades</dd>
+<dt>Horizon</dt><dd><span class="hz d">Long term</span></dd>
+</dl></div>
+</div>
+</section>
+
+<section>
+<h2>Side by side</h2>
 <table>
-<thead><tr><th></th><th class="a">Hub per tenant</th><th class="b">Shared hub, mapped at spawn</th></tr></thead>
+<thead><tr><th></th><th class="a">A · Hub per tenant</th><th class="b">B · Shared hub, impersonation</th><th class="c">B′ · Shared hub, per-tenant profile</th><th class="d">D · Tenant operator</th></tr></thead>
 <tbody>
-<tr><th>Blast radius</th><td class="a" data-label="Hub per tenant">One tenant</td><td class="b" data-label="Shared hub">Every tenant</td></tr>
-<tr><th>Hub privileges</th><td class="a" data-label="Hub per tenant">Stock Role in its own namespace</td><td class="b" data-label="Shared hub">Pod-create in every tenant namespace, which means every tenant's ServiceAccounts, Secrets and cloud role</td></tr>
-<tr><th>How it fails</th><td class="a" data-label="Hub per tenant">Closed: wrong group is refused at the gateway and the hub; a config typo breaks only that tenant</td><td class="b" data-label="Shared hub">Can fail open: a loose group match, a fallback profile or an empty profile list can place a user in the wrong tenant or the hub's default</td></tr>
-<tr><th>Ops effort</th><td class="a" data-label="Hub per tenant">N hubs, N Keycloak clients, N upgrades, all templated from one tenant list</td><td class="b" data-label="Shared hub">One hub and client, but one outage hits everyone, and each new tenant changes the shared hub</td></tr>
-<tr><th>Gateway auth</th><td class="a" data-label="Hub per tenant">A group check on every tenant route. For the gateway to verify browsers and scripts alike, the session cookie holds the plain JWT (still HttpOnly and Secure), so every app behind the route receives a usable token; the audience (<code>azp</code>) check is what stops one app replaying it at another. Scripts send a Bearer token and skip the login redirect.</td><td class="b" data-label="Shared hub">Optional: the hub can run its own OAuth login against Keycloak and check groups itself</td></tr>
-<tr><th>Who apps can trust</th><td class="a" data-label="Hub per tenant">Identity headers the gateway sets hold only on requests through it, not pod-to-pod, so apps that authorize per user verify the token themselves. The gateway can't inject the token as a Bearer header: some apps (jhub-apps, for one) reject it.</td><td class="b" data-label="Shared hub">The hub's own session; per-user checks stay inside JupyterHub</td></tr>
-<tr><th>One user in several tenants</th><td class="a" data-label="Hub per tenant">A separate hub per tenant: one URL, login and home each</td><td class="b" data-label="Shared hub"><span class="better">Better</span><b>One URL, pick a tenant profile</b>; no separate logins or hubs</td></tr>
-<tr><th>Which tenant am I in?</th><td class="a" data-label="Hub per tenant">Always clear: it is the URL you opened</td><td class="b" data-label="Shared hub">Chosen per server; switching tenant means starting another server</td></tr>
-<tr><th>Wins when</th><td class="a" data-label="Hub per tenant">Tenants are security boundaries with their own cloud identity</td><td class="b" data-label="Shared hub">Users work across several tenants, or tenants are many, small and mutually trusted</td></tr>
+<tr class="grp"><th colspan="5">Weight</th></tr>
+<tr><th>Running footprint</th><td class="a" data-label="A · Hub per tenant">A hub, proxy and database per tenant</td><td class="b" data-label="B · Shared, impersonation">One hub</td><td class="c" data-label="B′ · Shared, profile">One hub; near-zero added cost per tenant</td><td class="d" data-label="D · Tenant operator">Like A, plus the operator</td></tr>
+<tr><th>Per-tenant setup</th><td class="a" data-label="A · Hub per tenant">Namespace, hub release, Keycloak client, route and group policy, templated from one tenant list</td><td class="b" data-label="B · Shared, impersonation">An impersonation grant, a NetworkPolicy opening and a profile</td><td class="c" data-label="B′ · Shared, profile">A chart value (ServiceAccount, profile, one ingress rule) and a few Terraform resources (narrow role, identity binding, bucket and key policy)</td><td class="d" data-label="D · Tenant operator">One tenant resource; the operator creates the rest</td></tr>
+<tr><th>Ongoing ops</th><td class="a" data-label="A · Hub per tenant">N hubs to upgrade, migrate and monitor</td><td class="b" data-label="B · Shared, impersonation">One hub, but an outage hits every tenant</td><td class="c" data-label="B′ · Shared, profile">Same as B</td><td class="d" data-label="D · Tenant operator">The operator itself; it rolls the N hubs</td></tr>
+<tr class="grp"><th colspan="5">Security</th></tr>
+<tr><th>Boundary enforced by</th><td class="a" data-label="A · Hub per tenant">The Kubernetes namespace and the gateway group check</td><td class="b" data-label="B · Shared, impersonation">Hub code, plus impersonation</td><td class="c" data-label="B′ · Shared, profile">Data and pods: per-tenant cloud roles and NetworkPolicy. Who gets which tenant: hub code, not the gateway</td><td class="d" data-label="D · Tenant operator">Same as A; the operator is the only thing that creates tenant namespaces and labels</td></tr>
+<tr><th>Hub compromise reaches</th><td class="a" data-label="A · Hub per tenant">One tenant</td><td class="b" data-label="B · Shared, impersonation">Every tenant; through impersonation, potentially cluster-admin</td><td class="c" data-label="B′ · Shared, profile">Every tenant: the hub's ServiceAccount can create pods in the shared namespace that holds every tenant's notebook ServiceAccount, so it can start a pod as any tenant. That reaches each tenant's narrow cloud role, not Kubernetes rights in tenant namespaces</td><td class="d" data-label="D · Tenant operator">One tenant</td></tr>
+<tr><th>Who else can use the tenant's credentials</th><td class="a" data-label="A · Hub per tenant">Members, anyone a member shares a server with, and the hub's admins, who can be the tenant's own admin group. Platform operators are trusted in every option</td><td class="b" data-label="B · Shared, impersonation">Members, hub admins (the platform operators), and anyone the mapping places there by mistake</td><td class="c" data-label="B′ · Shared, profile">Members, anyone a member shares a server with, and hub admins, who are the platform operators. Same trust as A; the difference is that admin can't be delegated to the tenant</td><td class="d" data-label="D · Tenant operator">Same as A</td></tr>
+<tr><th>Tenant quota, NetworkPolicy, admission</th><td class="a" data-label="A · Hub per tenant">Apply: notebooks run in the tenant namespace</td><td class="b" data-label="B · Shared, impersonation">Apply when pods land in the tenant namespace</td><td class="c" data-label="B′ · Shared, profile">Don't apply: the pod runs in the hub namespace; only the node pool and one narrow ingress rule</td><td class="d" data-label="D · Tenant operator">Apply, created by the operator</td></tr>
+<tr><th>Group gate</th><td class="a" data-label="A · Hub per tenant">At the gateway, on every request to the tenant's routes</td><td class="b" data-label="B · Shared, impersonation">In hub code (the mapping)</td><td class="c" data-label="B′ · Shared, profile">In hub code: the server-side profile filter refuses a forged spawn. Weak spots: a profile that matches the group by its last path segment lets a same-named group anywhere in the realm pass; removing a user from the group takes effect at their next spawn, so a running server keeps the identity until it stops or is culled</td><td class="d" data-label="D · Tenant operator">As A</td></tr>
+<tr><th>Pod to pod</th><td class="a" data-label="A · Hub per tenant">Blocked: notebooks admit only their hub and proxy</td><td class="b" data-label="B · Shared, impersonation">Per tenant namespace, opened for the shared hub</td><td class="c" data-label="B′ · Shared, profile">Blocked: the hub namespace denies ingress by default and notebooks admit only the hub and proxy. A notebook is reached through the proxy only: its owner, an admin, or someone it is shared with</td><td class="d" data-label="D · Tenant operator">As A, with the operator's default-deny policies</td></tr>
+<tr><th>Credentials in the notebook</th><td class="a" data-label="A · Hub per tenant">Short-lived cloud credentials for the tenant's role. An API key passed as an env var is long-lived and visible to anyone with access to the server, as in B′</td><td class="b" data-label="B · Shared, impersonation">The tenant's identity, through impersonation</td><td class="c" data-label="B′ · Shared, profile">Short-lived cloud credentials from the pod identity agent, usable only through the VPC endpoint. Any per-tenant API key passed as an env var is long-lived and visible to anyone with access to the server. A read + add role still allows overwriting objects (an overwrite is a PutObject); mount options can refuse overwrite through the filesystem, not the API</td><td class="d" data-label="D · Tenant operator">As A</td></tr>
+<tr><th>Cluster-wide grants</th><td class="a" data-label="A · Hub per tenant">None</td><td class="b" data-label="B · Shared, impersonation">Yes: user impersonation</td><td class="c" data-label="B′ · Shared, profile">None</td><td class="d" data-label="D · Tenant operator">The operator's own (namespaces, RBAC, policies); no hub holds any</td></tr>
+<tr><th>How it fails</th><td class="a" data-label="A · Hub per tenant">Closed: a wrong group is refused; a config typo breaks one tenant</td><td class="b" data-label="B · Shared, impersonation">Can fail open into another tenant's full identity</td><td class="c" data-label="B′ · Shared, profile">A filter bug shows a profile to the wrong user: open, but only to that tenant's narrow role</td><td class="d" data-label="D · Tenant operator">Closed, as A; an operator bug can affect every tenant's setup</td></tr>
+<tr><th>Shared storage</th><td class="a" data-label="A · Hub per tenant">Homes and <code>/shared</code> are per tenant</td><td class="b" data-label="B · Shared, impersonation">Per tenant namespace</td><td class="c" data-label="B′ · Shared, profile">Per tenant when each profile mounts its tenant's claims. Object-storage mounts with pod-level credentials: the cloud role enforces it (another tenant's bucket returns AccessDenied), as strong as A. Block and NFS claims all sit in the hub namespace, so only hub config separates them. Shared directories are per group: the hub mounts <code>/shared/&lt;group&gt;</code> only for groups configured for shared storage, and only for users holding a shared-mount role; a tenant group not in that list gets none. The exposure: a tenant member who also belongs to another shared-storage group gets that group's directory, and their single per-user home, in the tenant profile too, so they can copy tenant data where the other group can read it</td><td class="d" data-label="D · Tenant operator">Per tenant, as A</td></tr>
+<tr class="grp"><th colspan="5">Admin and users</th></tr>
+<tr><th>Tenant self-administration</th><td class="a" data-label="A · Hub per tenant">The tenant's admin group can be hub admins for its own hub only: manage users and servers, cull, share, set profiles and images</td><td class="b" data-label="B · Shared, impersonation">Hub admin is all-or-nothing across every tenant, so it stays with the platform team</td><td class="c" data-label="B′ · Shared, profile">Same as B</td><td class="d" data-label="D · Tenant operator">As A: the operator maps the tenant's admin group to its hub's admins</td></tr>
+<tr><th>One user in several tenants</th><td class="a" data-label="A · Hub per tenant">A separate hub and login per tenant</td><td class="b" data-label="B · Shared, impersonation"><b>One login, pick a profile</b></td><td class="c" data-label="B′ · Shared, profile"><b>One login, pick a profile</b>. One node per user on the tenant pool: stop a CPU server before starting the tenant one; pool capacity caps concurrent notebooks</td><td class="d" data-label="D · Tenant operator">As A: a hub per tenant</td></tr>
+<tr><th>Gateway auth</th><td class="a" data-label="A · Hub per tenant">A group check on every tenant route. For the gateway to verify browsers and scripts alike, the session cookie holds the plain JWT (still HttpOnly and Secure), so every app behind the route receives a usable token; the audience (<code>azp</code>) check is what stops one app replaying it at another. Scripts send a Bearer token and skip the login redirect.</td><td class="b" data-label="B · Shared, impersonation">The hub's own OAuth login against Keycloak; it checks groups itself</td><td class="c" data-label="B′ · Shared, profile">Same as B</td><td class="d" data-label="D · Tenant operator">As A, with the operator creating an auth client per copy</td></tr>
+<tr><th>Who apps can trust</th><td class="a" data-label="A · Hub per tenant">Identity headers the gateway sets hold only on requests through it, not pod-to-pod, so apps that authorize per user verify the token themselves. The gateway can't inject the token as a Bearer header: some apps (jhub-apps, for one) reject it.</td><td class="b" data-label="B · Shared, impersonation">The hub's own session; per-user checks stay inside JupyterHub</td><td class="c" data-label="B′ · Shared, profile">Same as B</td><td class="d" data-label="D · Tenant operator">As A</td></tr>
+<tr class="grp"><th colspan="5">Work and time horizon</th></tr>
+<tr><th>Moving to D later</th><td class="a" data-label="A · Hub per tenant">Direct: D generates what A sets up per tenant; existing hub namespaces, claims and auth clients are adopted rather than recreated</td><td class="b" data-label="B · Shared, impersonation">Same moves as B′, plus removing the impersonation grants</td><td class="c" data-label="B′ · Shared, profile">Cloud data, groups and the notebook chart carry over. Per tenant: point the cloud role at the new hub namespace's ServiceAccount and retire the shared-hub one, replace the profile's ingress rule with normal tenant policies, move users to the tenant's own hub URL in a scheduled cutover, and recreate any user-published apps. Home directories are the main cost: claims are per namespace, so they are copied or re-bound into the new hub namespace. A per-profile home claim (one per user per tenant profile) keeps this to a re-bind; one shared home per user means sorting tenant files from the rest</td><td class="d" data-label="D · Tenant operator">n/a (end state)</td></tr>
+<tr><th>Work left to implement</th><td class="a" data-label="A · Hub per tenant"><span class="dots" role="img" aria-label="work left: 2 of 3, more dots means more work left"><i class="on"></i><i class="on"></i><i></i></span>Port the per-tenant hub onto the current tenant chart, add tenants, test, and per-copy support in the notebook chart (names, auth client, callback URL per copy)</td><td class="b" data-label="B · Shared, impersonation"><span class="dots" role="img" aria-label="work left: 3 of 3, more dots means more work left"><i class="on"></i><i class="on"></i><i class="on"></i></span>Scoped impersonation grants and admission rules, which Kubernetes doesn't offer yet</td><td class="c" data-label="B′ · Shared, profile"><span class="dots" role="img" aria-label="work left: 1 of 3, more dots means more work left"><i class="on"></i><i></i><i></i></span>Low: each tenant is a chart value plus a few Terraform resources</td><td class="d" data-label="D · Tenant operator"><span class="dots" role="img" aria-label="work left: 3 of 3, more dots means more work left"><i class="on"></i><i class="on"></i><i class="on"></i></span>CRD, controller, admission webhook and an upgrade path, on top of A's per-tenant setup</td></tr>
+<tr><th>Time horizon</th><td class="a" data-label="A · Hub per tenant"><span class="hz a">Now to mid term</span> per-tenant ops grow with the tenant count; outgrown when tenants are many or per-user</td><td class="b" data-label="B · Shared, impersonation"><span class="hz b">Not ready</span> until impersonation can be scoped per tenant</td><td class="c" data-label="B′ · Shared, profile"><span class="hz c">Short term</span> while the security gaps above are acceptable; tenant admin stays with the platform team</td><td class="d" data-label="D · Tenant operator"><span class="hz d">Long term</span> many or per-user tenants, once the operator exists</td></tr>
 </tbody>
 </table>
 <div class="callout" role="note">
-<h3>Combining data from two tenants needs a deliberate grant in either model</h3>
-<p>Neither option lets one notebook use two tenants' data by default. In B, each notebook still runs in one tenant namespace with that tenant's identity; the user picks which. To combine data, grant it on purpose: the data owner shares a dataset from tenant A to tenant B read-only, or the collaboration gets a joint tenant of its own.</p>
+<h3>Combining data from two tenants needs a deliberate grant in every option</h3>
+<p>No option lets one notebook use two tenants' data by default. In B and B′, each notebook still runs with one tenant's identity; the user picks which. To combine data, grant it on purpose: the data owner shares a dataset from tenant A to tenant B read-only, or the collaboration gets a joint tenant of its own.</p>
 </div>
 </section>
 
 <section>
-<h2>Recommended shape</h2>
-<div class="shape">
-<figure><svg class="dg" viewBox="0 0 360 250" role="img" aria-labelledby="tT dT">
-  <title id="tT">Recommended: a shared demo tier above per-tenant instances</title>
-  <desc id="dT">On top, a shared demo tier for any user with a demo hub, demo apps and sample data. A red barrier marks that it has no rights in tenants. Below, each tenant has its own hub and app copies, its tenant identity and its tenant data, separated by a wall.</desc>
-  <rect class="nsB" x="6" y="6" width="348" height="80" rx="10"/>
-  <text class="s" x="18" y="26">Shared demo tier · any user</text>
-  <rect class="hubB" x="18" y="40" width="96" height="30" rx="7"/><text class="mid" x="66" y="60">demo hub</text>
-  <rect class="bx" x="124" y="40" width="100" height="30" rx="7"/><text class="mid" x="174" y="60">demo apps</text>
-  <rect class="bx" x="234" y="40" width="108" height="30" rx="7"/><text class="mid" x="288" y="60">sample data</text>
-  <line class="bar" x1="6" y1="106" x2="354" y2="106"/>
-  <rect class="rlab" x="100" y="93" width="160" height="26" rx="13"/>
-  <text class="mid r" x="180" y="111">no rights in tenants</text>
-  <rect class="nsA" x="6" y="128" width="166" height="116" rx="10"/>
-  <text class="s" x="18" y="148">Tenant A · its members</text>
-  <text x="18" y="174">• own hub + apps</text>
-  <text x="18" y="198">• tenant identity</text>
-  <text x="18" y="222">• tenant data</text>
-  <rect class="nsA" x="188" y="128" width="166" height="116" rx="10"/>
-  <text class="s" x="200" y="148">Tenant B · its members</text>
-  <text x="200" y="174">• own hub + apps</text>
-  <text x="200" y="198">• tenant identity</text>
-  <text x="200" y="222">• tenant data</text>
-  <line class="wall" x1="180" y1="126" x2="180" y2="246"/>
-</svg></figure>
-<p>Anyone can try the platform in the shared demo tier, which holds only sample data and has no rights in any tenant. To do real work, a user is added to a tenant's group. Notebooks move over through a Git repo; nothing is copied from the demo hub, and tenant data never flows back to the demo tier.</p>
-</div>
+<h2>Questions to settle for B′</h2>
+<ul class="qs">
+  <li>Should the tenant profile mount only the tenant's own shared directory, and a home claim named per profile, so a member of another shared-storage group can't carry tenant data into that group's directory or into a home used outside the tenant?</li>
+  <li>How are notebooks kept from crowding the tenant's own workloads on its pool?</li>
+</ul>
 </section>
 
-<section>
-<h2>When the shared mapping hub wins</h2>
-<ul>
-  <li><b>Users belong to several tenants.</b> One URL and a profile picker, instead of a separate hub and login for every tenant a user is in.</li>
-  <li><b>Many small tenants</b>, such as one per project or per person, where N hubs stop being a handful.</li>
-  <li><b>Tenants are budgets, not boundaries</b>: one organisation splitting quota, with no per-tenant cloud identity.</li>
-</ul>
-<p class="note">If you build it anyway: deny by default, match full group paths exactly, and give the hub a Role per tenant namespace rather than a ClusterRole. Avoid letting a shared component impersonate users: unrestricted user impersonation can reach cluster-admin.</p>
-</section>
-
-<section id="operator">
-<h2>Looking ahead: a workspace operator</h2>
-<p>A hub per tenant is a hand-built version of what a Kubernetes workspace operator, such as <a href="https://github.com/jupyter-infra/jupyter-k8s">jupyter-k8s</a>, does natively: a notebook is a <code>Workspace</code> object in the tenant's namespace, and who can open it is decided by Kubernetes RBAC on the user's OIDC username and groups.</p>
-<div class="shape">
-<figure><svg class="dg" viewBox="0 0 360 340" role="img" aria-labelledby="tO dO">
-  <title id="tO">Future: a workspace operator</title>
-  <desc id="dO">Users pass an authorization check against Kubernetes RBAC and open workspaces that live in their own tenant namespace. Workspaces are Kubernetes objects; a workspace can belong to one person or the whole team. One small controller in a platform namespace reconciles workspaces in every tenant namespace.</desc>
-  <defs><marker id="ahO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
-  <rect class="bx" x="120" y="6" width="120" height="30" rx="15"/>
-  <text class="mid" x="180" y="26">Users</text>
-  <path class="ln" d="M180 36 V55" marker-end="url(#ahO)"/>
-  <rect class="bx" x="40" y="58" width="280" height="30" rx="7"/>
-  <text class="mid" x="180" y="78">Login · Kubernetes RBAC check</text>
-  <path class="ln" d="M130 88 L92 121" marker-end="url(#ahO)"/>
-  <path class="ln" d="M230 88 L268 121" marker-end="url(#ahO)"/>
-  <rect class="nsA" x="8" y="124" width="164" height="150" rx="10"/>
-  <rect class="hubA" x="20" y="136" width="140" height="30" rx="7"/>
-  <text class="mid" x="90" y="156">workspace: alice</text>
-  <rect class="hubA" x="20" y="174" width="140" height="30" rx="7"/>
-  <text class="mid" x="90" y="194">workspace: team</text>
-  <text x="24" y="226">• tenant identity</text>
-  <text x="24" y="246">• tenant data</text>
-  <text class="s" x="18" y="266">tenant A namespace</text>
-  <rect class="nsA" x="188" y="124" width="164" height="150" rx="10"/>
-  <rect class="hubA" x="200" y="136" width="140" height="30" rx="7"/>
-  <text class="mid" x="270" y="156">workspace: bob</text>
-  <text x="204" y="226">• tenant identity</text>
-  <text x="204" y="246">• tenant data</text>
-  <text class="s" x="198" y="266">tenant B namespace</text>
-  <line class="wall" x1="180" y1="118" x2="180" y2="278"/>
-  <rect class="nsB" x="60" y="292" width="240" height="42" rx="10"/>
-  <text class="mid" x="180" y="318">One workspace controller</text>
-  <path class="ln" d="M120 292 L100 276" marker-end="url(#ahO)" stroke-dasharray="4 3"/>
-  <path class="ln" d="M240 292 L260 276" marker-end="url(#ahO)" stroke-dasharray="4 3"/>
-</svg></figure>
-<div class="fut">
-<p><b>What it would change</b></p>
-<ul>
-  <li><b>The boundary stays in Kubernetes RBAC</b>, not hub code: a user can open a workspace only where a RoleBinding allows it, so it fails closed like A.</li>
-  <li><b>One control plane</b> to upgrade instead of N hubs. Shared templates set default images, storage and resource bounds; idle workspaces shut down.</li>
-  <li><b>Single-user tenants become cheap</b>: a namespace and a workspace, not a whole hub. Inside a team tenant, a workspace can be owner-only.</li>
-</ul>
-<p><b>Still open</b></p>
-<ul>
-  <li>The controller is trusted across tenants: its default ClusterRole creates Deployments and NetworkPolicies, and <code>pods/exec</code>, in every namespace. Unlike a shared hub, it has no user-facing web app.</li>
-  <li>Routing integrates with Traefik, while Nebari routes through Envoy Gateway; Keycloak's group claims must match the RoleBindings. Neither is tested with Nebari.</li>
-  <li>The API is <code>v1alpha1</code>, and hub add-ons such as jhub-apps have no equivalent yet.</li>
-</ul>
-</div>
-</div>
-</section>
 
 <section>
 <h2>Sources</h2>
