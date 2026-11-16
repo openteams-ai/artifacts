@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Can a skill replace a design system</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: one slide per screen, a sticky bar on top, notes in a drawer. Colors and type are Nebari's own: its zinc neutrals, magenta primary and teal accent, set in Geist and IBM Plex Mono. */
+:root{
+  color-scheme:light;
+  --bg:#F8F8F8; --panel:#FFFFFF; --panel2:#EEEEEF; --well:#F1F0F4; --line:#D4D4D7;
+  --fg:#262628; --muted:#5A5A61; --dim:#70707A;
+  --accent:#9547C0; --accent-ink:#FFFFFF; --accent-2:#236762;
+  --code-k:#77399A; --code-s:#725600; --code-a:#236762;
+  --diff:#D2161C;
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,"Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#1A1A1C; --panel:#262628; --panel2:#353538; --well:#141416; --line:#47474B;
+    --fg:#F8F8F8; --muted:#B7B7BB; --dim:#9D9DA6;
+    --accent:#C575F4; --accent-ink:#1A1A1C; --accent-2:#6ECAC1;
+    --code-k:#D69AFD; --code-s:#EED190; --code-a:#6ECAC1;
+    --diff:#F46F63;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#1A1A1C; --panel:#262628; --panel2:#353538; --well:#141416; --line:#47474B;
+  --fg:#F8F8F8; --muted:#B7B7BB; --dim:#9D9DA6;
+  --accent:#C575F4; --accent-ink:#1A1A1C; --accent-2:#6ECAC1;
+  --code-k:#D69AFD; --code-s:#EED190; --code-a:#6ECAC1;
+  --diff:#F46F63;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:clamp(1rem,1.45vw,1.35rem);line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:underline;text-underline-offset:.15em;text-decoration-thickness:1px}
+code,pre{font-family:var(--mono)}
+code{font-size:.88em;background:var(--panel2);color:var(--fg);padding:.08em .35em;border-radius:5px}
+pre{margin:0;background:var(--well);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:clamp(12px,1.4vw,22px);overflow-x:auto;font-size:clamp(.8rem,1.15vw,1.05rem);line-height:1.5}
+pre code{background:none;padding:0;font-size:inherit}
+pre .c{color:var(--dim)} pre .k{color:var(--code-k)} pre .s{color:var(--code-s)} pre .a{color:var(--code-a)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3,p{margin:0}
+h1{font-size:clamp(2.6rem,7vw,6.4rem);font-weight:700;letter-spacing:-.03em;line-height:1;text-wrap:balance}
+h2{font-size:clamp(1.7rem,3.6vw,3.2rem);font-weight:600;letter-spacing:-.02em;line-height:1.1;text-wrap:balance}
+h3{font-size:clamp(1.05rem,1.6vw,1.45rem);font-weight:600;line-height:1.25}
+.eyebrow{font-size:clamp(.75rem,1vw,.95rem);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.lede{color:var(--muted);max-width:60ch}
+.statement{font-size:clamp(1.4rem,2.6vw,2.3rem);font-weight:500;line-height:1.3;max-width:34ch;text-wrap:balance}
+.big{font-size:clamp(5rem,16vw,13rem);font-weight:700;letter-spacing:-.05em;line-height:.9;color:var(--accent);font-variant-numeric:tabular-nums}
+
+/* Bar */
+.bar{position:sticky;top:0;z-index:30;height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 12px 0 16px;background:var(--bg);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:.95rem;white-space:nowrap;color:inherit;text-decoration:none}
+.brand i{width:12px;height:12px;border-radius:3px;background:var(--accent);display:inline-block}
+.brand span{color:var(--muted);font-weight:500;display:inline-flex;gap:10px}
+.brand span::before{content:"·"}
+.bar-mid{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar-mid .pn{min-width:5ch;text-align:center}
+.iconbtn{appearance:none;border:0;background:transparent;color:inherit;font:inherit;width:34px;height:34px;border-radius:8px;cursor:pointer;display:inline-grid;place-items:center}
+.iconbtn:hover,.iconbtn[aria-pressed="true"]{background:var(--panel2)}
+.iconbtn svg{width:18px;height:18px}
+.progress{position:fixed;left:0;right:0;top:56px;height:3px;z-index:31;pointer-events:none}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s ease}
+
+/* Slides */
+.slide{display:none;min-height:calc(100dvh - 56px);padding:clamp(28px,5vh,64px) clamp(16px,6vw,96px);flex-direction:column;gap:clamp(16px,2.6vh,30px);justify-content:center;max-width:1500px;margin:0 auto;width:100%}
+.slide.active{display:flex}
+.slide>.head{display:grid;gap:8px}
+.slide>aside{display:none}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:clamp(16px,2.5vw,36px);align-items:start}
+.two>*{min-width:0}
+.stack{display:grid;gap:14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:clamp(14px,1.6vw,24px);display:grid;gap:6px;align-content:start}
+.card p{color:var(--muted);font-size:.92em}
+.card .tag{font-family:var(--mono);font-size:.75em;color:var(--accent)}
+.callout{border-left:3px solid var(--accent);padding:2px 0 2px 14px;color:var(--muted)}
+.callout strong{color:var(--fg)}
+.callout.warn{border-color:var(--accent-2)}
+.foot{font-size:.8em;color:var(--dim)}
+.kbd{font-family:var(--mono);font-size:.78em;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;color:var(--muted)}
+.btn{appearance:none;font:inherit;font-size:.9rem;font-weight:600;padding:8px 16px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* Running order */
+.order{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px;counter-reset:part}
+.order button{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:4px;cursor:pointer}
+.order button:hover{border-color:var(--accent)}
+.order button::before{counter-increment:part;content:counter(part);width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:.85rem;margin-bottom:6px}
+.order span{color:var(--muted);font-size:.88em}
+.order em{font-style:normal;color:var(--dim);font-size:.8em;font-family:var(--mono)}
+
+/* Compare */
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.cmp ul{margin:6px 0 0;padding-left:1.1em;display:grid;gap:6px;color:var(--muted);font-size:.92em}
+.cmp .card.win{border-color:var(--accent)}
+
+/* Stepper: click a step, see its pane */
+.stepper{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.stepper{grid-template-columns:1fr}}
+.stepper nav{display:grid;gap:6px}
+.stepper nav button{appearance:none;text-align:left;font:inherit;color:inherit;background:transparent;border:1px solid transparent;border-radius:8px;padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:center}
+.stepper nav button:hover{background:var(--panel)}
+.stepper nav button[aria-current="step"]{background:var(--panel);border-color:var(--line)}
+.stepper nav button i{width:26px;height:26px;border-radius:50%;background:var(--panel2);color:var(--muted);display:grid;place-items:center;font-style:normal;font-weight:700;font-size:.8rem;flex:none;font-family:var(--mono)}
+.stepper nav button[aria-current="step"] i{background:var(--accent);color:var(--accent-ink)}
+.pane{display:none;gap:12px}
+.pane.on{display:grid}
+.pane p{color:var(--muted)}
+.pane .api{font-family:var(--mono);color:var(--accent);font-size:.95em}
+
+/* Table */
+.tbl{width:100%;border-collapse:collapse;font-size:.9em}
+.tbl th,.tbl td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:.75em;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)}
+
+/* Demo card */
+.demo{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px}
+/* Canvases keep their ratio but never push the slide past one screen. */
+.demo canvas{display:block;width:auto;max-width:100%;max-height:46vh;aspect-ratio:16/9;margin:0 auto;border-radius:8px;background:var(--well)}
+.demo .row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.demo .hd{display:flex;align-items:center;gap:6px}
+.demo .st{font-family:var(--mono);font-size:.78em;color:var(--muted)}
+.demo .st b{color:var(--accent);font-weight:500}
+.demo select{font:inherit;font-size:.95em;background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+.code{max-height:46vh;overflow:auto}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pair figure{margin:0;display:grid;gap:4px;min-width:0}
+/* Live panel: something the page detects about this machine */
+.log{font-family:var(--mono);font-size:.8em;background:var(--well);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:4px;min-height:5em;color:var(--muted)}
+.log .ok{color:var(--accent)} .log .no{color:var(--accent-2)}
+.code pre{font-size:clamp(.68rem,.9vw,.85rem);white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 14px}
+
+/* Takeaways */
+.take{list-style:none;margin:0;padding:0;display:grid;gap:clamp(14px,2.4vh,26px);counter-reset:t}
+.take li{display:grid;grid-template-columns:1.6em 1fr;gap:14px;align-items:baseline;font-size:clamp(1.2rem,2.3vw,2rem);font-weight:500;line-height:1.3;max-width:42ch;text-wrap:balance}
+.take li::before{counter-increment:t;content:counter(t);color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums}
+
+/* Link cards (resources, more demos) */
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+@media (min-width:900px){.res.three{grid-template-columns:repeat(3,1fr)}}
+.res a{display:grid;gap:4px;align-content:start;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);text-decoration:none;color:inherit}
+.res a:hover{border-color:var(--accent)}
+.res em{font-style:normal;font-family:var(--mono);font-size:.7em;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.res b{font-family:var(--mono);font-weight:500;font-size:.92em;color:var(--accent)}
+.res span{color:var(--muted);font-size:.88em}
+
+/* Notes drawer */
+.notes{position:fixed;left:0;right:0;bottom:0;z-index:32;background:var(--panel);border-top:1px solid var(--line);padding:14px clamp(16px,6vw,96px);font-size:.95rem;max-height:34vh;overflow:auto;transform:translateY(110%);transition:transform .35s cubic-bezier(.2,0,0,1)}
+.notes.open{transform:none}
+.notes .nl{font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.notes p{max-width:80ch;color:var(--muted)}
+
+@media (prefers-reduced-motion:reduce){.notes,.progress i{transition:none}}
+/* Phone: every slide stacks, one after another */
+@media (max-width:699px){
+  .slide{display:flex;min-height:0;border-bottom:1px solid var(--line)}
+  .bar-mid .nav,.progress,.notes{display:none}
+}
+
+/* This deck: number tables, the name field, the three-up screenshot viewer */
+.tbl.num td,.tbl.num th[scope="row"]{font-variant-numeric:tabular-nums}
+.tbl.num th[scope="row"]{font-size:1em;text-transform:none;letter-spacing:0;color:var(--muted);font-weight:500}
+.tbl.num td{font-family:var(--mono);font-size:.95em}
+.field{font:inherit;font-family:var(--mono);font-size:.9em;width:100%;background:var(--well);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.log b{font-weight:500}
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.trio figure{margin:0;display:grid;gap:6px;min-width:0}
+.trio img{display:block;width:100%;height:auto;max-height:46vh;object-fit:contain;object-position:top;border:1px solid var(--line);border-radius:8px;background:var(--well)}
+.trio b{color:var(--accent);font-weight:500}
+.btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.five{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.five figure{margin:0;display:grid;gap:6px;min-width:0}
+.five img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:var(--well)}
+.find{margin-top:6px;align-items:start}
+.find img{max-height:none}
+.find figure.off img{border-color:var(--diff);box-shadow:0 0 0 1px var(--diff)}
+.find figcaption b{color:var(--diff);font-weight:500}
+.stepper nav button small{margin-left:auto;font-family:var(--mono);font-size:.72em;color:var(--dim)}
+@media (max-width:699px){.trio{grid-template-columns:1fr}.five{grid-template-columns:repeat(2,minmax(0,1fr))}.brand span{display:none}.bar-mid{font-size:.8rem}.tbl{font-size:.8em}.tbl th,.tbl td{padding:8px 6px}}
+</style>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<header class="bar" aria-label="Deck controls">
+  <a class="brand" href="#s1" id="brand-link"><i></i>Can a skill replace a design system <span>Tech share</span></a>
+  <div class="bar-mid">
+    <span class="nav"><button class="iconbtn" id="prev" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button></span>
+    <span class="pn" id="pn">1 / 6</span>
+    <span class="nav"><button class="iconbtn" id="next" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button></span>
+  </div>
+  <button class="iconbtn" id="notes-btn" aria-pressed="false" aria-label="Toggle speaker notes" title="Speaker notes (N)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg></button>
+</header>
+<div class="progress" aria-hidden="true"><i id="prog"></i></div>
+
+<main class="deck" id="deck">
+
+<!-- 1 -->
+<section class="slide" id="s1">
+  <div class="stack" style="gap:18px">
+    <p class="eyebrow">Tech share · Nebari design</p>
+    <h1>Can a skill replace a design system?</h1>
+    <p class="statement" style="color:var(--muted);font-weight:400">I built the same Nebari screens two ways with Claude. The quality came out even. The skill cost twice the tokens.</p>
+    <p class="foot"><span class="kbd">←</span> <span class="kbd">→</span> to move, <span class="kbd">N</span> for speaker notes.</p>
+  </div>
+  <aside>Open with the question. If an agent can read Figma directly, why do we maintain components in code? Give the answer up front: same quality, higher cost. The next four slides are how I got there. About 30 seconds.</aside>
+</section>
+
+<!-- 2 -->
+<section class="slide" id="s2">
+  <div class="head"><p class="eyebrow">The two approaches</p><h2>Both start from stock shadcn. What differs is who restyles it, and when.</h2></div>
+  <div class="cmp">
+    <div class="card"><p class="tag">the registry</p><h3>Engineers restyle once</h3>
+      <ul><li>Nebari design ships as a shadcn registry.</li><li>Engineers restyled shadcn to the design and released it.</li><li>The agent installs finished components.</li></ul></div>
+    <div class="card"><p class="tag">a skill and the Figma file</p><h3>The agent restyles in each app</h3>
+      <ul><li>No Nebari component code to install.</li><li>A skill, kit-ui, installs stock shadcn components.</li><li>It reads the Figma file and restyles them to match.</li></ul></div>
+  </div>
+  <p class="callout"><strong>The idea:</strong> shadcn brings the behavior. The Figma file decides the look. No component library to build first.</p>
+  <aside>Define the terms in one breath. A registry is our design system in code: someone builds and releases each component. A skill is a set of instructions and scripts the agent loads for one kind of task. Mine reads the designers' Figma file through the Figma MCP server and never writes to it. A small config block in the app fills in what the file leaves out, like CSS names for colors.</aside>
+</section>
+
+<!-- 3 -->
+<section class="slide" id="s3">
+  <div class="head"><p class="eyebrow">The test</p><h2>Same screens, same prompt, same model. A script and a blind reviewer judged.</h2></div>
+  <div class="cards">
+    <div class="card"><p class="tag">build</p><h3>Four chat screens</h3><p>From a real Nebari design. The two prompts differ only in which design system to use.</p></div>
+    <div class="card"><p class="tag">judge</p><h3>A script</h3><p>Accessibility checks, keyboard behavior, sideways scrolling, and a production build.</p></div>
+    <div class="card"><p class="tag">fidelity</p><h3>A blind reviewer</h3><p>Compares each build with the design and lists what a person would notice.</p></div>
+  </div>
+  <p class="callout warn"><strong>What I got wrong first:</strong> I measured fidelity by counting pixels. A one-pixel shift nobody can see scored worse than a wrong color.</p>
+  <aside>The point of this slide is that the comparison was fair. Each approach was built in fresh sessions that could not see each other, and every number on the next slide is an average across builds. Tell the pixel story quickly: the pixel count looked objective and did not match what anyone could see, so fidelity became a count of visible differences from a reviewer who did not know which build was which.</aside>
+</section>
+
+<!-- 4 -->
+<section class="slide" id="s4">
+  <div class="head"><p class="eyebrow">The result</p><h2>Same quality. Twice the tokens.</h2></div>
+  <div class="two">
+    <div class="stack"><p class="big">2.0×</p><p class="lede">the tokens to build the same four screens with the skill, and three times as long.</p></div>
+    <table class="tbl num">
+      <thead><tr><th scope="col">Average per build</th><th scope="col">Registry</th><th scope="col">Skill</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Differences you would notice</th><td>1.7</td><td>1.3</td></tr>
+        <tr><th scope="row">Accessibility defects</th><td>0</td><td>0</td></tr>
+        <tr><th scope="row">Tokens</th><td>186,410</td><td>379,610</td></tr>
+        <tr><th scope="row">Build time</th><td>6m 30s</td><td>19m 25s</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside>Read the table top to bottom. Fidelity: each approach averaged between one and two differences you would see with the build next to the design, and nothing you would see at a glance. That gap is too small to call. Accessibility: a tie, no violations and every keyboard check passed. Then the cost: the skill reads Figma and restyles components on every build, so it used about twice the tokens and three times the time. The registry pays that cost once, when engineers build the components.</aside>
+</section>
+
+<!-- 5 -->
+<section class="slide" id="screens">
+  <div class="head"><p class="eyebrow">The screens</p><h2>Design, skill and registry, side by side.</h2></div>
+  <div class="row" role="group" aria-label="Screen" style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn" data-shot="answer-light" aria-pressed="true">Answer</button>
+    <button class="btn" data-shot="answer-dark" aria-pressed="false">Answer, dark</button>
+    <button class="btn" data-shot="answer-1024-light" aria-pressed="false">Answer at 1024px</button>
+    <button class="btn" data-shot="history-light" aria-pressed="false">History</button>
+  </div>
+  <div class="trio" id="trio">
+    <figure><figcaption><b>Design</b> · the Figma frame</figcaption><a href="shots/answer-light-design.png" target="_blank" rel="noopener"><img data-arm="design" src="shots/answer-light-design.png" alt="Figma frame of the answer screen" width="1440" height="900"></a></figure>
+    <figure><figcaption><b>Skill</b> · kit-ui on stock shadcn</figcaption><a href="shots/answer-light-skill.png" target="_blank" rel="noopener"><img data-arm="skill" src="shots/answer-light-skill.png" alt="Skill build of the answer screen" width="1440" height="900"></a></figure>
+    <figure><figcaption><b>Registry</b> · @nebari components</figcaption><a href="shots/answer-light-registry.png" target="_blank" rel="noopener"><img data-arm="registry" src="shots/answer-light-registry.png" alt="Registry build of the answer screen" width="1440" height="900"></a></figure>
+  </div>
+  <p class="foot">The first build of each. Click a screenshot to open it full size.</p>
+  <aside>Let the room look. At this size the three are hard to tell apart, and that is the point: the differences the reviewer found are small, like a gray icon drawn near black or corners 2px rounder. Flip to dark and the 1024 width to show both builds hold up. Open one full size if someone asks about a detail.</aside>
+</section>
+
+<!-- 6 -->
+<section class="slide" id="s5">
+  <div class="head"><p class="eyebrow">Where I land</p><h2>Keep the registry where we have one. Start new UIs with the skill.</h2></div>
+  <div class="cmp">
+    <div class="card"><p class="tag">registry</p><h3>For Nebari, it stays</h3>
+      <ul><li>Half the tokens and a third of the time per build.</li><li>It carries extras a designer does not draw, like loading states.</li><li>Every app gets the same components.</li></ul></div>
+    <div class="card"><p class="tag">skill</p><h3>For something new, start here</h3>
+      <ul><li>It matched the registry with no library to build first.</li><li>A design change is a restyle, not a release.</li><li>Move to a registry when a second app needs the same parts.</li></ul></div>
+  </div>
+  <div class="res">
+    <a href="https://github.com/nebari-dev/nebari-design" target="_blank" rel="noopener"><b>nebari-dev/nebari-design</b><span>The registry used in this test.</span></a>
+    <a href="https://github.com/jbouder/skills/tree/main/kit-ui" target="_blank" rel="noopener"><b>kit-ui</b><span>The skill, and the example config for Nebari.</span></a>
+  </div>
+  <h2 style="margin-top:8px">Questions?</h2>
+  <aside>This is a lean, not a verdict. Fidelity does not separate the two, so it comes down to cost and what the registry adds on top. Caveats to offer if asked: four mostly static screens, no dialog or form; one AI reviewer; and the skill has run on one design file. Either way, someone should review the result by eye: every build had something a script missed.</aside>
+</section>
+
+</main>
+
+<div class="notes" id="notes" aria-live="polite"><div class="nl">Speaker notes</div><p id="notes-text"></p></div>
+
+<script>
+(function(){
+  /* ── Navigation ── */
+  var slides=Array.prototype.slice.call(document.querySelectorAll(".slide")),cur=0;
+  var pn=document.getElementById("pn"),prog=document.getElementById("prog"),notes=document.getElementById("notes"),notesText=document.getElementById("notes-text"),notesBtn=document.getElementById("notes-btn");
+  var onLeave={}, onEnter={}; // onEnter.s5 / onLeave.s5: start or stop work tied to a slide
+  function phone(){return window.matchMedia("(max-width: 699px)").matches;}
+  function go(i,push){
+    i=Math.max(0,Math.min(slides.length-1,i));
+    if(onLeave[slides[cur].id])onLeave[slides[cur].id]();
+    cur=i;
+    slides.forEach(function(s,k){s.classList.toggle("active",k===i);});
+    if(onEnter[slides[i].id])onEnter[slides[i].id]();
+    pn.textContent=(i+1)+" / "+slides.length;
+    prog.style.width=((i+1)/slides.length*100)+"%";
+    var a=slides[i].querySelector(":scope > aside");notesText.textContent=a?a.textContent:"No notes for this slide.";
+    if(push!==false){try{history.replaceState(null,"","#"+slides[i].id);}catch(e){}}
+    if(phone()){slides[i].scrollIntoView({block:"start"});}else{window.scrollTo(0,0);}
+  }
+  document.getElementById("prev").addEventListener("click",function(){go(cur-1);});
+  document.getElementById("next").addEventListener("click",function(){go(cur+1);});
+  document.getElementById("brand-link").addEventListener("click",function(e){e.preventDefault();go(0);});
+  document.querySelectorAll("[data-goto]").forEach(function(b){b.addEventListener("click",function(){var k=slides.findIndex(function(s){return s.id===b.dataset.goto;});if(k>=0)go(k);});});
+  document.addEventListener("keydown",function(e){
+    if(e.target.matches("input,textarea,select"))return;
+    if(e.key==="ArrowRight"||e.key==="PageDown"||e.key===" "){e.preventDefault();go(cur+1);}
+    else if(e.key==="ArrowLeft"||e.key==="PageUp"){e.preventDefault();go(cur-1);}
+    else if(e.key==="Home"){go(0);}else if(e.key==="End"){go(slides.length-1);}
+    else if(e.key==="n"||e.key==="N"){toggleNotes();}
+  });
+  function toggleNotes(){var o=!notes.classList.contains("open");notes.classList.toggle("open",o);notesBtn.setAttribute("aria-pressed",String(o));}
+  notesBtn.addEventListener("click",toggleNotes);
+  function fromHash(){var h=(location.hash||"").replace("#","");var k=slides.findIndex(function(s){return s.id===h;});go(k>=0?k:0,false);}
+  window.addEventListener("hashchange",fromHash);
+
+  /* ── Steppers ── */
+  document.querySelectorAll(".stepper nav button").forEach(function(b){b.addEventListener("click",function(){
+    var nav=b.parentNode,host=nav.parentNode;
+    nav.querySelectorAll("button").forEach(function(x){if(x===b)x.setAttribute("aria-current","step");else x.removeAttribute("aria-current");});
+    host.querySelectorAll(".pane").forEach(function(p){p.classList.toggle("on",p.dataset.pane===b.dataset.step);});
+  });});
+
+  /* ── Show code: each demo swaps its visual for the code that runs it ── */
+  var CODE={};
+  document.querySelectorAll("[data-code]").forEach(function(b){
+    var c=CODE[b.dataset.code],vis=document.getElementById(c.vis),panel=document.createElement("div");
+    panel.className="code";panel.hidden=true;
+    c.blocks.forEach(function(k){var l=document.createElement("p");l.className="st";l.textContent=k[0];var pre=document.createElement("pre"),code=document.createElement("code");code.textContent=k[1];pre.appendChild(code);panel.append(l,pre);});
+    vis.after(panel);
+    b.addEventListener("click",function(){
+      var on=b.getAttribute("aria-pressed")!=="true";
+      b.setAttribute("aria-pressed",String(on));b.title=on?"Hide code":"Show code";b.setAttribute("aria-label",b.title);
+      panel.hidden=!on;vis.hidden=on;
+    });
+  });
+
+  /* ── Screenshot viewer: one screen at a time, three arms ── */
+  var SHOT_NAMES={"answer-light":"the answer screen","answer-dark":"the answer screen in dark mode","answer-1024-light":"the answer screen at 1024px","history-light":"the history screen"};
+  var ARM_LABEL={design:"Figma frame of ",skill:"Skill build of ",registry:"Registry build of "};
+  document.querySelectorAll("[data-shot]").forEach(function(b){b.addEventListener("click",function(){
+    document.querySelectorAll("[data-shot]").forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+    var c=b.dataset.shot,wide=c.indexOf("1024")<0;
+    document.querySelectorAll("#trio img").forEach(function(img){
+      var src="shots/"+c+"-"+img.dataset.arm+".png";
+      img.src=src;img.parentNode.href=src;img.alt=ARM_LABEL[img.dataset.arm]+SHOT_NAMES[c];
+      img.width=wide?1440:1024;img.height=wide?900:768;
+    });
+  });});
+
+  fromHash();
+})();
+</script>
+</body>
+</html>
